@@ -77,6 +77,13 @@ async function applyRacingFrame(
   return canvas.toDataURL("image/png");
 }
 
+const SLIDESHOW_IMAGES = [
+  "/images/bg_loading_1.png",
+  "/images/bg_loading_2.png",
+];
+
+const SLIDESHOW_INTERVAL_MS = 4500;
+
 function LoadingPage() {
   const navigate = useNavigate();
   const { originalPhotos, selectedTheme, setFinalPhoto } = usePhotobooth();
@@ -84,6 +91,14 @@ function LoadingPage() {
   const [statusText, setStatusText] = useState("Preparing your photo...");
   const [error, setError] = useState<string | null>(null);
   const processedRef = useRef(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % SLIDESHOW_IMAGES.length);
+    }, SLIDESHOW_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (processedRef.current || !originalPhotos.length || !selectedTheme) {
@@ -198,20 +213,17 @@ function LoadingPage() {
   };
 
   return (
-    <div
-      className="h-svh aspect-9/16 mx-auto bg-cover bg-center bg-no-repeat flex items-start justify-center p-4 bg-primary text-secondary overflow-hidden"
-      style={{
-        backgroundImage: `url('${getAssetPath("/images/bg_loading.png")}')`,
-      }}
-    >
-      {/* <video
-        autoPlay
-        loop
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-      >
-        <source src={getAssetPath("/videos/kv2.mp4")} type="video/mp4" />
-      </video> */}
+    <div className="relative h-svh aspect-9/16 mx-auto flex items-start justify-center p-4 bg-primary text-secondary overflow-hidden">
+      {SLIDESHOW_IMAGES.map((src, index) => (
+        <div
+          key={src}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ease-in-out"
+          style={{
+            backgroundImage: `url('${getAssetPath(src)}')`,
+            opacity: currentSlide === index ? 1 : 0,
+          }}
+        />
+      ))}
 
       {error ? (
         <div className="relative z-10 flex flex-col items-center gap-8 px-12">
