@@ -1,17 +1,15 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "shell-photobooth-web",
-	"compatibility_date": "2025-09-02",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"main": "@tanstack/react-start/server-entry",
-	"vars": {
-		"REPLICATE_MODEL": "google/nano-banana",
-		"RESEND_FROM_EMAIL": "Photobooth <no-reply@photobooth.playlistx.studio>",
-		"NODE_ENV": "production",
-		"RACING_PROMPT_PITCREW": "Insert the face of the person from the first image onto the body of the person in the second image. Keep the pit crew outfit, background, and pose exactly the same. Make it look natural and photorealistic.",
-		"RACING_PROMPT_MOTOGP": "Insert the face of the person from the first image onto the body of the person in the second image. Keep the MotoGP racing suit, background, and pose exactly the same. Make it look natural and photorealistic.",
-		"RACING_PROMPT_F1": "Insert the face of the person from the first image onto the body of the person in the second image. Keep the F1 racing suit, background, and pose exactly the same. Make it look natural and photorealistic.",
-	},
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "shell-photobooth-web",
+  "compatibility_date": "2025-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
+  "vars": {
+    "REPLICATE_MODEL": "google/nano-banana",
+    "RESEND_FROM_EMAIL": "Photobooth <no-reply@photobooth.playlistx.studio>",
+    "NODE_ENV": "production",
+    "RACING_PROMPT_PITCREW": "Insert the face of the person from the first image onto the body of the person in the second image. Keep the pit crew outfit, background, and pose exactly the same. Make it look natural and photorealistic.",
+    "RACING_PROMPT_MOTOGP": "Insert the face of the person from the first image onto the body of the person in the second image. Keep the MotoGP racing suit, background, and pose exactly the same. Make it look natural and photorealistic.",
+    "RACING_PROMPT_F1": "Insert the face of the person from the first image onto the body of the person in the second image. Keep the F1 racing suit, background, and pose exactly the same. Make it look natural and photorealistic.",
+  },
 }
