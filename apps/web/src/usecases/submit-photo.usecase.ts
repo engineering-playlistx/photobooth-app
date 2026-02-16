@@ -40,17 +40,18 @@ export class SubmitPhotoUseCase {
     const {
       data: { publicUrl: photoUrl },
     } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(request.photoPath)
-    try {
-      // TODO: Use CDN
-      await this.emailService.sendPhotoEmail({
-        recipientEmail: request.email,
-        recipientName: request.name,
-        photoUrl,
-      })
-    } catch (emailError) {
-      console.error('Failed to send email:', emailError)
-      throw new Error('User created but failed to send email')
-    }
+
+    // Email sending disabled — kept for future use
+    // try {
+    //   await this.emailService.sendPhotoEmail({
+    //     recipientEmail: request.email,
+    //     recipientName: request.name,
+    //     photoUrl,
+    //   })
+    // } catch (emailError) {
+    //   console.error('Failed to send email:', emailError)
+    //   throw new Error('User created but failed to send email')
+    // }
 
     return {
       photoUrl,

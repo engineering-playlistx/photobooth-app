@@ -11,12 +11,11 @@ import { usePrint } from "../hooks/usePrint";
 import { savePhotoFile, savePhotoResult } from "../utils/database";
 import QRCodeModal from "../components/QRCodeModal";
 
-// // Email feature - commented out
-// const API_BASE_URL =
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
-// // eslint-disable-next-line @typescript-eslint/no-explicit-any
-// const API_CLIENT_KEY = (import.meta as any).env?.VITE_API_CLIENT_KEY || "";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const API_BASE_URL =
+  (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const API_CLIENT_KEY = (import.meta as any).env?.VITE_API_CLIENT_KEY || "";
 
 const SUPABASE_BUCKET = "photobooth-bucket";
 const SUPABASE_FOLDER = "public";
@@ -72,20 +71,24 @@ export default function ResultPage() {
     }
 
     try {
-      const blob = base64ToBlob(finalPhoto, "image/png");
       const filePath = `${SUPABASE_FOLDER}/${photoFileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from(SUPABASE_BUCKET)
-        .upload(filePath, blob, {
-          contentType: "image/png",
-          upsert: true,
-        });
+      // Photo is already uploaded to Supabase during auto-save,
+      // but re-upload with upsert as a fallback in case it failed
+      if (!hasSaved.current) {
+        const blob = base64ToBlob(finalPhoto, "image/png");
+        const { error: uploadError } = await supabase.storage
+          .from(SUPABASE_BUCKET)
+          .upload(filePath, blob, {
+            contentType: "image/png",
+            upsert: true,
+          });
 
-      if (uploadError) {
-        console.error("Supabase upload error:", uploadError);
-        addToast("Failed to upload photo. Please try again.", "error");
-        return;
+        if (uploadError) {
+          console.error("Supabase upload error:", uploadError);
+          addToast("Failed to upload photo. Please try again.", "error");
+          return;
+        }
       }
 
       const { data } = supabase.storage
@@ -141,7 +144,7 @@ export default function ResultPage() {
     }
   };
 
-  // Auto-save photo result to database when page loads
+  // Auto-save photo result to local database and Supabase when page loads
   useEffect(() => {
     if (hasSaved.current || !finalPhoto || !selectedTheme || !userInfo) {
       return;
@@ -151,6 +154,7 @@ export default function ResultPage() {
       try {
         hasSaved.current = true;
 
+        // Save locally via Electron
         const photoPath = await savePhotoFile(finalPhoto, photoFileName);
         setSavedPhotoPath(photoPath);
 
@@ -160,13 +164,46 @@ export default function ResultPage() {
           userInfo,
         });
 
-        console.log("Photo result saved to database successfully");
+        console.log("Photo result saved to local database successfully");
+
+        // Upload photo to Supabase storage and save user record
+        const supabasePath = `${SUPABASE_FOLDER}/${photoFileName}`;
+        const blob = base64ToBlob(finalPhoto, "image/png");
+        const { error: uploadError } = await supabase.storage
+          .from(SUPABASE_BUCKET)
+          .upload(supabasePath, blob, {
+            contentType: "image/png",
+            upsert: true,
+          });
+
+        if (uploadError) {
+          console.error("Supabase upload error:", uploadError);
+        } else {
+          const response = await fetch(`${API_BASE_URL}/api/photo`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${API_CLIENT_KEY}`,
+            },
+            body: JSON.stringify({
+              photoPath: supabasePath,
+              name: userInfo.name,
+              email: userInfo.email,
+              phone: userInfo.phone,
+              selectedTheme: selectedTheme.theme,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Failed to save user to Supabase:", errorData);
+          } else {
+            console.log("User record saved to Supabase successfully");
+          }
+        }
       } catch (error) {
-        console.error("Failed to save photo result to database:", error);
-        addToast(
-          "Failed to save photo result locally. Please try again.",
-          "error",
-        );
+        console.error("Failed to save photo result:", error);
+        addToast("Failed to save photo result. Please try again.", "error");
         hasSaved.current = false;
       }
     };
