@@ -79,7 +79,11 @@ async function applyRacingFrame(
 
 const SLIDESHOW_IMAGES = [
   "/images/bg_loading_1.png",
-  "/images/bg_loading_2.png",
+  "/images/bg_loading_11.png",
+  "/images/bg_loading_12.png",
+  "/images/bg_loading_13.png",
+  "/images/bg_loading_14.png",
+  "/images/bg_loading_15.png",
 ];
 
 const SLIDESHOW_INTERVAL_MS = 4500;
