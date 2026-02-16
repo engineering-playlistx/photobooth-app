@@ -117,11 +117,12 @@ function LoadingPage() {
         console.log(`[AI Generate] API URL: ${API_BASE_URL}/api/ai-generate`);
 
         setStatusText("Suiting you up...");
-        setProgress(15);
+        setProgress(10);
 
         const startTime = Date.now();
 
-        const response = await fetch(`${API_BASE_URL}/api/ai-generate`, {
+        // Phase 1: Create prediction
+        const createResponse = await fetch(`${API_BASE_URL}/api/ai-generate`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -133,57 +134,92 @@ function LoadingPage() {
           }),
         });
 
+        const createElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log(
+          `[AI Generate] Create response — status: ${createResponse.status} (${createElapsed}s)`,
+        );
+
+        if (!createResponse.ok) {
+          const errorData = await createResponse.json();
+          throw new Error(
+            (errorData as { error?: string }).error ||
+              "Failed to start generation",
+          );
+        }
+
+        const createData = (await createResponse.json()) as {
+          predictionId?: string;
+          tempPath?: string;
+        };
+        if (!createData.predictionId || !createData.tempPath) {
+          throw new Error("Server response missing prediction data");
+        }
+
+        const { predictionId, tempPath } = createData;
+        console.log(`[AI Generate] Prediction created — id: ${predictionId}`);
+        setStatusText("AI is generating your photo...");
+        setProgress(25);
+
+        // Phase 2: Poll for completion
+        const POLL_INTERVAL = 2500;
+        const MAX_ATTEMPTS = 60;
+
+        let generatedImageBase64: string | null = null;
+        for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+          await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
+          const pollProgress = 25 + Math.min(attempt * 2, 60);
+          setProgress(pollProgress);
+
+          const statusResponse = await fetch(
+            `${API_BASE_URL}/api/ai-generate-status?predictionId=${predictionId}&tempPath=${encodeURIComponent(tempPath)}`,
+            {
+              headers: {
+                Authorization: `Bearer ${API_CLIENT_KEY}`,
+              },
+            },
+          );
+
+          const statusData = (await statusResponse.json()) as {
+            status?: string;
+            generatedImageBase64?: string;
+            error?: string;
+          };
+          console.log(
+            `[AI Generate] Poll #${attempt + 1} — status: ${statusData.status}`,
+          );
+
+          if (
+            statusData.status === "succeeded" &&
+            statusData.generatedImageBase64
+          ) {
+            generatedImageBase64 = statusData.generatedImageBase64;
+            break;
+          }
+
+          if (
+            statusData.status === "failed" ||
+            statusData.status === "canceled"
+          ) {
+            throw new Error(
+              statusData.error || `Generation ${statusData.status}`,
+            );
+          }
+          // "starting" or "processing" — continue polling
+        }
+
+        if (!generatedImageBase64) {
+          throw new Error("Generation timed out. Please try again.");
+        }
+
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
         console.log(
-          `[AI Generate] Response received — status: ${response.status} (${elapsed}s)`,
-        );
-
-        setStatusText("AI is generating your photo...");
-        setProgress(50);
-
-        const rawText = await response.text();
-        console.log(
-          `[AI Generate] Response body length: ${rawText.length} chars`,
-        );
-
-        let data: Record<string, unknown>;
-        try {
-          data = JSON.parse(rawText) as Record<string, unknown>;
-        } catch {
-          console.error(
-            "[AI Generate] Failed to parse JSON. Raw response:",
-            rawText.substring(0, 500),
-          );
-          throw new Error(
-            `Server returned invalid JSON (status ${response.status})`,
-          );
-        }
-
-        if (!response.ok) {
-          console.error("[AI Generate] API error:", data);
-          throw new Error((data.error as string) || "Failed to generate photo");
-        }
-
-        if (!data.generatedImageBase64) {
-          console.error(
-            "[AI Generate] Missing generatedImageBase64 in response. Keys:",
-            Object.keys(data),
-          );
-          throw new Error("Server response missing generated image data");
-        }
-
-        const imageDataLength = (data.generatedImageBase64 as string).length;
-        console.log(
-          `[AI Generate] Got generated image — ${Math.round(imageDataLength / 1024)}KB`,
+          `[AI Generate] Got generated image — ${Math.round(generatedImageBase64.length / 1024)}KB (${elapsed}s)`,
         );
 
         setStatusText("Applying racing frame...");
-        setProgress(80);
+        setProgress(90);
 
-        const framedPhoto = await applyRacingFrame(
-          data.generatedImageBase64 as string,
-          theme,
-        );
+        const framedPhoto = await applyRacingFrame(generatedImageBase64, theme);
         console.log(
           `[AI Generate] Frame applied — total time: ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
         );

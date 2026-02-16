@@ -116,27 +116,20 @@ export const Route = createFileRoute('/api/ai-generate')({
           } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(tempPath)
 
           console.log(`[ai-generate] Temp photo URL: ${userPhotoUrl}`)
-          console.log(`[ai-generate] Calling Replicate face swap...`)
+          console.log(`[ai-generate] Creating async prediction...`)
 
           const aiService = new AIGenerationService()
-          const generatedImageUrl = await aiService.generateFaceSwap({
+          const predictionId = await aiService.createPrediction({
             userPhotoUrl,
             theme,
           })
 
-          console.log(`[ai-generate] Downloading generated image...`)
-          const generatedImageBase64 =
-            await aiService.downloadAsBase64(generatedImageUrl)
-
-          console.log(`[ai-generate] Cleaning up temp photo`)
-          await supabase.storage.from(SUPABASE_BUCKET).remove([tempPath])
-
-          const totalTime = ((Date.now() - requestStart) / 1000).toFixed(1)
+          const elapsed = ((Date.now() - requestStart) / 1000).toFixed(1)
           console.log(
-            `[ai-generate] Done — total: ${totalTime}s, response size: ${Math.round(generatedImageBase64.length / 1024)}KB`,
+            `[ai-generate] Prediction created in ${elapsed}s — id: ${predictionId}, tempPath: ${tempPath}`,
           )
 
-          return json({ generatedImageBase64 })
+          return json({ predictionId, tempPath })
         } catch (error) {
           console.error({ message: 'AI generation error', error })
 

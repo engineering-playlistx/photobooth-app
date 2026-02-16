@@ -33,7 +33,7 @@ export class AIGenerationService {
     this.replicate = new Replicate({ auth: apiKey })
   }
 
-  async generateFaceSwap(params: GenerateFaceSwapParams): Promise<string> {
+  async createPrediction(params: GenerateFaceSwapParams): Promise<string> {
     const targetImageUrl = TEMPLATE_URLS[params.theme]
     if (!targetImageUrl) {
       throw new Error(
@@ -46,46 +46,37 @@ export class AIGenerationService {
       throw new Error(`Prompt not configured for theme: ${params.theme}`)
     }
 
-    console.log(`[AIService] Calling Replicate model: ${REPLICATE_MODEL}`)
+    console.log(`[AIService] Creating prediction — model: ${REPLICATE_MODEL}`)
     console.log(`[AIService] Theme: ${params.theme}`)
     console.log(`[AIService] User photo URL: ${params.userPhotoUrl}`)
     console.log(`[AIService] Template URL: ${targetImageUrl}`)
 
-    const startTime = Date.now()
-
-    const output = await this.replicate.run(
-      REPLICATE_MODEL as `${string}/${string}`,
-      {
-        input: {
-          prompt,
-          image_input: [params.userPhotoUrl, targetImageUrl],
-          resolution: '2K',
-          output_format: 'png',
-          safety_filter_level: 'block_only_high',
-        },
+    const prediction = await this.replicate.predictions.create({
+      model: REPLICATE_MODEL as `${string}/${string}`,
+      input: {
+        prompt,
+        image_input: [params.userPhotoUrl, targetImageUrl],
+        resolution: '2K',
+        output_format: 'png',
+        safety_filter_level: 'block_only_high',
       },
-    )
+    })
 
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
-    console.log(`[AIService] Replicate responded in ${elapsed}s`)
-    console.log(`[AIService] Output type: ${typeof output}`)
     console.log(
-      `[AIService] Output value:`,
-      String(JSON.stringify(output)).substring(0, 200),
+      `[AIService] Prediction created — id: ${prediction.id}, status: ${prediction.status}`,
     )
-
-    const resultUrl = this.extractUrl(output)
-    if (!resultUrl) {
-      throw new Error(
-        `Unexpected response format from Replicate model: ${typeof output}`,
-      )
-    }
-
-    console.log(`[AIService] Extracted URL: ${resultUrl.substring(0, 100)}...`)
-    return resultUrl
+    return prediction.id
   }
 
-  private extractUrl(output: unknown): string | null {
+  async getPredictionStatus(predictionId: string): Promise<{
+    status: string
+    output: unknown
+  }> {
+    const prediction = await this.replicate.predictions.get(predictionId)
+    return { status: prediction.status, output: prediction.output }
+  }
+
+  extractUrl(output: unknown): string | null {
     // String URL (nano-banana-pro)
     if (typeof output === 'string') {
       return output
