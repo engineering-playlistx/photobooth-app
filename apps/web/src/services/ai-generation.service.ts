@@ -1,9 +1,13 @@
 import Replicate from 'replicate'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 export type RacingTheme = 'pitcrew' | 'motogp' | 'f1'
 
 export interface GenerateFaceSwapParams {
   userPhotoUrl: string
+  userPhotoBase64?: string // used by Google AI provider (skips Supabase upload)
+  templateBase64?: string // pre-fetched by route handler (skips background fetch)
+  templateMimeType?: string
   theme: RacingTheme
 }
 
@@ -15,6 +19,8 @@ const TEMPLATE_URLS: Record<RacingTheme, string | undefined> = {
 
 const DEFAULT_MODEL = 'google/nano-banana-pro'
 const REPLICATE_MODEL = process.env.REPLICATE_MODEL || DEFAULT_MODEL
+const GOOGLE_AI_MODEL = process.env.GOOGLE_AI_MODEL || 'gemini-2.5-flash-image'
+export const AI_PROVIDER = process.env.AI_PROVIDER || 'replicate' // 'replicate' | 'google'
 
 const THEME_PROMPTS: Record<RacingTheme, string | undefined> = {
   pitcrew: process.env.RACING_PROMPT_PITCREW,
@@ -22,18 +28,55 @@ const THEME_PROMPTS: Record<RacingTheme, string | undefined> = {
   f1: process.env.RACING_PROMPT_F1,
 }
 
+// ---------------------------------------------------------------------------
+// In-memory job store for Google AI (simulates Replicate's async predictions)
+// NOTE: This works for Node.js long-running servers. For Cloudflare Workers
+// (stateless/ephemeral), replace with a persistent store (e.g. Supabase table).
+// ---------------------------------------------------------------------------
+interface GoogleJobEntry {
+  status: 'processing' | 'succeeded' | 'failed'
+  output?: string // base64 data URI of the generated image
+  error?: string
+}
+
+const googleJobStore = new Map<string, GoogleJobEntry>()
+
 export class AIGenerationService {
   private replicate: Replicate
+  private googleAI: GoogleGenerativeAI | null = null
 
   constructor() {
-    const apiKey = process.env.REPLICATE_API_KEY
-    if (!apiKey) {
+    const replicateApiKey = process.env.REPLICATE_API_KEY
+    if (!replicateApiKey) {
       throw new Error('REPLICATE_API_KEY environment variable is required')
     }
-    this.replicate = new Replicate({ auth: apiKey })
+    this.replicate = new Replicate({ auth: replicateApiKey })
+
+    if (AI_PROVIDER === 'google') {
+      const googleApiKey = process.env.GOOGLE_AI_STUDIO_API_KEY
+      if (!googleApiKey) {
+        throw new Error(
+          'GOOGLE_AI_STUDIO_API_KEY environment variable is required',
+        )
+      }
+      this.googleAI = new GoogleGenerativeAI(googleApiKey)
+    }
   }
 
   async createPrediction(params: GenerateFaceSwapParams): Promise<string> {
+    if (AI_PROVIDER === 'google') {
+      return this.createGooglePrediction(params)
+    }
+    return this.createReplicatePrediction(params)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Replicate provider (existing logic, unchanged)
+  // ---------------------------------------------------------------------------
+
+  private async createReplicatePrediction(
+    params: GenerateFaceSwapParams,
+  ): Promise<string> {
     const targetImageUrl = TEMPLATE_URLS[params.theme]
     if (!targetImageUrl) {
       throw new Error(
@@ -46,7 +89,9 @@ export class AIGenerationService {
       throw new Error(`Prompt not configured for theme: ${params.theme}`)
     }
 
-    console.log(`[AIService] Creating prediction — model: ${REPLICATE_MODEL}`)
+    console.log(
+      `[AIService] Creating Replicate prediction — model: ${REPLICATE_MODEL}`,
+    )
     console.log(`[AIService] Theme: ${params.theme}`)
     console.log(`[AIService] User photo URL: ${params.userPhotoUrl}`)
     console.log(`[AIService] Template URL: ${targetImageUrl}`)
@@ -63,18 +108,206 @@ export class AIGenerationService {
     })
 
     console.log(
-      `[AIService] Prediction created — id: ${prediction.id}, status: ${prediction.status}`,
+      `[AIService] Replicate prediction created — id: ${prediction.id}, status: ${prediction.status}`,
     )
     return prediction.id
   }
 
+  // ---------------------------------------------------------------------------
+  // Google AI provider
+  // ---------------------------------------------------------------------------
+
+  private createGooglePrediction(params: GenerateFaceSwapParams): string {
+    const jobId = crypto.randomUUID()
+    googleJobStore.set(jobId, { status: 'processing' })
+
+    console.log(`[AIService] Creating Google AI job — id: ${jobId}`)
+    console.log(`[AIService] Theme: ${params.theme}`)
+
+    // Fire and forget — don't await, so the route returns immediately
+    this._generateGoogleBase64(jobId, params)
+      .then((outputBase64) => {
+        console.log(`[AIService] Google AI job ${jobId} succeeded`)
+        googleJobStore.set(jobId, { status: 'succeeded', output: outputBase64 })
+      })
+      .catch((err) => {
+        console.error(`[AIService] Google AI job ${jobId} failed:`, err)
+        googleJobStore.set(jobId, {
+          status: 'failed',
+          error: err instanceof Error ? err.message : String(err),
+        })
+      })
+
+    return jobId
+  }
+
+  // ---------------------------------------------------------------------------
+  // Public sync entry point — call from route handler so the await runs inside
+  // an active HTTP request context (fire-and-forget background tasks hang in
+  // Nitro/Vite dev and some production runtimes).
+  // ---------------------------------------------------------------------------
+
+  async generateGoogleAISync(params: GenerateFaceSwapParams): Promise<string> {
+    const jobId = 'sync-' + crypto.randomUUID()
+    console.log(`[AIService] Running Google AI synchronously — id: ${jobId}`)
+    return this._generateGoogleBase64(jobId, params)
+  }
+
+  // Core Google AI generation — returns the base64 data URI of the result.
+  private async _generateGoogleBase64(
+    jobId: string,
+    params: GenerateFaceSwapParams,
+  ): Promise<string> {
+    const targetImageUrl = TEMPLATE_URLS[params.theme]
+    if (!targetImageUrl) {
+      throw new Error(
+        `Template image URL not configured for theme: ${params.theme}`,
+      )
+    }
+
+    const prompt = THEME_PROMPTS[params.theme]
+    if (!prompt) {
+      throw new Error(`Prompt not configured for theme: ${params.theme}`)
+    }
+
+    // Parse user photo base64
+    console.log(`[AIService][${jobId}] Step 1 — parsing user photo`)
+    const rawUserPhoto = params.userPhotoBase64 || ''
+    const userPhotoMatch = rawUserPhoto.match(
+      /^data:([a-zA-Z0-9]+\/[a-zA-Z0-9\-.+]+);base64,(.+)$/,
+    )
+    const userPhotoMimeType = userPhotoMatch ? userPhotoMatch[1] : 'image/png'
+    const userPhotoBase64 = userPhotoMatch ? userPhotoMatch[2] : rawUserPhoto
+    console.log(
+      `[AIService][${jobId}] Step 1 done — mimeType: ${userPhotoMimeType}, base64 length: ${userPhotoBase64.length}`,
+    )
+
+    // Use pre-fetched template if provided by the route handler; otherwise fetch it.
+    let templateBase64: string
+    let templateMimeType: string
+
+    if (params.templateBase64) {
+      console.log(`[AIService][${jobId}] Step 2 — using pre-fetched template`)
+      templateBase64 = params.templateBase64
+      templateMimeType = params.templateMimeType || 'image/jpeg'
+      console.log(
+        `[AIService][${jobId}] Step 2 done — mimeType: ${templateMimeType}`,
+      )
+    } else {
+      console.log(
+        `[AIService][${jobId}] Step 2 — fetching template: ${targetImageUrl}`,
+      )
+      const templateAbortController = new AbortController()
+      const templateFetchTimeout = setTimeout(
+        () => templateAbortController.abort(),
+        15_000,
+      )
+      let templateResponse: Response
+      try {
+        templateResponse = await fetch(targetImageUrl, {
+          signal: templateAbortController.signal,
+        })
+      } catch (fetchErr) {
+        clearTimeout(templateFetchTimeout)
+        throw new Error(
+          `Template fetch failed: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`,
+        )
+      }
+      clearTimeout(templateFetchTimeout)
+
+      if (!templateResponse.ok) {
+        throw new Error(
+          `Failed to fetch template image: ${templateResponse.status} ${templateResponse.statusText}`,
+        )
+      }
+      const templateArrayBuffer = await templateResponse.arrayBuffer()
+      templateBase64 = Buffer.from(templateArrayBuffer).toString('base64')
+      templateMimeType =
+        templateResponse.headers.get('content-type') || 'image/jpeg'
+      console.log(
+        `[AIService][${jobId}] Step 2 done — template ${Math.round(templateArrayBuffer.byteLength / 1024)}KB, mimeType: ${templateMimeType}`,
+      )
+    }
+
+    // Call Google AI
+    console.log(
+      `[AIService][${jobId}] Step 3 — calling Google AI model: ${GOOGLE_AI_MODEL}`,
+    )
+    const model = this.googleAI!.getGenerativeModel({ model: GOOGLE_AI_MODEL })
+
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType: userPhotoMimeType,
+                data: userPhotoBase64,
+              },
+            },
+            {
+              inlineData: { mimeType: templateMimeType, data: templateBase64 },
+            },
+          ],
+        },
+      ],
+
+      generationConfig: { responseModalities: ['IMAGE', 'TEXT'] } as any,
+    })
+
+    console.log(`[AIService][${jobId}] Step 3 done — response received`)
+
+    // Extract the generated image from the response
+    const parts = result.response.candidates?.[0]?.content?.parts ?? []
+
+    const imagePart = parts.find((p: any) => p.inlineData?.data)
+
+    if (!(imagePart as any)?.inlineData) {
+      const rawText = parts
+
+        .map((p: any) => p.text)
+        .filter(Boolean)
+        .join(' ')
+      throw new Error(
+        `No image output returned from Google AI model. Response text: ${rawText || '(empty)'}`,
+      )
+    }
+
+    const { mimeType, data } = (imagePart as any).inlineData
+    return `data:${mimeType};base64,${data}`
+  }
+
+  // ---------------------------------------------------------------------------
+  // Status polling — unified interface for both providers
+  // ---------------------------------------------------------------------------
+
   async getPredictionStatus(predictionId: string): Promise<{
     status: string
     output: unknown
+    generatedBase64?: string // set for Google AI succeeded jobs (already base64)
   }> {
+    if (AI_PROVIDER === 'google') {
+      const job = googleJobStore.get(predictionId)
+      if (!job) {
+        return { status: 'failed', output: null }
+      }
+      return {
+        status: job.status,
+        output: job.output ?? null,
+        generatedBase64: job.status === 'succeeded' ? job.output : undefined,
+      }
+    }
+
+    // Replicate
     const prediction = await this.replicate.predictions.get(predictionId)
     return { status: prediction.status, output: prediction.output }
   }
+
+  // ---------------------------------------------------------------------------
+  // Helpers (used by Replicate provider — kept unchanged)
+  // ---------------------------------------------------------------------------
 
   extractUrl(output: unknown): string | null {
     // String URL (nano-banana-pro)

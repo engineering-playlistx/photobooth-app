@@ -33,18 +33,17 @@ export const Route = createFileRoute('/api/ai-generate-status')({
           const predictionId = url.searchParams.get('predictionId')
           const tempPath = url.searchParams.get('tempPath')
 
-          if (!predictionId || !tempPath) {
+          if (!predictionId) {
             return json(
               {
-                error:
-                  'Missing required query params: predictionId and tempPath',
+                error: 'Missing required query param: predictionId',
               },
               { status: 400 },
             )
           }
 
           const aiService = new AIGenerationService()
-          const { status, output } =
+          const { status, output, generatedBase64 } =
             await aiService.getPredictionStatus(predictionId)
 
           console.log(
@@ -59,35 +58,48 @@ export const Route = createFileRoute('/api/ai-generate-status')({
           // Failed or canceled
           if (status === 'failed' || status === 'canceled') {
             console.error(`[ai-generate-status] Prediction ${status}:`, output)
-            const supabase = getSupabaseAdminClient()
-            await supabase.storage.from(SUPABASE_BUCKET).remove([tempPath])
+            if (tempPath) {
+              const supabase = getSupabaseAdminClient()
+              await supabase.storage.from(SUPABASE_BUCKET).remove([tempPath])
+            }
             return json(
               { status, error: `AI generation ${status}` },
               { status: 500 },
             )
           }
 
-          // Succeeded — download result and clean up
+          // Succeeded
           if (status === 'succeeded') {
-            const resultUrl = aiService.extractUrl(output)
-            if (!resultUrl) {
-              console.error(
-                '[ai-generate-status] No output URL from prediction:',
-                output,
+            let generatedImageBase64: string
+
+            if (generatedBase64) {
+              // Google AI: output is already a base64 data URI — no download needed
+              console.log(
+                `[ai-generate-status] Google AI job succeeded — using inline base64 output`,
               )
-              return json(
-                { status: 'failed', error: 'No output URL from AI model' },
-                { status: 500 },
-              )
+              generatedImageBase64 = generatedBase64
+            } else {
+              // Replicate: extract URL and download the image
+              const resultUrl = aiService.extractUrl(output)
+              if (!resultUrl) {
+                console.error(
+                  '[ai-generate-status] No output URL from prediction:',
+                  output,
+                )
+                return json(
+                  { status: 'failed', error: 'No output URL from AI model' },
+                  { status: 500 },
+                )
+              }
+              console.log(`[ai-generate-status] Downloading generated image...`)
+              generatedImageBase64 = await aiService.downloadAsBase64(resultUrl)
             }
 
-            console.log(`[ai-generate-status] Downloading generated image...`)
-            const generatedImageBase64 =
-              await aiService.downloadAsBase64(resultUrl)
-
-            console.log(`[ai-generate-status] Cleaning up temp photo`)
-            const supabase = getSupabaseAdminClient()
-            await supabase.storage.from(SUPABASE_BUCKET).remove([tempPath])
+            if (tempPath) {
+              console.log(`[ai-generate-status] Cleaning up temp photo`)
+              const supabase = getSupabaseAdminClient()
+              await supabase.storage.from(SUPABASE_BUCKET).remove([tempPath])
+            }
 
             console.log(
               `[ai-generate-status] Done — response size: ${Math.round(generatedImageBase64.length / 1024)}KB`,

@@ -10,6 +10,7 @@ import FormPage from "./routes/form";
 import LoadingPage from "./routes/loading";
 import ResultPage from "./routes/result";
 import DataPage from "./routes/data";
+import TestPage from "./routes/test";
 import { NavigationListener } from "./components/NavigationListener";
 
 // TODO: Fix ts error
@@ -37,6 +38,7 @@ root.render(
             <Route path="/loading" element={<LoadingPage />} />
             <Route path="/result" element={<ResultPage />} />
             <Route path="/data" element={<DataPage />} />
+            <Route path="/test" element={<TestPage />} />
           </Route>
         </Routes>
       </HashRouter>

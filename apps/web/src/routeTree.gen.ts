@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiTestGoogleAiRouteImport } from './routes/api.test-google-ai'
 import { Route as ApiPhotoRouteImport } from './routes/api.photo'
 import { Route as ApiAiGenerateStatusRouteImport } from './routes/api.ai-generate-status'
 import { Route as ApiAiGenerateRouteImport } from './routes/api.ai-generate'
@@ -25,6 +26,11 @@ import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ss
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTestGoogleAiRoute = ApiTestGoogleAiRouteImport.update({
+  id: '/api/test-google-ai',
+  path: '/api/test-google-ai',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPhotoRoute = ApiPhotoRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/api/ai-generate': typeof ApiAiGenerateRoute
   '/api/ai-generate-status': typeof ApiAiGenerateStatusRoute
   '/api/photo': typeof ApiPhotoRoute
+  '/api/test-google-ai': typeof ApiTestGoogleAiRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/api/ai-generate': typeof ApiAiGenerateRoute
   '/api/ai-generate-status': typeof ApiAiGenerateStatusRoute
   '/api/photo': typeof ApiPhotoRoute
+  '/api/test-google-ai': typeof ApiTestGoogleAiRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/api/ai-generate': typeof ApiAiGenerateRoute
   '/api/ai-generate-status': typeof ApiAiGenerateStatusRoute
   '/api/photo': typeof ApiPhotoRoute
+  '/api/test-google-ai': typeof ApiTestGoogleAiRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/api/ai-generate'
     | '/api/ai-generate-status'
     | '/api/photo'
+    | '/api/test-google-ai'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/api/ai-generate'
     | '/api/ai-generate-status'
     | '/api/photo'
+    | '/api/test-google-ai'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/api/ai-generate'
     | '/api/ai-generate-status'
     | '/api/photo'
+    | '/api/test-google-ai'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   ApiAiGenerateRoute: typeof ApiAiGenerateRoute
   ApiAiGenerateStatusRoute: typeof ApiAiGenerateStatusRoute
   ApiPhotoRoute: typeof ApiPhotoRoute
+  ApiTestGoogleAiRoute: typeof ApiTestGoogleAiRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoSentryTestingRoute: typeof DemoSentryTestingRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
@@ -193,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/test-google-ai': {
+      id: '/api/test-google-ai'
+      path: '/api/test-google-ai'
+      fullPath: '/api/test-google-ai'
+      preLoaderRoute: typeof ApiTestGoogleAiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/photo': {
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiGenerateRoute: ApiAiGenerateRoute,
   ApiAiGenerateStatusRoute: ApiAiGenerateStatusRoute,
   ApiPhotoRoute: ApiPhotoRoute,
+  ApiTestGoogleAiRoute: ApiTestGoogleAiRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoSentryTestingRoute: DemoSentryTestingRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,

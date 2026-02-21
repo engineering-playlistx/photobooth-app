@@ -11,11 +11,12 @@ import { usePrint } from "../hooks/usePrint";
 import { savePhotoFile, savePhotoResult } from "../utils/database";
 import QRCodeModal from "../components/QRCodeModal";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const API_BASE_URL =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const API_CLIENT_KEY = (import.meta as any).env?.VITE_API_CLIENT_KEY || "";
+const API_CLIENT_KEY =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (import.meta as any).env?.VITE_API_CLIENT_KEY || "";
 
 const SUPABASE_BUCKET = "photobooth-bucket";
 const SUPABASE_FOLDER = "public";
