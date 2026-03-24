@@ -8,7 +8,8 @@
     "dev": "concurrently \"pnpm fe dev\" \"pnpm wb dev\"",
     "lint": "pnpm fe lint && pnpm wb lint",
     "lint:fix": "pnpm fe lint:fix && pnpm wb lint:fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "download-photos": "node scripts/download-photos.mjs"
   },
   "keywords": [],
   "author": "",
