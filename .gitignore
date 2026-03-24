@@ -89,3 +89,9 @@ typings/
 
 # Electron-Forge
 out/
+
+# downloaded files
+downloads/
+
+# Claude Code local config
+.claude/
