@@ -319,7 +319,7 @@ Seed the `config_json` with current Shell values: themes (pitcrew, motogp, f1), 
 
 ## Phase 3 — Config-Driven Themes
 
-### TASK-3.1: Remove hardcoded RacingTheme type from frontend
+### ~~TASK-3.1: Remove hardcoded RacingTheme type from frontend~~ ✅ DONE
 
 **What:** Replace `RacingTheme = "pitcrew" | "motogp" | "f1"` with `string` throughout the frontend. Theme list comes from `EventConfig`.
 
@@ -341,7 +341,7 @@ Seed the `config_json` with current Shell values: themes (pitcrew, motogp, f1), 
 
 ---
 
-### TASK-3.2: Move printer name and tech config to EventConfig
+### ~~TASK-3.2: Move printer name and tech config to EventConfig~~ ✅ DONE
 
 **What:** `printerName` and `inactivityTimeoutSeconds` come from `EventConfig.techConfig`.
 
