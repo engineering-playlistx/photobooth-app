@@ -93,7 +93,7 @@
 
 ## Phase 1 — EventId Threading
 
-### TASK-1.1: Add eventId to Supabase schema
+### ~~TASK-1.1: Add eventId to Supabase schema~~ ✅ DONE
 
 **What:** Add `eventId` to the data model — Supabase tables and SQLite.
 
@@ -128,7 +128,7 @@ INSERT INTO events (id, name, status) VALUES ('evt_shell_001', 'Shell Racing 202
 
 ---
 
-### TASK-1.2: Add eventId to SQLite schema
+### ~~TASK-1.2: Add eventId to SQLite schema~~ ✅ DONE
 
 **What:** Add `event_id` column to the local `photo_results` table.
 
@@ -146,7 +146,7 @@ INSERT INTO events (id, name, status) VALUES ('evt_shell_001', 'Shell Racing 202
 
 ---
 
-### TASK-1.3: Read eventId from env, pass through frontend
+### ~~TASK-1.3: Read eventId from env, pass through frontend~~ ✅ DONE
 
 **What:** Read `VITE_EVENT_ID` from env. Thread it through `PhotoboothContext` and all API calls.
 
@@ -168,7 +168,7 @@ INSERT INTO events (id, name, status) VALUES ('evt_shell_001', 'Shell Racing 202
 
 ---
 
-### TASK-1.4: Accept eventId in backend `/api/photo`
+### ~~TASK-1.4: Accept eventId in backend `/api/photo`~~ ✅ DONE
 
 **What:** Backend reads `eventId` from request body and saves it with the user record.
 
