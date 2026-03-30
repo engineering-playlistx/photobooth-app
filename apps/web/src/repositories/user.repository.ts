@@ -6,6 +6,7 @@ export interface CreateUserData {
   phone: string
   photoPath: string
   selectedTheme?: string
+  eventId?: string
 }
 
 export interface User {
@@ -30,6 +31,7 @@ export class UserRepository {
         phone: data.phone,
         photo_path: data.photoPath,
         selected_theme: data.selectedTheme ?? null,
+        event_id: data.eventId ?? null,
       })
       .select()
       .single()

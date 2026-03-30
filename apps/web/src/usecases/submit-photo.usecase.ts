@@ -10,6 +10,7 @@ export interface SubmitPhotoRequest {
   email: string
   phone: string
   selectedTheme?: string
+  eventId?: string
 }
 
 export interface SubmitPhotoResult {
@@ -35,6 +36,7 @@ export class SubmitPhotoUseCase {
       phone: request.phone,
       photoPath: request.photoPath,
       selectedTheme: request.selectedTheme,
+      eventId: request.eventId,
     })
 
     const {
