@@ -15,7 +15,7 @@ declare global {
     getKioskConfig(): Promise<KioskConfig>;
     platform: string;
     isElectron: boolean;
-    print: (imageDataUrl: string) => Promise<PrintResult>;
+    print: (filePath: string, printerName?: string) => Promise<PrintResult>;
     savePhotoFile: (
       base64Data: string,
       fileName: string,

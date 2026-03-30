@@ -13,11 +13,13 @@ const INTERACTION_EVENTS = [
 interface UseInactivityTimeoutOptions {
   onTimeout: () => void;
   disabled?: boolean;
+  timeoutMs?: number;
 }
 
 export function useInactivityTimeout({
   onTimeout,
   disabled,
+  timeoutMs = INACTIVITY_TIMEOUT_MS,
 }: UseInactivityTimeoutOptions) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onTimeoutRef = useRef(onTimeout);
@@ -32,10 +34,7 @@ export function useInactivityTimeout({
 
     const resetTimer = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(
-        () => onTimeoutRef.current(),
-        INACTIVITY_TIMEOUT_MS,
-      );
+      timerRef.current = setTimeout(() => onTimeoutRef.current(), timeoutMs);
     };
 
     resetTimer(); // start on mount
@@ -50,5 +49,5 @@ export function useInactivityTimeout({
         window.removeEventListener(event, resetTimer),
       );
     };
-  }, [disabled]);
+  }, [disabled, timeoutMs]);
 }

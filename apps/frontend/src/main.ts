@@ -308,25 +308,27 @@ ipcMain.handle("db-get-photo-result-by-id", (_event, id: string) => {
 });
 
 // printing feature
-ipcMain.handle("print-window", async (_event, filePath: string) => {
-  try {
-    // Create a hidden window for printing
-    const printWindow = new BrowserWindow({
-      show: false,
-      width: 800,
-      height: 600,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-      },
-    });
+ipcMain.handle(
+  "print-window",
+  async (_event, filePath: string, printerName?: string) => {
+    try {
+      // Create a hidden window for printing
+      const printWindow = new BrowserWindow({
+        show: false,
+        width: 800,
+        height: 600,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+        },
+      });
 
-    // Create HTML file path
-    const htmlPath = path.join(path.dirname(filePath), "print-temp.html");
-    const fs = require("fs");
+      // Create HTML file path
+      const htmlPath = path.join(path.dirname(filePath), "print-temp.html");
+      const fs = require("fs");
 
-    // Create HTML content with file reference
-    const htmlContent = `
+      // Create HTML content with file reference
+      const htmlContent = `
     <!DOCTYPE html>
     <html>
       <head>
@@ -364,48 +366,49 @@ ipcMain.handle("print-window", async (_event, filePath: string) => {
     </html>
   `;
 
-    // Write HTML file
-    fs.writeFileSync(htmlPath, htmlContent);
+      // Write HTML file
+      fs.writeFileSync(htmlPath, htmlContent);
 
-    // Load the HTML file
-    await printWindow.loadFile(htmlPath);
+      // Load the HTML file
+      await printWindow.loadFile(htmlPath);
 
-    // Wait for content to load
-    await new Promise((resolve) => setTimeout(resolve, 500));
+      // Wait for content to load
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Print the window
-    printWindow.webContents.print({
-      silent: true,
-      deviceName: "DS-RX1",
-      printBackground: true,
-      landscape: true,
-      color: true,
-      margins: {
-        marginType: "none",
-      },
-    });
+      // Print the window
+      printWindow.webContents.print({
+        silent: true,
+        deviceName: printerName ?? "DS-RX1",
+        printBackground: true,
+        landscape: true,
+        color: true,
+        margins: {
+          marginType: "none",
+        },
+      });
 
-    // Close the print window and clean up after a delay
-    setTimeout(() => {
-      printWindow.close();
-      // Clean up temp HTML file
-      const htmlPath = path.join(path.dirname(filePath), "print-temp.html");
-      const fs = require("fs");
-      try {
-        if (fs.existsSync(htmlPath)) {
-          fs.unlinkSync(htmlPath);
+      // Close the print window and clean up after a delay
+      setTimeout(() => {
+        printWindow.close();
+        // Clean up temp HTML file
+        const htmlPath = path.join(path.dirname(filePath), "print-temp.html");
+        const fs = require("fs");
+        try {
+          if (fs.existsSync(htmlPath)) {
+            fs.unlinkSync(htmlPath);
+          }
+        } catch (err) {
+          console.error("Failed to delete temp HTML file:", err);
         }
-      } catch (err) {
-        console.error("Failed to delete temp HTML file:", err);
-      }
-    }, 1000);
+      }, 1000);
 
-    return { success: true };
-  } catch (error) {
-    console.error("Print failed", error);
-    throw error;
-  }
-});
+      return { success: true };
+    } catch (error) {
+      console.error("Print failed", error);
+      throw error;
+    }
+  },
+);
 
 // kiosk config feature
 interface KioskConfig {

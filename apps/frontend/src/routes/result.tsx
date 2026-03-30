@@ -10,6 +10,7 @@ import { getAssetPath } from "../utils/assets";
 import { usePrint } from "../hooks/usePrint";
 import { savePhotoFile, savePhotoResult } from "../utils/database";
 import QRCodeModal from "../components/QRCodeModal";
+import { useEventConfig } from "../contexts/EventConfigContext";
 
 const API_BASE_URL =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,6 +39,7 @@ function base64ToBlob(base64: string, contentType = "", sliceSize = 512) {
 
 export default function ResultPage() {
   const { eventId, finalPhoto, selectedTheme, userInfo } = usePhotobooth();
+  const { config: eventConfig } = useEventConfig();
   const supabaseFolder = eventId ? `events/${eventId}/photos` : "public";
   const navigate = useNavigate();
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -129,7 +131,10 @@ export default function ResultPage() {
         addToast("Photo not saved yet. Please wait.", "error");
         return;
       }
-      const result = await print(savedPhotoPath);
+      const result = await print(
+        savedPhotoPath,
+        eventConfig.techConfig.printerName,
+      );
       if (result.success) {
         console.log("Print successful!");
         if (result.filepath) {

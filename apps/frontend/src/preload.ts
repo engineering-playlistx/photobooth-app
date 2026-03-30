@@ -11,10 +11,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
   isElectron: true,
 
   // Print function
-  print: async (filePath: string) => {
+  print: async (filePath: string, printerName?: string) => {
     try {
       // send print command to main process with file path
-      const result = await ipcRenderer.invoke("print-window", filePath);
+      const result = await ipcRenderer.invoke(
+        "print-window",
+        filePath,
+        printerName,
+      );
       return result;
     } catch (error) {
       return {

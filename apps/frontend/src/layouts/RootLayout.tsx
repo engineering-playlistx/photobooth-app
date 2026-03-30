@@ -1,6 +1,7 @@
 import React from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { usePhotobooth } from "../contexts/PhotoboothContext";
+import { useEventConfig } from "../contexts/EventConfigContext";
 import { useInactivityTimeout } from "../hooks/useInactivityTimeout";
 
 // Suppress timeout on the splash screen (already home) and during AI
@@ -11,6 +12,7 @@ function RootLayout() {
   const { reset } = usePhotobooth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { config } = useEventConfig();
 
   useInactivityTimeout({
     onTimeout: () => {
@@ -18,6 +20,7 @@ function RootLayout() {
       void navigate("/");
     },
     disabled: TIMEOUT_DISABLED_ROUTES.has(location.pathname),
+    timeoutMs: config.techConfig.inactivityTimeoutSeconds * 1000,
   });
 
   return (
