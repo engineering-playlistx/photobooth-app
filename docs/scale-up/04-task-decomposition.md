@@ -210,7 +210,7 @@ INSERT INTO events (id, name, status) VALUES ('evt_shell_001', 'Shell Racing 202
 
 ---
 
-### TASK-2.2: Add event_configs table to Supabase + seed Shell config
+### ~~TASK-2.2: Add event_configs table to Supabase + seed Shell config~~ ✅ DONE
 
 **What:** Create the `event_configs` table and insert the current Shell configuration as the first row.
 
