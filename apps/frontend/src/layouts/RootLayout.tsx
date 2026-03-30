@@ -1,7 +1,25 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { usePhotobooth } from "../contexts/PhotoboothContext";
+import { useInactivityTimeout } from "../hooks/useInactivityTimeout";
+
+// Suppress timeout on the splash screen (already home) and during AI
+// generation (loading can take 30–60s with no user input).
+const TIMEOUT_DISABLED_ROUTES = new Set(["/", "/loading"]);
 
 function RootLayout() {
+  const { reset } = usePhotobooth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useInactivityTimeout({
+    onTimeout: () => {
+      reset();
+      void navigate("/");
+    },
+    disabled: TIMEOUT_DISABLED_ROUTES.has(location.pathname),
+  });
+
   return (
     <div className="min-h-svh bg-white text-black">
       <Outlet />
