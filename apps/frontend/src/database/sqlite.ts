@@ -15,9 +15,6 @@ function getSQLiteDatabase(): DatabaseSync {
 
   const db = new DatabaseSync(dbPath);
 
-  // Drop old table if schema is outdated, then recreate with correct schema
-  db.exec("DROP TABLE IF EXISTS photo_results");
-
   db.exec(`
     CREATE TABLE IF NOT EXISTS photo_results (
       id TEXT PRIMARY KEY,
