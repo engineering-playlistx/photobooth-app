@@ -190,7 +190,7 @@ INSERT INTO events (id, name, status) VALUES ('evt_shell_001', 'Shell Racing 202
 
 ## Phase 2 — kiosk.config.json + Config Endpoint
 
-### TASK-2.1: Define EventConfig TypeScript types
+### ~~TASK-2.1: Define EventConfig TypeScript types~~ ✅ DONE
 
 **What:** Define the `EventConfig` interface and related types. This is the schema contract between backend and frontend.
 
