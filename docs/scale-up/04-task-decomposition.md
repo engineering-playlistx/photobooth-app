@@ -237,7 +237,7 @@ Seed the `config_json` with current Shell values: themes (pitcrew, motogp, f1), 
 
 ---
 
-### TASK-2.3: Add GET /api/config endpoint
+### ~~TASK-2.3: Add GET /api/config endpoint~~ ✅ DONE
 
 **What:** Backend endpoint that reads `event_configs` by `eventId` and returns `EventConfig` JSON.
 
