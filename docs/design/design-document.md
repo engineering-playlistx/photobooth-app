@@ -20,7 +20,7 @@
 7. [Technical Architecture](#7-technical-architecture)
 8. [V1 Roadmap — Immediate Priorities](#8-v1-roadmap--immediate-priorities)
 9. [V2 Roadmap — New Architecture](#9-v2-roadmap--new-architecture)
-10. [Open Questions](#10-open-questions)
+10. [Resolved Decisions](#10-resolved-decisions)
 
 ---
 
@@ -592,14 +592,14 @@ New guest session starts (tap "Welcome")
 
 ---
 
-## 10. Open Questions
+## 10. Resolved Decisions
 
-| Question | Context |
-|----------|---------|
-| **Kiosk pairing UX** | How does a new kiosk get its `eventId`? Manual `kiosk.config.json` file edit, or a pairing flow (e.g. scan a QR code in the dashboard to link a kiosk to an event)? |
-| **Module position rules — enforcement** | The flow builder should prevent invalid orderings (e.g. AI Generation placed before Camera). Where do these constraints live — frontend validation, schema, or both? |
-| **Multi-kiosk coordination** | If 3 kiosks run the same event, do they share a live guest count in real-time? Is there a need for cross-kiosk sync beyond what Supabase already provides? |
-| **Client dashboard access** | Separate login credentials per client, or a shared read-only link? |
-| **Email delivery re-enablement** | `EmailService` exists but is disabled in `SubmitPhotoUseCase`. Is email to guests a V1 or V2 feature? |
-| **Asset CDN** | Supabase Storage is used for assets now. As the asset library grows (per-event frames, templates, backgrounds), should assets be organized per event in storage paths? |
-| **Inactivity timeout behavior** | When timeout fires mid-session, should partial data (e.g. a captured photo) be discarded? Or held temporarily in case the guest returns? |
+| Decision | Resolution |
+|----------|------------|
+| **Kiosk pairing UX** | Manual `kiosk.config.json` file edit for now. A QR-code pairing flow is a future improvement. |
+| **Module position rules — enforcement** | Frontend validation only for now. Schema-level enforcement can be added later. |
+| **Multi-kiosk coordination** | No additional cross-kiosk sync needed. Supabase's existing real-time capabilities are sufficient. |
+| **Client dashboard access** | No dashboard access for clients. Clients prefer a simple daily report handed to them — they are too busy to check dashboards themselves. Automated daily report delivery (email/chat) is a V2 consideration. |
+| **Email delivery re-enablement** | V2 feature. `EmailService` remains disabled in `SubmitPhotoUseCase` for V1. |
+| **Asset storage organization** | Assets are organized per event in Supabase Storage paths (e.g. `events/<eventId>/frames/`, `events/<eventId>/templates/`). |
+| **Inactivity timeout behavior** | Partial session data (captured photo, form input) is held temporarily when timeout fires. The session can be manually reset by the operator if needed (e.g. for a new guest who is not the same person). |
