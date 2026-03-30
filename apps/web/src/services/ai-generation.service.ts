@@ -1,19 +1,17 @@
 import Replicate from 'replicate'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-export type RacingTheme = 'pitcrew' | 'motogp' | 'f1'
-
 export interface GenerateFaceSwapParams {
   userPhotoUrl: string
   userPhotoBase64?: string // used by Google AI provider (skips Supabase upload)
   templateBase64?: string // pre-fetched by route handler (skips background fetch)
   templateMimeType?: string
-  theme: RacingTheme
+  theme: string
   templateUrl?: string // override env-var lookup (comes from EventConfig)
   prompt?: string // override env-var lookup (comes from EventConfig)
 }
 
-const TEMPLATE_URLS: Record<RacingTheme, string | undefined> = {
+const TEMPLATE_URLS: Record<string, string | undefined> = {
   pitcrew: process.env.RACING_TEMPLATE_PITCREW_URL,
   motogp: process.env.RACING_TEMPLATE_MOTOGP_URL,
   f1: process.env.RACING_TEMPLATE_F1_URL,
@@ -24,7 +22,7 @@ const REPLICATE_MODEL = process.env.REPLICATE_MODEL || DEFAULT_MODEL
 const GOOGLE_AI_MODEL = process.env.GOOGLE_AI_MODEL || 'gemini-2.5-flash-image'
 export const AI_PROVIDER = process.env.AI_PROVIDER || 'replicate' // 'replicate' | 'google'
 
-const THEME_PROMPTS: Record<RacingTheme, string | undefined> = {
+const THEME_PROMPTS: Record<string, string | undefined> = {
   pitcrew: process.env.RACING_PROMPT_PITCREW,
   motogp: process.env.RACING_PROMPT_MOTOGP,
   f1: process.env.RACING_PROMPT_F1,

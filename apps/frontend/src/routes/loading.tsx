@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePhotobooth } from "../contexts/PhotoboothContext";
-import type { RacingTheme } from "../contexts/PhotoboothContext";
+import type { AiThemeConfig } from "../types/event-config";
 import { getAssetPath } from "../utils/assets";
 import { useEventConfig } from "../contexts/EventConfigContext";
 
@@ -12,20 +12,9 @@ const API_BASE_URL =
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const API_CLIENT_KEY = (import.meta as any).env?.VITE_API_CLIENT_KEY || "";
 
-// --- Photo positioning inside the final canvas ---
-// Adjusted photo size here
-// based on the frame design
-const PHOTO_WIDTH = 1004;
-const PHOTO_HEIGHT = 1507;
-// Offset from the centered position (px). Positive = right/down, negative = left/up.
-const PHOTO_OFFSET_X = 0;
-const PHOTO_OFFSET_Y = 0;
-
-const FRAME_MAP: Record<RacingTheme, string> = {
-  pitcrew: "/images/frame-racing-pitcrew.png",
-  motogp: "/images/frame-racing-motogp.png",
-  f1: "/images/frame-racing-f1.png",
-};
+function resolveImageUrl(url: string): string {
+  return url.startsWith("http") ? url : getAssetPath(url);
+}
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -42,12 +31,17 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 
 async function applyRacingFrame(
   aiGeneratedBase64: string,
-  theme: RacingTheme,
+  themeConfig: AiThemeConfig,
 ): Promise<string> {
-  // for 4 x 6 = 1280 x 1920
-  // shell custom ID card = 54 x 86 = 1205 x 1920
-  const canvasWidth = 1205;
-  const canvasHeight = 1920;
+  const {
+    canvasWidth,
+    canvasHeight,
+    photoWidth,
+    photoHeight,
+    photoOffsetX,
+    photoOffsetY,
+    frameImageUrl,
+  } = themeConfig;
 
   const canvas = document.createElement("canvas");
   canvas.width = canvasWidth;
@@ -59,19 +53,17 @@ async function applyRacingFrame(
   }
 
   const aiImage = await loadImage(aiGeneratedBase64);
-  const photoWidth = PHOTO_WIDTH;
-  const photoHeight = PHOTO_HEIGHT;
-  const photoX = (canvasWidth - photoWidth) / 2 + PHOTO_OFFSET_X;
-  const photoY = (canvasHeight - photoHeight) / 2 + PHOTO_OFFSET_Y;
+  const photoX = (canvasWidth - photoWidth) / 2 + photoOffsetX;
+  const photoY = (canvasHeight - photoHeight) / 2 + photoOffsetY;
   ctx.drawImage(aiImage, photoX, photoY, photoWidth, photoHeight);
 
   // Frame overlay is optional — skip if the image file doesn't exist
   try {
-    const frameImage = await loadImage(getAssetPath(FRAME_MAP[theme]));
+    const frameImage = await loadImage(resolveImageUrl(frameImageUrl));
     ctx.drawImage(frameImage, 0, 0, canvasWidth, canvasHeight);
   } catch {
     console.warn(
-      `[AI Generate] Frame image not found: ${FRAME_MAP[theme]} — skipping overlay`,
+      `[AI Generate] Frame image not found: ${frameImageUrl} — skipping overlay`,
     );
   }
 
@@ -116,6 +108,12 @@ function LoadingPage() {
     async function generateAIPhoto() {
       try {
         const theme = selectedTheme!.theme;
+        const themeConfig = eventConfig.aiConfig.themes.find(
+          (t) => t.id === theme,
+        );
+        if (!themeConfig) {
+          throw new Error(`Theme '${theme}' not found in event config`);
+        }
         const photoSize = Math.round(originalPhotos[0].length / 1024);
         console.log(
           `[AI Generate] Starting — theme: ${theme}, photo size: ${photoSize}KB`,
@@ -238,7 +236,10 @@ function LoadingPage() {
         setStatusText("Applying racing frame...");
         setProgress(90);
 
-        const framedPhoto = await applyRacingFrame(generatedImageBase64, theme);
+        const framedPhoto = await applyRacingFrame(
+          generatedImageBase64,
+          themeConfig,
+        );
         console.log(
           `[AI Generate] Frame applied — total time: ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
         );

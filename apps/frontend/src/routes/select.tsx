@@ -1,21 +1,21 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { RACING_THEMES, usePhotobooth } from "../contexts/PhotoboothContext";
-import type { RacingTheme } from "../contexts/PhotoboothContext";
+import { usePhotobooth } from "../contexts/PhotoboothContext";
+import { useEventConfig } from "../contexts/EventConfigContext";
 import { getAssetPath } from "../utils/assets";
 
-const THEME_IMAGES: Record<RacingTheme, string> = {
-  pitcrew: "/images/theme-pitcrew.png",
-  motogp: "/images/theme-motogp.png",
-  f1: "/images/theme-f1.png",
-};
+function resolveImageUrl(url: string): string {
+  return url.startsWith("http") ? url : getAssetPath(url);
+}
 
 function SelectPage() {
   const navigate = useNavigate();
   const { setSelectedTheme } = usePhotobooth();
+  const { config } = useEventConfig();
+  const themes = config.aiConfig.themes;
 
-  function handleSelectTheme(theme: RacingTheme) {
-    setSelectedTheme({ theme });
+  function handleSelectTheme(themeId: string) {
+    setSelectedTheme({ theme: themeId });
     void navigate("/camera");
   }
 
@@ -61,30 +61,27 @@ function SelectPage() {
           Choose your racing role:
         </p>
         <div className="flex flex-col gap-18 w-full">
-          {(Object.keys(RACING_THEMES) as RacingTheme[]).map((themeKey) => {
-            const theme = RACING_THEMES[themeKey];
-            return (
-              <button
-                key={themeKey}
-                onClick={() => handleSelectTheme(themeKey)}
-                className="relative w-full rounded-4xl overflow-hidden cursor-pointer transition-all duration-200 active:scale-[0.98] hover:shadow-2xl select-none font-shell font-medium"
-              >
-                <div className="relative flex flex-row items-center gap-14 w-full bg-tertiary">
-                  <div className="bg-white p-4">
-                    <img
-                      src={getAssetPath(THEME_IMAGES[themeKey])}
-                      alt={theme.title}
-                      className="w-28 h-28"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  </div>
-                  <h2 className="text-7xl text-white">{theme.title}</h2>
+          {themes.map((theme) => (
+            <button
+              key={theme.id}
+              onClick={() => handleSelectTheme(theme.id)}
+              className="relative w-full rounded-4xl overflow-hidden cursor-pointer transition-all duration-200 active:scale-[0.98] hover:shadow-2xl select-none font-shell font-medium"
+            >
+              <div className="relative flex flex-row items-center gap-14 w-full bg-tertiary">
+                <div className="bg-white p-4">
+                  <img
+                    src={resolveImageUrl(theme.previewImageUrl)}
+                    alt={theme.label}
+                    className="w-28 h-28"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
                 </div>
-              </button>
-            );
-          })}
+                <h2 className="text-7xl text-white">{theme.label}</h2>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
     </div>

@@ -5,15 +5,13 @@ import {
   AI_PROVIDER,
 } from '../services/ai-generation.service'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
-import type { RacingTheme } from '../services/ai-generation.service'
 import type { EventConfig } from '../types/event-config'
 
-const VALID_THEMES: Array<RacingTheme> = ['pitcrew', 'motogp', 'f1']
 const SUPABASE_BUCKET = 'photobooth-bucket'
 
 interface RequestBody {
   userPhotoBase64: string
-  theme: RacingTheme
+  theme: string
   eventId?: string
 }
 
@@ -126,15 +124,6 @@ export const Route = createFileRoute('/api/ai-generate')({
           console.log(
             `[ai-generate] Photo payload size: ${Math.round(userPhotoBase64.length / 1024)}KB`,
           )
-
-          if (!VALID_THEMES.includes(theme)) {
-            return json(
-              {
-                error: `Invalid theme. Must be one of: ${VALID_THEMES.join(', ')}`,
-              },
-              { status: 400 },
-            )
-          }
 
           const { provider, templateUrl, prompt } = await resolveThemeConfig(
             body.eventId,
