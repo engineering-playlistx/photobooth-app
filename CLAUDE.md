@@ -26,7 +26,7 @@ The app is being migrated from a hardcoded single-client app → config-driven m
 | `docs/scale-up/04-task-decomposition.md` | Atomic executable tasks with dependency graph |
 | `docs/scale-up/05-execution-strategy.md` | How to work with Claude Code on these tasks |
 
-**Current phase:** Phase 0 (hotfixes) — in progress. TASK-0.1 ✅, TASK-0.2 ✅, TASK-0.3 pending.
+**Current phase:** Phase 0 (hotfixes) — complete ✅. Starting Phase 1 (EventId Threading).
 
 ---
 
@@ -36,7 +36,7 @@ The app is being migrated from a hardcoded single-client app → config-driven m
 |-----|------|--------|
 | ~~`DROP TABLE IF EXISTS photo_results` runs on every app start~~ | `sqlite.ts` | ✅ Fixed (TASK-0.1) |
 | ~~`Replicate` client initialized even when `AI_PROVIDER === 'google'`~~ | `ai-generation.service.ts` | ✅ Fixed (TASK-0.2) |
-| No inactivity timeout on kiosk | new hook | Pending (TASK-0.3) |
+| ~~No inactivity timeout on kiosk~~ | `useInactivityTimeout.ts` | ✅ Fixed (TASK-0.3) |
 
 ---
 

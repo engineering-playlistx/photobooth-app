@@ -61,7 +61,7 @@
 
 ---
 
-### TASK-0.3: Add inactivity timeout to kiosk
+### ~~TASK-0.3: Add inactivity timeout to kiosk~~ ✅ DONE
 
 **What:** Add a hook that resets the session and navigates to `/` if no user interaction occurs for N seconds. N is a constant for now (configurable in Phase 3).
 
