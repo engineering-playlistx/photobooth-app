@@ -6,9 +6,71 @@ This file gives Claude Code the context needed to work effectively in this repo.
 
 ## Project Overview
 
-**Shell Photobooth** is a kiosk-style photobooth application built for racing events. Users take a photo, select a racing theme (Pit Crew, MotoGP, or F1), and receive an AI face-swapped result delivered via email and physical print.
+**Shell Photobooth** is a **managed, AI-powered photobooth platform** sold as a service to brands and marketing agencies. The current deployment serves Shell racing events (Pit Crew / MotoGP / F1 face-swap), but the product is actively being scaled into a multi-client SaaS platform where each client gets a fully configurable, branded kiosk experience.
 
-The app is **offline-first**: all photos are saved locally via SQLite and the filesystem. Cloud delivery (Supabase storage + email via Resend) is layered on top.
+The app is **offline-first**: all photos are saved locally via SQLite and the filesystem. Cloud delivery (Supabase storage) is layered on top. **Supabase is the source of truth** — SQLite is an offline backup only. If they ever differ, Supabase wins.
+
+**Current state:** No kiosk is deployed in the field and no backend is running. The app is in pre-migration state — safe to modify without breaking live events.
+
+---
+
+## Migration Status
+
+The app is being migrated from a hardcoded single-client app → config-driven multi-client platform. Migration is planned in phases. See `docs/scale-up/` for the full plan.
+
+| Document | Contents |
+|----------|----------|
+| `docs/scale-up/01-reality-check.md` | Active bugs + what breaks during migration |
+| `docs/scale-up/02-constraints-interview.md` | Settled constraints and invariants |
+| `docs/scale-up/03-migration-strategy.md` | Phase-by-phase migration plan (Phase 0–6) |
+| `docs/scale-up/04-task-decomposition.md` | Atomic executable tasks with dependency graph |
+| `docs/scale-up/05-execution-strategy.md` | How to work with Claude Code on these tasks |
+
+**Current phase:** Phase 0 (hotfixes) — not yet started.
+
+---
+
+## Known Active Bugs
+
+Fix these before any other migration work.
+
+| Bug | File | Description |
+|-----|------|-------------|
+| **CRITICAL** | `apps/frontend/src/database/sqlite.ts:19` | `DROP TABLE IF EXISTS photo_results` runs on every app start — wipes all local SQLite data on restart |
+| **MEDIUM** | `apps/web/src/services/ai-generation.service.ts:49` | `Replicate` client is initialized even when `AI_PROVIDER === 'google'` — crashes if `REPLICATE_API_KEY` is missing |
+
+---
+
+## Core Constraints & Invariants
+
+These decisions are settled. All future code must respect them.
+
+**Data**
+- Supabase is source of truth. SQLite is offline backup only.
+- Partial session saves are allowed (internet can drop mid-event), but partial state must be detectable and recoverable.
+- No GDPR-style deletion requirement — retain data as long as storage allows.
+- Starting fresh with a new Supabase project — old `public/` photo paths do not need to be migrated.
+
+**Guest Experience**
+- AI generation must complete within **60 seconds** or show an error with retry.
+- If the backend is unreachable during AI generation, "sorry, try again" is acceptable.
+- Once a result is generated, if printing is enabled for the event, it **must** print — printing failures must surface to the operator.
+- Guest flow sequence is configurable per event (steps can be added, removed, or reordered).
+
+**Architecture**
+- All kiosks at a given time must run the **same app version** — no mixed-version deployments.
+- Simultaneous events (multiple clients at once) must be supported — every entity is scoped to an `eventId`.
+- TypeScript: follow current practice — pragmatic `any` is acceptable where unavoidable (e.g. `import.meta` access, Google AI SDK types). Do not introduce stricter rules mid-migration.
+- Unit tests are required for new business logic. No e2e requirement yet.
+- Routing architecture can change in V2 if it's technically justified and not costly.
+- Supabase is the current storage provider. Design repositories to be replaceable later (avoid Supabase-specific calls leaking outside `repositories/` and `utils/supabase*.ts`).
+- Session state should eventually be persisted locally (SQLite) so a crash mid-session is recoverable. Not required for Phase 0–2.
+
+**Operations**
+- Risk tolerance: **2/5** — conservative. Validate before deploying. No "move fast" shortcuts.
+- Rollback strategy: revert via git. No live deployment currently.
+- Kiosk updates today are manual USB install. Electron auto-update is the target but not yet implemented.
+- Daily report to clients = guest count only (no dashboard access for clients).
 
 ---
 
@@ -308,12 +370,26 @@ Racing template images for the face-swap model are hosted externally (Supabase/C
 
 All docs live in `/docs/`:
 
+**Design docs** (`docs/design/`):
 | File | Contents |
 |------|----------|
-| `design-document.md` | Full architecture, tech stack, data models, AI pipeline |
+| `design-document.md` | Full product architecture, V1/V2 roadmap, module system, data models |
+
+**Scale-up docs** (`docs/scale-up/`) — active migration planning:
+| File | Contents |
+|------|----------|
+| `01-reality-check.md` | Active bugs, risks, and what breaks during migration |
+| `02-constraints-interview.md` | Settled constraints and invariants (answered) |
+| `03-migration-strategy.md` | Phase-by-phase migration plan |
+| `04-task-decomposition.md` | Atomic tasks with acceptance criteria and dependency graph |
+| `05-execution-strategy.md` | Claude Code session strategy and prompting guide |
+
+**Other docs** (`docs/`):
+| File | Contents |
+|------|----------|
 | `project-structure.md` | Monorepo layout, data flow, IPC, route details |
 | `setup-guide.md` | Step-by-step guide for Supabase, Replicate, Resend, Cloudflare deployment |
-| `change-plan.md` | Migration plan: how the app was converted from archetype quiz → AI racing photobooth |
+| `change-plan.md` | How the app was converted from archetype quiz → AI racing photobooth |
 | `download-photos-guide.md` | Guide for bulk-downloading photos from Supabase bucket |
 
 ---
