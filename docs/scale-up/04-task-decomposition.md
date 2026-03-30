@@ -276,7 +276,7 @@ Seed the `config_json` with current Shell values: themes (pitcrew, motogp, f1), 
 
 ---
 
-### TASK-2.5: Fetch EventConfig on kiosk startup + add EventConfigContext
+### ~~TASK-2.5: Fetch EventConfig on kiosk startup + add EventConfigContext~~ ✅ DONE
 
 **What:** On app load, call `/api/config` and store the result in a React context. All routes read from this context.
 

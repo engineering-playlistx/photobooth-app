@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { PhotoboothProvider } from "./contexts/PhotoboothContext";
+import { EventConfigProvider } from "./contexts/EventConfigContext";
 import RootLayout from "./layouts/RootLayout";
 import IndexPage from "./routes/index";
 import CameraPage from "./routes/camera";
@@ -26,22 +27,24 @@ if (!rootElement) {
 const root = createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <PhotoboothProvider>
-      <HashRouter>
-        <NavigationListener />
-        <Routes>
-          <Route path="/" element={<RootLayout />}>
-            <Route index element={<IndexPage />} />
-            <Route path="/select" element={<SelectPage />} />
-            <Route path="/camera" element={<CameraPage />} />
-            <Route path="/form" element={<FormPage />} />
-            <Route path="/loading" element={<LoadingPage />} />
-            <Route path="/result" element={<ResultPage />} />
-            <Route path="/data" element={<DataPage />} />
-            <Route path="/test" element={<TestPage />} />
-          </Route>
-        </Routes>
-      </HashRouter>
-    </PhotoboothProvider>
+    <EventConfigProvider>
+      <PhotoboothProvider>
+        <HashRouter>
+          <NavigationListener />
+          <Routes>
+            <Route path="/" element={<RootLayout />}>
+              <Route index element={<IndexPage />} />
+              <Route path="/select" element={<SelectPage />} />
+              <Route path="/camera" element={<CameraPage />} />
+              <Route path="/form" element={<FormPage />} />
+              <Route path="/loading" element={<LoadingPage />} />
+              <Route path="/result" element={<ResultPage />} />
+              <Route path="/data" element={<DataPage />} />
+              <Route path="/test" element={<TestPage />} />
+            </Route>
+          </Routes>
+        </HashRouter>
+      </PhotoboothProvider>
+    </EventConfigProvider>
   </React.StrictMode>,
 );

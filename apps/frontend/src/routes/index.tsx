@@ -1,11 +1,14 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAssetPath } from "../utils/assets";
+import { useEventConfig } from "../contexts/EventConfigContext";
 
 function IndexPage() {
   const navigate = useNavigate();
+  const { refresh } = useEventConfig();
 
   function handleOpenCamera() {
+    refresh(); // re-fetch config in background for next session
     void navigate("/select");
   }
 
