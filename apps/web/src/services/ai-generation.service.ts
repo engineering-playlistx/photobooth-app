@@ -42,16 +42,10 @@ interface GoogleJobEntry {
 const googleJobStore = new Map<string, GoogleJobEntry>()
 
 export class AIGenerationService {
-  private replicate: Replicate
+  private replicate: Replicate | null = null
   private googleAI: GoogleGenerativeAI | null = null
 
   constructor() {
-    const replicateApiKey = process.env.REPLICATE_API_KEY
-    if (!replicateApiKey) {
-      throw new Error('REPLICATE_API_KEY environment variable is required')
-    }
-    this.replicate = new Replicate({ auth: replicateApiKey })
-
     if (AI_PROVIDER === 'google') {
       const googleApiKey = process.env.GOOGLE_AI_STUDIO_API_KEY
       if (!googleApiKey) {
@@ -60,6 +54,12 @@ export class AIGenerationService {
         )
       }
       this.googleAI = new GoogleGenerativeAI(googleApiKey)
+    } else {
+      const replicateApiKey = process.env.REPLICATE_API_KEY
+      if (!replicateApiKey) {
+        throw new Error('REPLICATE_API_KEY environment variable is required')
+      }
+      this.replicate = new Replicate({ auth: replicateApiKey })
     }
   }
 
@@ -96,6 +96,9 @@ export class AIGenerationService {
     console.log(`[AIService] User photo URL: ${params.userPhotoUrl}`)
     console.log(`[AIService] Template URL: ${targetImageUrl}`)
 
+    if (!this.replicate) {
+      throw new Error("Replicate not initialized — provider is 'google'")
+    }
     const prediction = await this.replicate.predictions.create({
       model: REPLICATE_MODEL as `${string}/${string}`,
       input: {
@@ -301,6 +304,9 @@ export class AIGenerationService {
     }
 
     // Replicate
+    if (!this.replicate) {
+      throw new Error("Replicate not initialized — provider is 'google'")
+    }
     const prediction = await this.replicate.predictions.get(predictionId)
     return { status: prediction.status, output: prediction.output }
   }
