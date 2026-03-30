@@ -29,6 +29,15 @@ function getSQLiteDatabase(): DatabaseSync {
     CREATE INDEX IF NOT EXISTS idx_photo_results_photo_path ON photo_results(photo_path);
   `);
 
+  // Migration: add event_id column if it doesn't exist yet
+  const columns = db
+    .prepare("PRAGMA table_info(photo_results)")
+    .all() as Array<{ name: string }>;
+  const hasEventId = columns.some((col) => col.name === "event_id");
+  if (!hasEventId) {
+    db.exec("ALTER TABLE photo_results ADD COLUMN event_id TEXT");
+  }
+
   dbInstance = db;
   return db;
 }
@@ -37,9 +46,9 @@ export function savePhotoResultToSQLite(document: PhotoResultDocument): void {
   const db = getSQLiteDatabase();
 
   const stmt = db.prepare(
-    `INSERT OR REPLACE INTO photo_results 
-     (id, photo_path, selected_theme, user_info, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT OR REPLACE INTO photo_results
+     (id, photo_path, selected_theme, user_info, event_id, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
 
   stmt.run(
@@ -47,6 +56,7 @@ export function savePhotoResultToSQLite(document: PhotoResultDocument): void {
     document.photoPath,
     JSON.stringify(document.selectedTheme),
     JSON.stringify(document.userInfo),
+    document.eventId ?? null,
     document.createdAt,
     document.updatedAt,
   );
@@ -66,6 +76,7 @@ export function getAllPhotoResultsFromSQLite(): PhotoResultDocument[] {
       photoPath: r.photo_path as string,
       selectedTheme: JSON.parse(r.selected_theme as string),
       userInfo: JSON.parse(r.user_info as string),
+      eventId: (r.event_id as string | null) ?? null,
       createdAt: r.created_at as string,
       updatedAt: r.updated_at as string,
     };
@@ -88,6 +99,7 @@ export function getPhotoResultByIdFromSQLite(
     photoPath: row.photo_path as string,
     selectedTheme: JSON.parse(row.selected_theme as string),
     userInfo: JSON.parse(row.user_info as string),
+    eventId: (row.event_id as string | null) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };

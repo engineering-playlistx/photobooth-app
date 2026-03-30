@@ -11,6 +11,7 @@ export interface PhotoResultDocument {
     email: string;
     phone: string;
   };
+  eventId: string | null;
   createdAt: string;
   updatedAt: string;
 }
