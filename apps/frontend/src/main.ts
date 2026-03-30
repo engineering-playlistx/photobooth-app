@@ -407,6 +407,51 @@ ipcMain.handle("print-window", async (_event, filePath: string) => {
   }
 });
 
+// kiosk config feature
+interface KioskConfig {
+  eventId: string;
+  apiBaseUrl: string;
+  apiClientKey: string;
+}
+
+ipcMain.handle("get-kiosk-config", () => {
+  const fs = require("fs");
+  const configPath = path.join(app.getPath("userData"), "kiosk.config.json");
+
+  if (fs.existsSync(configPath)) {
+    try {
+      const raw = fs.readFileSync(configPath, "utf-8") as string;
+      return JSON.parse(raw) as KioskConfig;
+    } catch (err) {
+      console.error(
+        "[get-kiosk-config] Failed to parse kiosk.config.json:",
+        err,
+      );
+    }
+  }
+
+  if (isDev) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const env = (import.meta as any).env ?? {};
+    const config: KioskConfig = {
+      eventId: (env.VITE_EVENT_ID as string | undefined) ?? "",
+      apiBaseUrl:
+        (env.VITE_API_BASE_URL as string | undefined) ??
+        "http://localhost:3000",
+      apiClientKey: (env.VITE_API_CLIENT_KEY as string | undefined) ?? "",
+    };
+    return config;
+  }
+
+  // Prod: missing config is fatal
+  dialog.showErrorBox(
+    "Configuration Missing",
+    "kiosk.config.json was not found. Please contact your system administrator.",
+  );
+  app.quit();
+  throw new Error("kiosk.config.json not found");
+});
+
 // printing feature pdf
 ipcMain.handle("print-window-pdf", async (_event, imageDataUrl: string) => {
   try {

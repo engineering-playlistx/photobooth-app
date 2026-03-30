@@ -256,7 +256,7 @@ Seed the `config_json` with current Shell values: themes (pitcrew, motogp, f1), 
 
 ---
 
-### TASK-2.4: Add kiosk config file loader to Electron
+### ~~TASK-2.4: Add kiosk config file loader to Electron~~ ✅ DONE
 
 **What:** On startup, Electron reads `kiosk.config.json` from `app.getPath('userData')`. Falls back to env vars for local dev.
 

@@ -1,11 +1,18 @@
 import type { PhotoResultDocument } from "../utils/database";
 
 declare global {
+  interface KioskConfig {
+    eventId: string;
+    apiBaseUrl: string;
+    apiClientKey: string;
+  }
+
   interface Window {
     electronAPI?: ElectronAPI;
   }
 
   interface ElectronAPI {
+    getKioskConfig(): Promise<KioskConfig>;
     platform: string;
     isElectron: boolean;
     print: (imageDataUrl: string) => Promise<PrintResult>;

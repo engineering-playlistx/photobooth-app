@@ -98,6 +98,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
       }
     },
   },
+  // Kiosk config
+  getKioskConfig: () => ipcRenderer.invoke("get-kiosk-config"),
+
   // Navigation listener
   onNavigateToHome: (callback: () => void) => {
     ipcRenderer.on("navigate-to-home", callback);
