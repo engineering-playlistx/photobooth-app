@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS event_configs (
 Go to **Storage → Policies** and run this SQL in the SQL Editor (or add via the UI):
 
 ```sql
--- Allow anonymous read from public/ folder
+-- Allow anonymous read from public/ folder (legacy path)
 CREATE POLICY "Give anon users access to public folder"
   ON "storage"."objects"
   AS PERMISSIVE FOR SELECT
@@ -156,7 +156,7 @@ CREATE POLICY "Give anon users access to public folder"
     AND auth.role() = 'anon'
   );
 
--- Allow anonymous upload to public/ folder
+-- Allow anonymous upload to public/ folder (legacy path)
 CREATE POLICY "Give anon users access to upload to public folder"
   ON "storage"."objects"
   AS PERMISSIVE FOR INSERT
@@ -166,9 +166,33 @@ CREATE POLICY "Give anon users access to upload to public folder"
     AND lower((storage.foldername(name))[1]) = 'public'
     AND auth.role() = 'anon'
   );
+
+-- Allow anonymous read from events/ folder (Phase 1+ path: events/<eventId>/photos/)
+CREATE POLICY "Give anon users access to events folder"
+  ON "storage"."objects"
+  AS PERMISSIVE FOR SELECT
+  TO public
+  USING (
+    bucket_id = 'photobooth-bucket'
+    AND lower((storage.foldername(name))[1]) = 'events'
+    AND auth.role() = 'anon'
+  );
+
+-- Allow anonymous upload to events/ folder (Phase 1+ path: events/<eventId>/photos/)
+CREATE POLICY "Give anon users access to upload to events folder"
+  ON "storage"."objects"
+  AS PERMISSIVE FOR INSERT
+  TO public
+  WITH CHECK (
+    bucket_id = 'photobooth-bucket'
+    AND lower((storage.foldername(name))[1]) = 'events'
+    AND auth.role() = 'anon'
+  );
 ```
 
 > The `temp/` folder is accessed via the backend's `service_role` key, which bypasses RLS — no additional policy needed for it.
+>
+> **Note (Phase 1+):** Photos are uploaded to `events/<eventId>/photos/<filename>` (not `public/`). The `events/` policies above are required for this to work. The `public/` policies remain for backward compatibility with any existing photos.
 
 ---
 
@@ -256,8 +280,8 @@ After completing all steps, confirm:
 - [ ] `events` table exists and has one row: `evt_shell_001`
 - [ ] RLS is enabled on `users` table
 - [ ] `photobooth-bucket` exists and is public
-- [ ] `photobooth-bucket` has `public/` and `templates/` folders with template images inside
-- [ ] Storage policies allow anon read + upload to `public/` folder
+- [ ] `photobooth-bucket` has `templates/` folder with template images inside
+- [ ] Storage policies allow anon read + upload to `public/` folder (legacy) and `events/` folder (Phase 1+)
 - [ ] All three Supabase env vars updated in `apps/frontend/.env`
 - [ ] All three Supabase env vars updated in `apps/web/.env`
 - [ ] Template URLs updated in `apps/web/.env`

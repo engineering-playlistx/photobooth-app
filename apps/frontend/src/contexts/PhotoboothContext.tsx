@@ -3,6 +3,9 @@ import React, { createContext, useContext, useState } from "react";
 
 export type RacingTheme = "pitcrew" | "motogp" | "f1";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const EVENT_ID: string | null = (import.meta as any).env?.VITE_EVENT_ID ?? null;
+
 export const RACING_THEMES: Record<
   RacingTheme,
   {
@@ -35,6 +38,7 @@ interface UserInfo {
 }
 
 interface PhotoboothContextType {
+  eventId: string | null;
   finalPhoto: string | null;
   selectedTheme: ThemeSelection | null;
   originalPhotos: string[];
@@ -68,6 +72,7 @@ export function PhotoboothProvider({ children }: { children: ReactNode }) {
   return (
     <PhotoboothContext.Provider
       value={{
+        eventId: EVENT_ID,
         originalPhotos,
         finalPhoto,
         selectedTheme,

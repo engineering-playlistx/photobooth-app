@@ -19,7 +19,6 @@ const API_CLIENT_KEY =
   (import.meta as any).env?.VITE_API_CLIENT_KEY || "";
 
 const SUPABASE_BUCKET = "photobooth-bucket";
-const SUPABASE_FOLDER = "public";
 
 function base64ToBlob(base64: string, contentType = "", sliceSize = 512) {
   const byteCharacters = atob(base64.split(",")[1]);
@@ -38,7 +37,8 @@ function base64ToBlob(base64: string, contentType = "", sliceSize = 512) {
 }
 
 export default function ResultPage() {
-  const { finalPhoto, selectedTheme, userInfo } = usePhotobooth();
+  const { eventId, finalPhoto, selectedTheme, userInfo } = usePhotobooth();
+  const supabaseFolder = eventId ? `events/${eventId}/photos` : "public";
   const navigate = useNavigate();
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -72,7 +72,7 @@ export default function ResultPage() {
     }
 
     try {
-      const filePath = `${SUPABASE_FOLDER}/${photoFileName}`;
+      const filePath = `${supabaseFolder}/${photoFileName}`;
 
       // Photo is already uploaded to Supabase during auto-save,
       // but re-upload with upsert as a fallback in case it failed
@@ -163,12 +163,13 @@ export default function ResultPage() {
           photoPath,
           selectedTheme,
           userInfo,
+          eventId,
         });
 
         console.log("Photo result saved to local database successfully");
 
         // Upload photo to Supabase storage and save user record
-        const supabasePath = `${SUPABASE_FOLDER}/${photoFileName}`;
+        const supabasePath = `${supabaseFolder}/${photoFileName}`;
         const blob = base64ToBlob(finalPhoto, "image/png");
         const { error: uploadError } = await supabase.storage
           .from(SUPABASE_BUCKET)
@@ -192,6 +193,7 @@ export default function ResultPage() {
               email: userInfo.email,
               phone: userInfo.phone,
               selectedTheme: selectedTheme.theme,
+              eventId,
             }),
           });
 
