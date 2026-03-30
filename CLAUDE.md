@@ -26,18 +26,56 @@ The app is being migrated from a hardcoded single-client app → config-driven m
 | `docs/scale-up/04-task-decomposition.md` | Atomic executable tasks with dependency graph |
 | `docs/scale-up/05-execution-strategy.md` | How to work with Claude Code on these tasks |
 
-**Current phase:** Phase 0 (hotfixes) — not yet started.
+**Current phase:** Phase 0 (hotfixes) — in progress. TASK-0.1 ✅, TASK-0.2 ✅, TASK-0.3 pending.
 
 ---
 
 ## Known Active Bugs
 
-Fix these before any other migration work.
+| Bug | File | Status |
+|-----|------|--------|
+| ~~`DROP TABLE IF EXISTS photo_results` runs on every app start~~ | `sqlite.ts` | ✅ Fixed (TASK-0.1) |
+| ~~`Replicate` client initialized even when `AI_PROVIDER === 'google'`~~ | `ai-generation.service.ts` | ✅ Fixed (TASK-0.2) |
+| No inactivity timeout on kiosk | new hook | Pending (TASK-0.3) |
 
-| Bug | File | Description |
-|-----|------|-------------|
-| **CRITICAL** | `apps/frontend/src/database/sqlite.ts:19` | `DROP TABLE IF EXISTS photo_results` runs on every app start — wipes all local SQLite data on restart |
-| **MEDIUM** | `apps/web/src/services/ai-generation.service.ts:49` | `Replicate` client is initialized even when `AI_PROVIDER === 'google'` — crashes if `REPLICATE_API_KEY` is missing |
+---
+
+## Development Workflow
+
+Follow this for every task. Full rationale in `docs/scale-up/05-execution-strategy.md`.
+
+### Per-task checklist
+
+1. **Read before touching** — read every file listed in the task before making changes
+2. **Lint changed files** (Layer 1):
+   ```bash
+   git diff --name-only | grep -E '\.(ts|tsx)$' | xargs npx eslint
+   ```
+   Fix any new errors before moving on. Do not use `pnpm lint` — it fails on pre-existing issues.
+3. **Run tests** (Layer 2) — required when new business logic is added:
+   ```bash
+   pnpm wb test   # for apps/web changes
+   ```
+   Use `vi.resetModules()` + dynamic `import()` for modules with env-var-driven constants.
+4. **Manual smoke test** (Layer 3) — follow the exact steps in the task's **Verification** section
+5. **Commit** — one commit per completed task:
+   ```bash
+   git add <only the files this task touched>
+   git commit -m "fix(phase-N): TASK-X.Y — <what changed>"
+   ```
+   Never batch multiple tasks into one commit. Never commit a broken build.
+6. **Mark done** — update `docs/scale-up/04-task-decomposition.md`: strikethrough the task heading + ✅
+
+### Commit conventions
+
+| Type | When |
+|------|------|
+| `fix(phase-N):` | Bug fixes and hotfixes (Phase 0 tasks) |
+| `feat(phase-N):` | New features (Phase 1+ tasks) |
+| `chore:` | Formatting, tooling, doc-only changes |
+| `test:` | Test-only changes |
+
+Separate formatting-only changes (e.g. after `pnpm lint:fix`) into their own `chore: apply prettier formatting` commit — do not mix with logic changes.
 
 ---
 

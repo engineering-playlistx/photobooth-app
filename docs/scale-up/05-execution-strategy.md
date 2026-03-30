@@ -75,6 +75,40 @@ Please read apps/frontend/src/database/sqlite.ts first.
 
 ---
 
+## Verification Workflow
+
+Every task uses a three-layer verification process before being marked done. Each task definition in `04-task-decomposition.md` includes a **Verification** section that maps to these layers.
+
+### Layer 1 — Lint changed files (always)
+
+Run ESLint only on the files modified in this task:
+
+```bash
+git diff --name-only | grep -E '\.(ts|tsx)$' | xargs npx eslint
+```
+
+Do not use `pnpm lint` as the gate — it fails on pre-existing Prettier issues unrelated to your change. If ESLint reports **new** errors in files you touched, fix them before closing the task.
+
+### Layer 2 — Unit tests (required for new business logic)
+
+For changes in `apps/web`:
+```bash
+pnpm wb test
+```
+
+For changes in `apps/frontend`: no test runner is configured yet. Add vitest to the frontend when the first frontend business logic test is needed.
+
+Write tests for: conditional branching, data transformation, error handling.
+Skip tests for: deleted code, config wiring, UI-only rendering.
+
+Use `vi.resetModules()` + dynamic `import()` when testing modules with env-var-driven constants (see `ai-generation.service.test.ts` as the reference pattern).
+
+### Layer 3 — Manual smoke test
+
+Follow the exact steps in the task's **Verification** section. Run them in order. If any step fails, do not move to the next task.
+
+---
+
 ## Context Claude Needs in Each Session
 
 Claude's context resets between conversations. For each session, provide:
@@ -113,18 +147,18 @@ Do not move to the next task if you haven't verified the current one. The depend
 
 ## Definition of "Done" for a Task
 
-A task is done when:
-- [ ] All files listed in the task have been modified as specified
-- [ ] No TypeScript compilation errors (`pnpm fe build` or `pnpm wb build` passes)
-- [ ] The acceptance criteria in the task definition are met
-- [ ] No existing functionality is broken (smoke test the kiosk flow end to end if frontend files were touched)
-- [ ] The task is marked complete in `04-task-decomposition.md`
+A task is done when all three verification layers pass:
 
-For backend tasks, also verify:
+- [ ] **Layer 1:** `git diff --name-only | grep -E '\.(ts|tsx)$' | xargs npx eslint` — no new errors in changed files
+- [ ] **Layer 2:** Unit tests written (if business logic changed) and `pnpm wb test` passes
+- [ ] **Layer 3:** Manual steps in the task's **Verification** section all pass
+- [ ] Task is marked complete (~~strikethrough~~ + ✅) in `04-task-decomposition.md`
+
+For backend tasks, Layer 3 also includes:
 - [ ] The endpoint responds correctly to a `curl` or Postman request
 - [ ] Error cases return appropriate HTTP status codes
 
-For frontend tasks, also verify:
+For frontend tasks, Layer 3 also includes:
 - [ ] The full guest flow (/ → select → camera → form → loading → result) still works
 - [ ] The admin `/data` route still works
 

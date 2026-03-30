@@ -7,13 +7,14 @@
 - **Files:** Which files to touch
 - **Input:** What needs to exist before this task can start
 - **Output:** What "done" looks like (acceptance criteria)
+- **Verification:** How to confirm the task is complete (see `05-execution-strategy.md` for the full workflow)
 - **Risk:** What could go wrong
 
 ---
 
 ## Phase 0 — Hotfixes
 
-### TASK-0.1: Fix SQLite DROP TABLE on startup
+### ~~TASK-0.1: Fix SQLite DROP TABLE on startup~~ ✅ DONE
 
 **What:** Remove the destructive `DROP TABLE IF EXISTS` line. Replace with a schema migration guard that only alters the table if columns are missing.
 
@@ -28,11 +29,16 @@
 - If a new column needs to be added later, use `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
 - Existing records survive an app restart
 
+**Verification:**
+- Layer 1: Lint changed file — no new ESLint errors introduced
+- Layer 2: No unit test required (deletion of a single destructive line; surrounding logic is unchanged)
+- Layer 3 (manual): Start the app → add a record via the kiosk flow → restart the app → verify the record still appears in the `/data` admin route
+
 **Risk:** Low. Non-destructive change.
 
 ---
 
-### TASK-0.2: Guard Replicate initialization when AI provider is Google
+### ~~TASK-0.2: Guard Replicate initialization when AI provider is Google~~ ✅ DONE
 
 **What:** Only initialize `Replicate` client when `AI_PROVIDER === 'replicate'`. Calling methods on an uninitialized client should throw a clear error, not a cryptic one.
 
@@ -45,6 +51,11 @@
 - Constructor does not call `new Replicate()` when provider is `'google'`
 - `REPLICATE_API_KEY` env var is not required when provider is `'google'`
 - Calling a Replicate method when provider is `'google'` throws `Error("Replicate not initialized — provider is 'google'")`
+
+**Verification:**
+- Layer 1: Lint changed file — no new ESLint errors introduced (pre-existing `@google/generative-ai` unresolved-module errors are tracked separately)
+- Layer 2: Unit tests in `apps/web/src/services/ai-generation.service.test.ts` — `pnpm wb test` passes (4 tests)
+- Layer 3 (manual): Set `AI_PROVIDER=google` + `GOOGLE_AI_STUDIO_API_KEY=<any>`, remove `REPLICATE_API_KEY` from `apps/web/.env`, start the backend → confirm no crash on startup
 
 **Risk:** Low.
 
@@ -66,6 +77,15 @@
 - Timeout resets on any user interaction
 - Timeout does not fire on the `/` splash screen (already home)
 - N is defined as a constant `INACTIVITY_TIMEOUT_MS = 60_000`
+
+**Verification:**
+- Layer 1: Lint changed files — no new ESLint errors introduced
+- Layer 2: No unit test required (hook behavior is DOM/timer-dependent; manual verification is sufficient)
+- Layer 3 (manual):
+  - Navigate to any non-`/` route, wait 60 seconds with no input → confirm app navigates to `/`
+  - Touch or click during the wait → confirm timeout resets and does not fire
+  - Stay on `/` for 60 seconds → confirm no navigation loop
+  - Start a session and let the AI generation run without touching the screen → confirm timeout does not fire mid-generation (loading page should suppress or reset the timer)
 
 **Risk:** Low. Touch events should be straightforward to detect. Test that it doesn't fire during AI generation (which takes 30–60s with no user input).
 
