@@ -297,7 +297,7 @@ Seed the `config_json` with current Shell values: themes (pitcrew, motogp, f1), 
 
 ---
 
-### TASK-2.6: Move AI config from Cloudflare env into EventConfig
+### ~~TASK-2.6: Move AI config from Cloudflare env into EventConfig~~ ✅ DONE
 
 **What:** Backend reads `provider`, `apiKeyOverride`, and per-theme config from `EventConfig` (fetched from DB) instead of process.env for per-event values.
 

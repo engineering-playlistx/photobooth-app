@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { usePhotobooth } from "../contexts/PhotoboothContext";
 import type { RacingTheme } from "../contexts/PhotoboothContext";
 import { getAssetPath } from "../utils/assets";
+import { useEventConfig } from "../contexts/EventConfigContext";
 
 // TODO: Fix eslint
 const API_BASE_URL =
@@ -91,6 +92,7 @@ const SLIDESHOW_INTERVAL_MS = 4500;
 function LoadingPage() {
   const navigate = useNavigate();
   const { originalPhotos, selectedTheme, setFinalPhoto } = usePhotobooth();
+  const { config: eventConfig } = useEventConfig();
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Preparing your photo...");
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +137,7 @@ function LoadingPage() {
           body: JSON.stringify({
             userPhotoBase64: originalPhotos[0],
             theme,
+            eventId: eventConfig.eventId,
           }),
         });
 

@@ -6,6 +6,7 @@ import {
 } from '../services/ai-generation.service'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
 import type { RacingTheme } from '../services/ai-generation.service'
+import type { EventConfig } from '../types/event-config'
 
 const VALID_THEMES: Array<RacingTheme> = ['pitcrew', 'motogp', 'f1']
 const SUPABASE_BUCKET = 'photobooth-bucket'
@@ -13,6 +14,71 @@ const SUPABASE_BUCKET = 'photobooth-bucket'
 interface RequestBody {
   userPhotoBase64: string
   theme: RacingTheme
+  eventId?: string
+}
+
+interface ResolvedThemeConfig {
+  provider: 'replicate' | 'google'
+  templateUrl: string | undefined
+  prompt: string | undefined
+}
+
+async function resolveThemeConfig(
+  eventId: string | undefined,
+  theme: string,
+): Promise<ResolvedThemeConfig> {
+  const envFallback: ResolvedThemeConfig = {
+    provider: AI_PROVIDER as 'replicate' | 'google',
+    templateUrl: undefined,
+    prompt: undefined,
+  }
+
+  if (!eventId) return envFallback
+
+  try {
+    const supabase = getSupabaseAdminClient()
+    const { data, error } = await supabase
+      .from('event_configs')
+      .select('config_json')
+      .eq('event_id', eventId)
+      .single()
+
+    if (error) {
+      if (error.code !== 'PGRST116') {
+        console.warn(
+          `[ai-generate] Event config DB error for ${eventId}:`,
+          error.message,
+        )
+      }
+      return envFallback
+    }
+
+    const config = data.config_json as EventConfig
+    const themeConfig = config.aiConfig.themes.find((t) => t.id === theme)
+
+    if (!themeConfig) {
+      console.warn(
+        `[ai-generate] Theme '${theme}' not in event config — using env fallback`,
+      )
+      return {
+        provider: config.aiConfig.provider,
+        templateUrl: undefined,
+        prompt: undefined,
+      }
+    }
+
+    return {
+      provider: config.aiConfig.provider,
+      templateUrl: themeConfig.templateImageUrl,
+      prompt: themeConfig.prompt,
+    }
+  } catch (err) {
+    console.warn(
+      '[ai-generate] Failed to fetch event config — using env fallback:',
+      err,
+    )
+    return envFallback
+  }
 }
 
 function validateApiKey(request: Request): boolean {
@@ -70,11 +136,22 @@ export const Route = createFileRoute('/api/ai-generate')({
             )
           }
 
-          const aiService = new AIGenerationService()
+          const { provider, templateUrl, prompt } = await resolveThemeConfig(
+            body.eventId,
+            theme,
+          )
+
+          if (body.eventId) {
+            console.log(
+              `[ai-generate] Using event config — eventId: ${body.eventId}, provider: ${provider}`,
+            )
+          }
+
+          const aiService = new AIGenerationService(provider)
           let predictionId: string
           let tempPath = ''
 
-          if (AI_PROVIDER === 'google') {
+          if (provider === 'google') {
             // Google AI: run entirely synchronously inside the request handler.
             // Background fire-and-forget tasks hang in Nitro/Vite and some production
             // runtimes — awaiting inside the active request lifecycle is the reliable path.
@@ -82,20 +159,23 @@ export const Route = createFileRoute('/api/ai-generate')({
               `[ai-generate] Using Google AI provider — synchronous mode`,
             )
 
-            const templateUrl =
+            const resolvedTemplateUrl =
+              templateUrl ??
               process.env[`RACING_TEMPLATE_${theme.toUpperCase()}_URL`]
-            if (!templateUrl) {
+            if (!resolvedTemplateUrl) {
               return json(
                 { error: `Template URL not configured for theme: ${theme}` },
                 { status: 500 },
               )
             }
 
-            console.log(`[ai-generate] Pre-fetching template: ${templateUrl}`)
+            console.log(
+              `[ai-generate] Pre-fetching template: ${resolvedTemplateUrl}`,
+            )
             let templateBase64: string
             let templateMimeType: string
             try {
-              const templateResponse = await fetch(templateUrl)
+              const templateResponse = await fetch(resolvedTemplateUrl)
               if (!templateResponse.ok) {
                 throw new Error(
                   `${templateResponse.status} ${templateResponse.statusText}`,
@@ -129,6 +209,8 @@ export const Route = createFileRoute('/api/ai-generate')({
               templateBase64,
               templateMimeType,
               theme,
+              templateUrl: resolvedTemplateUrl,
+              prompt,
             })
 
             const elapsed = ((Date.now() - requestStart) / 1000).toFixed(1)
@@ -196,6 +278,8 @@ export const Route = createFileRoute('/api/ai-generate')({
             predictionId = await aiService.createPrediction({
               userPhotoUrl,
               theme,
+              templateUrl,
+              prompt,
             })
           }
 

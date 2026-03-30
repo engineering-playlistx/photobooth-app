@@ -9,6 +9,8 @@ export interface GenerateFaceSwapParams {
   templateBase64?: string // pre-fetched by route handler (skips background fetch)
   templateMimeType?: string
   theme: RacingTheme
+  templateUrl?: string // override env-var lookup (comes from EventConfig)
+  prompt?: string // override env-var lookup (comes from EventConfig)
 }
 
 const TEMPLATE_URLS: Record<RacingTheme, string | undefined> = {
@@ -44,9 +46,12 @@ const googleJobStore = new Map<string, GoogleJobEntry>()
 export class AIGenerationService {
   private replicate: Replicate | null = null
   private googleAI: GoogleGenerativeAI | null = null
+  private readonly provider: 'replicate' | 'google'
 
-  constructor() {
-    if (AI_PROVIDER === 'google') {
+  constructor(providerOverride?: 'replicate' | 'google') {
+    this.provider = providerOverride ?? (AI_PROVIDER as 'replicate' | 'google')
+
+    if (this.provider === 'google') {
       const googleApiKey = process.env.GOOGLE_AI_STUDIO_API_KEY
       if (!googleApiKey) {
         throw new Error(
@@ -64,7 +69,7 @@ export class AIGenerationService {
   }
 
   async createPrediction(params: GenerateFaceSwapParams): Promise<string> {
-    if (AI_PROVIDER === 'google') {
+    if (this.provider === 'google') {
       return this.createGooglePrediction(params)
     }
     return this.createReplicatePrediction(params)
@@ -77,14 +82,14 @@ export class AIGenerationService {
   private async createReplicatePrediction(
     params: GenerateFaceSwapParams,
   ): Promise<string> {
-    const targetImageUrl = TEMPLATE_URLS[params.theme]
+    const targetImageUrl = params.templateUrl ?? TEMPLATE_URLS[params.theme]
     if (!targetImageUrl) {
       throw new Error(
         `Template image URL not configured for theme: ${params.theme}`,
       )
     }
 
-    const prompt = THEME_PROMPTS[params.theme]
+    const prompt = params.prompt ?? THEME_PROMPTS[params.theme]
     if (!prompt) {
       throw new Error(`Prompt not configured for theme: ${params.theme}`)
     }
@@ -161,14 +166,14 @@ export class AIGenerationService {
     jobId: string,
     params: GenerateFaceSwapParams,
   ): Promise<string> {
-    const targetImageUrl = TEMPLATE_URLS[params.theme]
+    const targetImageUrl = params.templateUrl ?? TEMPLATE_URLS[params.theme]
     if (!targetImageUrl) {
       throw new Error(
         `Template image URL not configured for theme: ${params.theme}`,
       )
     }
 
-    const prompt = THEME_PROMPTS[params.theme]
+    const prompt = params.prompt ?? THEME_PROMPTS[params.theme]
     if (!prompt) {
       throw new Error(`Prompt not configured for theme: ${params.theme}`)
     }
@@ -291,7 +296,7 @@ export class AIGenerationService {
     output: unknown
     generatedBase64?: string // set for Google AI succeeded jobs (already base64)
   }> {
-    if (AI_PROVIDER === 'google') {
+    if (this.provider === 'google') {
       const job = googleJobStore.get(predictionId)
       if (!job) {
         return { status: 'failed', output: null }
