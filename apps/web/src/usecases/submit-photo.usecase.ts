@@ -1,3 +1,4 @@
+import { SessionRepository } from '../repositories/session.repository'
 import { UserRepository } from '../repositories/user.repository'
 import { EmailService } from '../services/email.service'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
@@ -16,14 +17,17 @@ export interface SubmitPhotoRequest {
 export interface SubmitPhotoResult {
   photoUrl: string
   userId: string
+  sessionId: string
 }
 
 export class SubmitPhotoUseCase {
   private userRepository: UserRepository
+  private sessionRepository: SessionRepository
   private emailService: EmailService
 
   constructor() {
     this.userRepository = new UserRepository()
+    this.sessionRepository = new SessionRepository()
     this.emailService = new EmailService()
   }
 
@@ -43,6 +47,18 @@ export class SubmitPhotoUseCase {
       data: { publicUrl: photoUrl },
     } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(request.photoPath)
 
+    const sessionId = crypto.randomUUID()
+    await this.sessionRepository.createSession({
+      id: sessionId,
+      eventId: request.eventId ?? 'evt_shell_001',
+      photoPath: request.photoPath,
+      userInfo: {
+        name: request.name,
+        email: request.email,
+        phone: request.phone,
+      },
+    })
+
     // Email sending disabled — kept for future use
     // try {
     //   await this.emailService.sendPhotoEmail({
@@ -58,6 +74,7 @@ export class SubmitPhotoUseCase {
     return {
       photoUrl,
       userId: user.id,
+      sessionId,
     }
   }
 }

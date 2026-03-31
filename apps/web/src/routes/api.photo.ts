@@ -122,6 +122,7 @@ export const Route = createFileRoute('/api/photo')({
           return json({
             message: 'Photo saved successfully',
             photoUrl: result.photoUrl,
+            sessionId: result.sessionId,
           })
         } catch (error) {
           console.error({ message: 'API error', error })
