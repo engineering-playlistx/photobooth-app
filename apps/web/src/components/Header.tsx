@@ -1,6 +1,11 @@
-import { Link } from '@tanstack/react-router'
+import React from 'react'
+import { Link, useRouterState } from '@tanstack/react-router'
 
 export default function Header() {
+  const { location } = useRouterState()
+
+  if (location.pathname.startsWith('/result/')) return null
+
   return (
     <>
       <header className="p-4 flex items-center bg-gray-800 text-white shadow-lg">
