@@ -14,6 +14,7 @@ export default function FormPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [isConsentChecked, setIsConsentChecked] = useState(false);
+  const [consentError, setConsentError] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [layoutName, setLayoutName] = useState("default");
 
@@ -24,6 +25,11 @@ export default function FormPage() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!isConsentChecked) {
+      setConsentError(true);
+      return;
+    }
+    setConsentError(false);
     setShowKeyboard(false);
     setUserInfo({ name, email, phone });
     void navigate("/loading");
@@ -229,23 +235,32 @@ export default function FormPage() {
             />
           </div>
 
-          <div className="flex items-start gap-3 mt-8">
-            <input
-              id="consent"
-              type="checkbox"
-              checked={isConsentChecked}
-              onChange={(e) => setIsConsentChecked(e.target.checked)}
-              required
-              className="mt-1 w-6 h-6 accent-tertiary border-secondary/50 rounded"
-              style={{ minWidth: "1.5rem", minHeight: "1.5rem" }}
-            />
-            <label
-              htmlFor="consent"
-              className="text-lg lg:text-2xl font-sans select-none"
-            >
-              I consent to the collection and use of my personal data so I can
-              receive and download my photo.
-            </label>
+          <div className="flex flex-col gap-2 mt-8">
+            <div className="flex items-start gap-3">
+              <input
+                id="consent"
+                type="checkbox"
+                checked={isConsentChecked}
+                onChange={(e) => {
+                  setIsConsentChecked(e.target.checked);
+                  if (e.target.checked) setConsentError(false);
+                }}
+                className="mt-1 w-6 h-6 accent-tertiary border-secondary/50 rounded"
+                style={{ minWidth: "1.5rem", minHeight: "1.5rem" }}
+              />
+              <label
+                htmlFor="consent"
+                className="text-lg lg:text-2xl font-sans select-none"
+              >
+                I consent to the collection and use of my personal data so I can
+                receive and download my photo.
+              </label>
+            </div>
+            {consentError && (
+              <p className="text-red-500 text-xl font-medium ml-9">
+                Please tick the consent checkbox to continue.
+              </p>
+            )}
           </div>
 
           <div className="flex justify-center mt-8">
