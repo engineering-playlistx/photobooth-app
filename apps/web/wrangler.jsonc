@@ -6,11 +6,37 @@
   "main": "@tanstack/react-start/server-entry",
   "vars": {
     "REPLICATE_MODEL": "google/nano-banana",
+    "AI_PROVIDER": "google",
     "RESEND_FROM_EMAIL": "Photobooth <no-reply@photobooth.playlistx.studio>",
     "NODE_ENV": "production",
     "RACING_PROMPT_PITCREW": "make the person in the first image (image 1) as a race engineer, wearing a red Ferrari race engineer shirt (like in image 2) with ONLY Shell logo visible. Leave out all the logo and keep only the Shell logo. The person is standing in front of the race track garage, facing the front.\nDO NOT CHANGE ANY FACIAL FEATURES from the reference image for the person's face. KEEP FACIAL AND HEAD ACCESSORIES.\nThe background appears to be a race track garage. The lighting is bright and even.\n\nColor & light (IMPORTANT):\n• Real daylight, blue sky\n• Natural contrast (cinematic)\n• Accurate white balance\n• True-to-life colors - skin tones rich and dimensional\n• No faded, dusty, pastel, or washed-out colors\n\nOverall aesthetic: modern, clean, commercial, editorial feel. Feels like a real person.",
     "RACING_PROMPT_MOTOGP": "make the person in the first image (image 1) as a motogp racer, wearing a racing outfit (like in image 2) with ONLY Shell logo visible. Leave out all the logo and keep only the Shell logo. The person is standing in front of the motogp motorbike, facing the front.\nDO NOT CHANGE ANY FACIAL FEATURES from the reference image for the person's face. KEEP FACIAL AND HEAD ACCESSORIES.\nThe background appears to be a race track or an open, paved area, with a slight blur, suggesting the focus is on the person and the bike. The lighting is bright and even.\n\nColor & light (IMPORTANT):\n• Real daylight, blue sky\n• Natural contrast (cinematic)\n• Accurate white balance\n• True-to-life colors - skin tones rich and dimensional\n• No faded, dusty, pastel, or washed-out colors\n\nOverall aesthetic: modern, clean, commercial, editorial feel. Feels like a real person.",
     "RACING_PROMPT_F1": "make the person in the first image (image 1) as an F1 racer, wearing a racing outfit (like in image 2) with ONLY Shell logo visible. Leave out all the logo and keep only the Shell logo. The person is standing in front of the F1 Racing Car, facing the front.\nDO NOT CHANGE ANY FACIAL FEATURES from the reference image for the person's face. KEEP FACIAL AND HEAD ACCESSORIES.\nThe background appears to be a race track or an open, paved area, with a slight blur, suggesting the focus is on the person and the car. The lighting is bright and even.\n\nColor & light (IMPORTANT):\n• Real daylight, blue sky\n• Natural contrast (cinematic)\n• Accurate white balance\n• True-to-life colors - skin tones rich and dimensional\n• No faded, dusty, pastel, or washed-out colors\n\nOverall aesthetic: modern, clean, commercial, editorial feel. Feels like a real person.",
+  },
+  // Rate limiting bindings — enforced per-IP by Cloudflare's Rate Limiting API.
+  // Each binding must be referenced in code via `env.RATE_LIMITER_*.limit({ key })`.
+  // namespace_id is an arbitrary unique integer per binding (no Cloudflare dashboard setup needed).
+  "unsafe": {
+    "bindings": [
+      {
+        "name": "RATE_LIMITER_AI",
+        "type": "ratelimit",
+        "namespace_id": "1001",
+        "simple": { "limit": 5, "period": 60 },
+      },
+      {
+        "name": "RATE_LIMITER_PHOTO",
+        "type": "ratelimit",
+        "namespace_id": "1002",
+        "simple": { "limit": 10, "period": 60 },
+      },
+      {
+        "name": "RATE_LIMITER_CONFIG",
+        "type": "ratelimit",
+        "namespace_id": "1003",
+        "simple": { "limit": 30, "period": 60 },
+      },
+    ],
   },
   "observability": {
     "enabled": false,

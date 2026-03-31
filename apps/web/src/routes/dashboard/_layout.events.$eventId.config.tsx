@@ -42,6 +42,57 @@ export const Route = createFileRoute(
   component: ConfigEditorPage,
 })
 
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/
+
+function validateConfig(config: EventConfig): Record<string, string> {
+  const errors: Record<string, string> = {}
+
+  if (!HEX_COLOR_RE.test(config.branding.primaryColor)) {
+    errors['branding.primaryColor'] = 'Must be a valid hex color (e.g. #ff0000)'
+  }
+  if (!HEX_COLOR_RE.test(config.branding.secondaryColor)) {
+    errors['branding.secondaryColor'] =
+      'Must be a valid hex color (e.g. #ffffff)'
+  }
+
+  const timeout = config.techConfig.inactivityTimeoutSeconds
+  if (!Number.isInteger(timeout) || timeout < 10) {
+    errors['techConfig.inactivityTimeoutSeconds'] = 'Must be an integer ≥ 10'
+  }
+
+  config.aiConfig.themes.forEach((theme, i) => {
+    if (!theme.label.trim()) {
+      errors[`theme[${i}].label`] = 'Label is required'
+    }
+    if (!theme.prompt.trim()) {
+      errors[`theme[${i}].prompt`] = 'Prompt is required'
+    }
+    if (!theme.previewImageUrl.trim()) {
+      errors[`theme[${i}].previewImageUrl`] = 'Preview image URL is required'
+    }
+    if (!theme.frameImageUrl.trim()) {
+      errors[`theme[${i}].frameImageUrl`] = 'Frame image URL is required'
+    }
+    if (!theme.templateImageUrl.trim()) {
+      errors[`theme[${i}].templateImageUrl`] = 'Template image URL is required'
+    }
+    const dims: Array<[keyof typeof theme, string]> = [
+      ['canvasWidth', 'Canvas width'],
+      ['canvasHeight', 'Canvas height'],
+      ['photoWidth', 'Photo width'],
+      ['photoHeight', 'Photo height'],
+    ]
+    for (const [field, label] of dims) {
+      const val = theme[field] as number
+      if (!Number.isInteger(val) || val <= 0) {
+        errors[`theme[${i}].${field}`] = `${label} must be a positive integer`
+      }
+    }
+  })
+
+  return errors
+}
+
 function ConfigEditorPage() {
   const initial = Route.useLoaderData()
   const { eventId } = Route.useParams()
@@ -49,8 +100,25 @@ function ConfigEditorPage() {
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({})
+
+  const isDirty = JSON.stringify(config) !== JSON.stringify(initial)
+
+  const handleDiscard = () => {
+    setConfig(initial)
+    setValidationErrors({})
+    setStatus('idle')
+  }
 
   const handleSave = async () => {
+    const errors = validateConfig(config)
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors)
+      return
+    }
+    setValidationErrors({})
     if (!confirm('Save config? Incorrect values may break the kiosk.')) return
     setSaving(true)
     setStatus('idle')
@@ -131,6 +199,15 @@ function ConfigEditorPage() {
         <h1 className="text-2xl font-bold text-white">Event Config</h1>
         <div className="flex items-center gap-3">
           <SaveStatus />
+          {isDirty && (
+            <button
+              onClick={handleDiscard}
+              disabled={saving}
+              className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-200 rounded-lg transition-colors"
+            >
+              Discard changes
+            </button>
+          )}
           <button
             onClick={() => void handleSave()}
             disabled={saving}
@@ -141,6 +218,21 @@ function ConfigEditorPage() {
         </div>
       </div>
 
+      {Object.keys(validationErrors).length > 0 && (
+        <div className="mb-6 p-4 bg-red-900/40 border border-red-700 rounded-lg">
+          <p className="text-sm font-semibold text-red-300 mb-2">
+            Please fix the following errors before saving:
+          </p>
+          <ul className="space-y-1">
+            {Object.values(validationErrors).map((msg, i) => (
+              <li key={i} className="text-sm text-red-400">
+                • {msg}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="space-y-6">
         {/* Branding */}
         <Section title="Branding">
@@ -148,11 +240,13 @@ function ConfigEditorPage() {
             label="Primary Color"
             value={config.branding.primaryColor}
             onChange={(v) => updateBranding('primaryColor', v)}
+            error={validationErrors['branding.primaryColor']}
           />
           <ColorField
             label="Secondary Color"
             value={config.branding.secondaryColor}
             onChange={(v) => updateBranding('secondaryColor', v)}
+            error={validationErrors['branding.secondaryColor']}
           />
           <Field label="Logo URL">
             <input
@@ -208,8 +302,13 @@ function ConfigEditorPage() {
               onChange={(e) =>
                 updateTech('inactivityTimeoutSeconds', Number(e.target.value))
               }
-              className={inputClass}
+              className={`${inputClass} ${validationErrors['techConfig.inactivityTimeoutSeconds'] ? 'border-red-500' : ''}`}
             />
+            {validationErrors['techConfig.inactivityTimeoutSeconds'] && (
+              <p className="mt-1 text-xs text-red-400">
+                {validationErrors['techConfig.inactivityTimeoutSeconds']}
+              </p>
+            )}
           </Field>
           <div className="mb-3">
             <label className="flex items-center gap-2 cursor-pointer">
@@ -395,6 +494,15 @@ function ConfigEditorPage() {
 
       <div className="mt-8 pt-6 border-t border-slate-700 flex items-center justify-end gap-3">
         <SaveStatus />
+        {isDirty && (
+          <button
+            onClick={handleDiscard}
+            disabled={saving}
+            className="px-5 py-2 text-sm bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-200 rounded-lg transition-colors font-medium"
+          >
+            Discard changes
+          </button>
+        )}
         <button
           onClick={() => void handleSave()}
           disabled={saving}
@@ -432,10 +540,12 @@ function ColorField({
   label,
   value,
   onChange,
+  error,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
+  error?: string
 }) {
   return (
     <Field label={label}>
@@ -448,10 +558,11 @@ function ColorField({
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={inputClass}
+          className={`${inputClass} ${error ? 'border-red-500' : ''}`}
           placeholder="#ffffff"
         />
       </div>
+      {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
     </Field>
   )
 }

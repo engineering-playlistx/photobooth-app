@@ -1,5 +1,6 @@
 import Replicate from 'replicate'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { getSupabaseAdminClient } from '../utils/supabase-admin'
 
 export interface GenerateFaceSwapParams {
   userPhotoUrl: string
@@ -29,17 +30,10 @@ const THEME_PROMPTS: Record<string, string | undefined> = {
 }
 
 // ---------------------------------------------------------------------------
-// In-memory job store for Google AI (simulates Replicate's async predictions)
-// NOTE: This works for Node.js long-running servers. For Cloudflare Workers
-// (stateless/ephemeral), replace with a persistent store (e.g. Supabase table).
+// Supabase-backed job store for Google AI predictions.
+// Replaces the previous module-level Map which was incompatible with
+// Cloudflare Workers (stateless/ephemeral — each isolate has an empty Map).
 // ---------------------------------------------------------------------------
-interface GoogleJobEntry {
-  status: 'processing' | 'succeeded' | 'failed'
-  output?: string // base64 data URI of the generated image
-  error?: string
-}
-
-const googleJobStore = new Map<string, GoogleJobEntry>()
 
 export class AIGenerationService {
   private replicate: Replicate | null = null
@@ -123,25 +117,46 @@ export class AIGenerationService {
   // Google AI provider
   // ---------------------------------------------------------------------------
 
-  private createGooglePrediction(params: GenerateFaceSwapParams): string {
+  private async createGooglePrediction(
+    params: GenerateFaceSwapParams,
+  ): Promise<string> {
     const jobId = crypto.randomUUID()
-    googleJobStore.set(jobId, { status: 'processing' })
+    const admin = getSupabaseAdminClient()
 
     console.log(`[AIService] Creating Google AI job — id: ${jobId}`)
     console.log(`[AIService] Theme: ${params.theme}`)
 
+    // Insert initial row so status polling can find it immediately
+    const { error: insertError } = await admin
+      .from('ai_jobs')
+      .insert({ id: jobId, status: 'processing' })
+    if (insertError) {
+      throw new Error(`Failed to create ai_job row: ${insertError.message}`)
+    }
+
     // Fire and forget — don't await, so the route returns immediately
     this._generateGoogleBase64(jobId, params)
-      .then((outputBase64) => {
+      .then(async (outputBase64) => {
         console.log(`[AIService] Google AI job ${jobId} succeeded`)
-        googleJobStore.set(jobId, { status: 'succeeded', output: outputBase64 })
+        await admin
+          .from('ai_jobs')
+          .update({
+            status: 'succeeded',
+            output: outputBase64,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', jobId)
       })
-      .catch((err) => {
+      .catch(async (err) => {
         console.error(`[AIService] Google AI job ${jobId} failed:`, err)
-        googleJobStore.set(jobId, {
-          status: 'failed',
-          error: err instanceof Error ? err.message : String(err),
-        })
+        await admin
+          .from('ai_jobs')
+          .update({
+            status: 'failed',
+            error: err instanceof Error ? err.message : String(err),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', jobId)
       })
 
     return jobId
@@ -295,14 +310,20 @@ export class AIGenerationService {
     generatedBase64?: string // set for Google AI succeeded jobs (already base64)
   }> {
     if (this.provider === 'google') {
-      const job = googleJobStore.get(predictionId)
-      if (!job) {
+      const admin = getSupabaseAdminClient()
+      const { data, error } = await admin
+        .from('ai_jobs')
+        .select('status, output, error')
+        .eq('id', predictionId)
+        .single()
+      if (error) {
         return { status: 'failed', output: null }
       }
       return {
-        status: job.status,
-        output: job.output ?? null,
-        generatedBase64: job.status === 'succeeded' ? job.output : undefined,
+        status: data.status as string,
+        output: (data.output as string | null) ?? null,
+        generatedBase64:
+          data.status === 'succeeded' ? (data.output as string) : undefined,
       }
     }
 

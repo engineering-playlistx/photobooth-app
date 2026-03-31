@@ -11,6 +11,8 @@ import type { EventConfig } from "../types/event-config";
 
 interface EventConfigContextType {
   config: EventConfig;
+  apiBaseUrl: string;
+  apiClientKey: string;
   refresh: () => void;
 }
 
@@ -39,6 +41,8 @@ type LoadStatus = "loading" | "ready" | "error";
 
 export function EventConfigProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<EventConfig | null>(null);
+  const [apiBaseUrl, setApiBaseUrl] = useState("");
+  const [apiClientKey, setApiClientKey] = useState("");
   const [status, setStatus] = useState<LoadStatus>("loading");
 
   // Refs avoid stale-closure issues inside the async callback
@@ -50,10 +54,16 @@ export function EventConfigProvider({ children }: { children: ReactNode }) {
       if (!kioskConfigRef.current) {
         kioskConfigRef.current = await window.electronAPI!.getKioskConfig();
       }
-      const { eventId, apiBaseUrl, apiClientKey } = kioskConfigRef.current;
-      const data = await fetchConfig(apiBaseUrl, apiClientKey, eventId);
+      const {
+        eventId,
+        apiBaseUrl: baseUrl,
+        apiClientKey: clientKey,
+      } = kioskConfigRef.current;
+      const data = await fetchConfig(baseUrl, clientKey, eventId);
       configRef.current = data;
       setConfig(data);
+      setApiBaseUrl(baseUrl);
+      setApiClientKey(clientKey);
       setStatus("ready");
     } catch (err) {
       console.error("[EventConfig] fetch failed:", err);
@@ -102,7 +112,9 @@ export function EventConfigProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <EventConfigContext.Provider value={{ config, refresh }}>
+    <EventConfigContext.Provider
+      value={{ config, apiBaseUrl, apiClientKey, refresh }}
+    >
       {children}
     </EventConfigContext.Provider>
   );

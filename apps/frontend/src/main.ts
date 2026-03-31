@@ -369,38 +369,50 @@ ipcMain.handle(
       // Write HTML file
       fs.writeFileSync(htmlPath, htmlContent);
 
-      // Load the HTML file
+      // Load the HTML file and wait for all content (including images) to render
       await printWindow.loadFile(htmlPath);
-
-      // Wait for content to load
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Print the window
-      printWindow.webContents.print({
-        silent: true,
-        deviceName: printerName ?? "DS-RX1",
-        printBackground: true,
-        landscape: true,
-        color: true,
-        margins: {
-          marginType: "none",
-        },
+      await new Promise<void>((resolve) => {
+        if (printWindow.webContents.isLoading()) {
+          printWindow.webContents.once("did-finish-load", () => resolve());
+        } else {
+          resolve();
+        }
       });
 
-      // Close the print window and clean up after a delay
-      setTimeout(() => {
+      const cleanup = () => {
         printWindow.close();
-        // Clean up temp HTML file
-        const htmlPath = path.join(path.dirname(filePath), "print-temp.html");
-        const fs = require("fs");
+        const tempHtmlPath = path.join(
+          path.dirname(filePath),
+          "print-temp.html",
+        );
         try {
-          if (fs.existsSync(htmlPath)) {
-            fs.unlinkSync(htmlPath);
+          if (fs.existsSync(tempHtmlPath)) {
+            fs.unlinkSync(tempHtmlPath);
           }
         } catch (err) {
           console.error("Failed to delete temp HTML file:", err);
         }
-      }, 1000);
+      };
+
+      // Print the window; cleanup runs in the completion callback
+      printWindow.webContents.print(
+        {
+          silent: true,
+          deviceName: printerName ?? "DS-RX1",
+          printBackground: true,
+          landscape: true,
+          color: true,
+          margins: {
+            marginType: "none",
+          },
+        },
+        (success, failureReason) => {
+          if (!success) {
+            console.error("Print job failed:", failureReason);
+          }
+          cleanup();
+        },
+      );
 
       return { success: true };
     } catch (error) {

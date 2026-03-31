@@ -120,7 +120,7 @@ export const Route = createFileRoute('/api/photo')({
           })
 
           return json({
-            message: 'Photo uploaded and email sent successfully',
+            message: 'Photo saved successfully',
             photoUrl: result.photoUrl,
           })
         } catch (error) {

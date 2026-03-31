@@ -12,13 +12,6 @@ import { savePhotoFile, savePhotoResult } from "../utils/database";
 import QRCodeModal from "../components/QRCodeModal";
 import { useEventConfig } from "../contexts/EventConfigContext";
 
-const API_BASE_URL =
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (import.meta as any).env?.VITE_API_BASE_URL || "http://localhost:3000";
-const API_CLIENT_KEY =
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (import.meta as any).env?.VITE_API_CLIENT_KEY || "";
-
 const SUPABASE_BUCKET = "photobooth-bucket";
 
 function base64ToBlob(base64: string, contentType = "", sliceSize = 512) {
@@ -39,7 +32,7 @@ function base64ToBlob(base64: string, contentType = "", sliceSize = 512) {
 
 export default function ResultPage() {
   const { eventId, finalPhoto, selectedTheme, userInfo } = usePhotobooth();
-  const { config: eventConfig } = useEventConfig();
+  const { config: eventConfig, apiBaseUrl, apiClientKey } = useEventConfig();
   const supabaseFolder = eventId ? `events/${eventId}/photos` : "public";
   const navigate = useNavigate();
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -185,11 +178,11 @@ export default function ResultPage() {
         if (uploadError) {
           console.error("Supabase upload error:", uploadError);
         } else {
-          const response = await fetch(`${API_BASE_URL}/api/photo`, {
+          const response = await fetch(`${apiBaseUrl}/api/photo`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${API_CLIENT_KEY}`,
+              Authorization: `Bearer ${apiClientKey}`,
             },
             body: JSON.stringify({
               photoPath: supabasePath,
@@ -216,7 +209,14 @@ export default function ResultPage() {
     };
 
     void saveToDatabase();
-  }, [finalPhoto, selectedTheme, userInfo, photoFileName]);
+  }, [
+    finalPhoto,
+    selectedTheme,
+    userInfo,
+    photoFileName,
+    apiBaseUrl,
+    apiClientKey,
+  ]);
 
   return (
     <div className="h-svh aspect-9/16 mx-auto relative flex items-center justify-center bg-primary text-secondary">

@@ -19,6 +19,17 @@ function SelectPage() {
     void navigate("/camera");
   }
 
+  if (themes.length === 0) {
+    return (
+      <div className="h-svh aspect-9/16 mx-auto flex flex-col items-center justify-center gap-6 bg-black px-12 text-center">
+        <p className="text-white text-3xl font-bold">No themes configured</p>
+        <p className="text-white/70 text-xl">
+          No themes are configured for this event. Contact your event manager.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-svh aspect-9/16 mx-auto relative flex flex-col items-center justify-center bg-primary text-secondary overflow-hidden">
       <div
