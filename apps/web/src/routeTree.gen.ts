@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTestGoogleAiRouteImport } from './routes/api.test-google-ai'
 import { Route as ApiPhotoRouteImport } from './routes/api.photo'
+import { Route as ApiConfigRouteImport } from './routes/api.config'
 import { Route as ApiAiGenerateStatusRouteImport } from './routes/api.ai-generate-status'
 import { Route as ApiAiGenerateRouteImport } from './routes/api.ai-generate'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
@@ -36,6 +37,11 @@ const ApiTestGoogleAiRoute = ApiTestGoogleAiRouteImport.update({
 const ApiPhotoRoute = ApiPhotoRouteImport.update({
   id: '/api/photo',
   path: '/api/photo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiConfigRoute = ApiConfigRouteImport.update({
+  id: '/api/config',
+  path: '/api/config',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAiGenerateStatusRoute = ApiAiGenerateStatusRouteImport.update({
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/ai-generate': typeof ApiAiGenerateRoute
   '/api/ai-generate-status': typeof ApiAiGenerateStatusRoute
+  '/api/config': typeof ApiConfigRoute
   '/api/photo': typeof ApiPhotoRoute
   '/api/test-google-ai': typeof ApiTestGoogleAiRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/ai-generate': typeof ApiAiGenerateRoute
   '/api/ai-generate-status': typeof ApiAiGenerateStatusRoute
+  '/api/config': typeof ApiConfigRoute
   '/api/photo': typeof ApiPhotoRoute
   '/api/test-google-ai': typeof ApiTestGoogleAiRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api/ai-generate': typeof ApiAiGenerateRoute
   '/api/ai-generate-status': typeof ApiAiGenerateStatusRoute
+  '/api/config': typeof ApiConfigRoute
   '/api/photo': typeof ApiPhotoRoute
   '/api/test-google-ai': typeof ApiTestGoogleAiRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api/ai-generate'
     | '/api/ai-generate-status'
+    | '/api/config'
     | '/api/photo'
     | '/api/test-google-ai'
     | '/demo/api/names'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api/ai-generate'
     | '/api/ai-generate-status'
+    | '/api/config'
     | '/api/photo'
     | '/api/test-google-ai'
     | '/demo/api/names'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api/ai-generate'
     | '/api/ai-generate-status'
+    | '/api/config'
     | '/api/photo'
     | '/api/test-google-ai'
     | '/demo/api/names'
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiAiGenerateRoute: typeof ApiAiGenerateRoute
   ApiAiGenerateStatusRoute: typeof ApiAiGenerateStatusRoute
+  ApiConfigRoute: typeof ApiConfigRoute
   ApiPhotoRoute: typeof ApiPhotoRoute
   ApiTestGoogleAiRoute: typeof ApiTestGoogleAiRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
@@ -220,6 +233,13 @@ declare module '@tanstack/react-router' {
       path: '/api/photo'
       fullPath: '/api/photo'
       preLoaderRoute: typeof ApiPhotoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/config': {
+      id: '/api/config'
+      path: '/api/config'
+      fullPath: '/api/config'
+      preLoaderRoute: typeof ApiConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/ai-generate-status': {
@@ -299,6 +319,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiAiGenerateRoute: ApiAiGenerateRoute,
   ApiAiGenerateStatusRoute: ApiAiGenerateStatusRoute,
+  ApiConfigRoute: ApiConfigRoute,
   ApiPhotoRoute: ApiPhotoRoute,
   ApiTestGoogleAiRoute: ApiTestGoogleAiRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
