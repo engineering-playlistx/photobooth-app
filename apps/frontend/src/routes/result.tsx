@@ -131,10 +131,9 @@ export default function ResultPage() {
         addToast("Photo not saved yet. Please wait.", "error");
         return;
       }
-      const result = await print(
-        savedPhotoPath,
-        eventConfig.techConfig.printerName,
-      );
+      const printerName = eventConfig.techConfig.printerName;
+      console.log(`[Print] Using printer: "${printerName}"`);
+      const result = await print(savedPhotoPath, printerName);
       if (result.success) {
         console.log("Print successful!");
         if (result.filepath) {
