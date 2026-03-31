@@ -463,7 +463,7 @@ Tasks are ordered by priority. P0/P1 should be completed before or during Phase 
 
 ---
 
-### TASK-B.01 — Fix consent validation on form submit (P0, legal)
+### ~~TASK-B.01 — Fix consent validation on form submit (P0, legal)~~ ✅
 
 **What:** Check `isConsentChecked` before navigating from `/form` to `/loading`. If consent is required (`config.formFields.consent === true`) and unchecked, show a validation message and block navigation.
 
@@ -474,7 +474,7 @@ Tasks are ordered by priority. P0/P1 should be completed before or during Phase 
 
 ---
 
-### TASK-B.02 — Replace Google AI in-memory job store with Supabase table (P0, production blocker)
+### ~~TASK-B.02 — Replace Google AI in-memory job store with Supabase table (P0, production blocker)~~ ✅
 
 **What:** Create an `ai_jobs` table in Supabase. Replace `googleJobStore` Map with reads/writes to this table. `createGooglePrediction()` inserts a row; the background async process updates it; `getPredictionStatus()` reads from it.
 
@@ -498,7 +498,7 @@ CREATE TABLE ai_jobs (
 
 ---
 
-### TASK-B.03 — Fix print race: wait for `did-finish-load` before printing (P0)
+### ~~TASK-B.03 — Fix print race: wait for `did-finish-load` before printing (P0)~~ ✅
 
 **What:** Replace the `setTimeout(500ms)` pre-print wait with a proper `webContents.did-finish-load` event listener. Use `webContents.on('after-print')` to close the window and clean up temp files instead of a fixed 1-second timeout.
 
@@ -509,7 +509,7 @@ CREATE TABLE ai_jobs (
 
 ---
 
-### TASK-B.04 — Move API client key out of Vite env into kiosk.config.json (P1, security)
+### ~~TASK-B.04 — Move API client key out of Vite env into kiosk.config.json (P1, security)~~ ✅
 
 **What:** The `apiClientKey` field already exists in `KioskConfig` (added in Phase 2). Update `result.tsx` to read `API_CLIENT_KEY` from `EventConfigContext` or `KioskConfig` IPC call rather than `import.meta.env.VITE_API_CLIENT_KEY`. Remove `VITE_API_CLIENT_KEY` from `apps/frontend/.env`.
 
@@ -522,7 +522,7 @@ CREATE TABLE ai_jobs (
 
 ---
 
-### TASK-B.05 — Add rate limiting to backend API endpoints (P1, security)
+### ~~TASK-B.05 — Add rate limiting to backend API endpoints (P1, security)~~ ✅
 
 **What:** Configure Cloudflare rate limiting rules in `wrangler.jsonc` to limit:
 - `/api/ai-generate`: max 5 req/min per IP
@@ -536,7 +536,7 @@ CREATE TABLE ai_jobs (
 
 ---
 
-### TASK-B.06 — Add validation to config editor before save (P1)
+### ~~TASK-B.06 — Add validation to config editor before save (P1)~~ ✅
 
 **What:** Before calling `saveEventConfig`, validate that:
 - `primaryColor` and `secondaryColor` are valid hex color strings (`/^#[0-9a-fA-F]{6}$/`)
@@ -556,7 +556,7 @@ Add a "Discard changes" button that resets the form to the loaded state.
 
 ---
 
-### TASK-B.07 — Fix misleading success message in `/api/photo` response (P1)
+### ~~TASK-B.07 — Fix misleading success message in `/api/photo` response (P1)~~ ✅
 
 **What:** The response body says `"Photo uploaded and email sent successfully"` but email is disabled. Change it to `"Photo saved successfully"`.
 
@@ -648,7 +648,7 @@ Add a "Discard changes" button that resets the form to the loaded state.
 
 ---
 
-### TASK-B.15 — Add empty-themes guard to select.tsx (P2)
+### ~~TASK-B.15 — Add empty-themes guard to select.tsx (P2)~~ ✅
 
 **What:** If `config.aiConfig.themes.length === 0`, show an operator-visible error screen ("No themes configured for this event") instead of a blank button grid.
 
@@ -710,23 +710,23 @@ Add a "Discard changes" button that resets the form to the loaded state.
 
 | ID | Title | Priority | Phase |
 |----|-------|----------|-------|
-| RISK-01 | Google AI job store breaks on Cloudflare Workers | P0 | Pre-Phase 5 |
+| RISK-01 | Google AI job store breaks on Cloudflare Workers | P0 | ✅ Done (TASK-B.02) |
 | RISK-02 | Partial save has no recovery path | P0 | Phase 6 (existing) |
-| RISK-03 | Print timing race condition | P0 | Pre-Phase 5 |
-| SEC-01 | API client key exposed in frontend bundle | P1 | Pre-Phase 5 |
+| RISK-03 | Print timing race condition | P0 | ✅ Done (TASK-B.03) |
+| SEC-01 | API client key exposed in frontend bundle | P1 | ✅ Done (TASK-B.04) |
 | SEC-02 | Dashboard login leaks Supabase error messages | P2 | Backlog |
 | SEC-03 | Name sanitization too narrow | P2 | Backlog |
-| SEC-04 | No rate limiting on API endpoints | P1 | Pre-Phase 5 |
-| DATA-01 | Consent not enforced on form submit | P0 | Pre-Phase 5 |
+| SEC-04 | No rate limiting on API endpoints | P1 | ✅ Done (TASK-B.05) |
+| DATA-01 | Consent not enforced on form submit | P0 | ✅ Done (TASK-B.01) |
 | DATA-02 | `hasSaved` flag doesn't survive navigation | P2 | Backlog |
 | DATA-03 | No unique constraint on users table | P2 | Backlog |
 | DATA-04 | Supabase temp photo orphaned on failed prediction | P2 | Backlog |
 | UX-01 | No save progress feedback on result page | P2 | Backlog |
 | UX-02 | Inactivity fires mid-generation on short timeout | P2 | Backlog |
-| UX-03 | Blank screen if themes array is empty | P2 | Pre-Phase 5 |
+| UX-03 | Blank screen if themes array is empty | P2 | ✅ Done (TASK-B.15) |
 | UX-04 | No "last retake" warning on camera page | P3 | Backlog |
-| UX-05 | Config editor has no undo / revert | P2 | Backlog |
-| UX-06 | Config editor accepts invalid numeric values | P1 | Pre-Phase 5 |
+| UX-05 | Config editor has no undo / revert | P2 | ✅ Done (TASK-B.06) |
+| UX-06 | Config editor accepts invalid numeric values | P1 | ✅ Done (TASK-B.06) |
 | UX-07 | No pagination on guest list and photo gallery | P2 | Backlog |
 | UX-08 | Bulk ZIP crashes browser on large events | P2 | Backlog |
 | CODE-01 | `getKioskConfig()` typed as sync, called as async | P2 | Backlog |
@@ -735,7 +735,7 @@ Add a "Discard changes" button that resets the form to the loaded state.
 | CODE-04 | SQLite `JSON.parse` has no error handling | P2 | Backlog |
 | CODE-05 | `moduleFlow` unused (intentional stub) | — | Future phase |
 | CODE-06 | `RacingTheme` reference may be stale after Phase 3 | P2 | Verify |
-| CODE-07 | Email silently disabled; success message is misleading | P1 | Pre-Phase 5 |
+| CODE-07 | Email silently disabled; success message is misleading | P1 | ✅ Done (TASK-B.07) |
 | CODE-08 | `"DS-RX1"` fallback printer still hardcoded | P2 | Backlog |
 | PERF-01 | Session auth hits Supabase on every dashboard nav | P2 | Backlog |
 | PERF-02 | Config endpoint has no HTTP caching | P2 | Backlog |
@@ -747,11 +747,13 @@ Add a "Discard changes" button that resets the form to the loaded state.
 
 Before starting Phase 5 (Guest Portal), the following items should be resolved, as Phase 5 builds directly on the data and API layers analyzed above:
 
-- [ ] **TASK-B.01** — Consent validation (legal requirement)
-- [ ] **TASK-B.02** — Google AI job store (breaks production if Google is the provider)
-- [ ] **TASK-B.03** — Print timing race (blank prints at events)
-- [ ] **TASK-B.04** — Move API key out of Vite env
-- [ ] **TASK-B.05** — Rate limiting on API endpoints
-- [ ] **TASK-B.06** — Config editor validation + discard button
-- [ ] **TASK-B.07** — Fix misleading "email sent" message
-- [ ] **UX-03 / TASK-B.15** — Empty themes guard in select.tsx
+- [x] **TASK-B.01** — Consent validation (legal requirement) ✅
+- [x] **TASK-B.02** — Google AI job store (breaks production if Google is the provider) ✅
+- [x] **TASK-B.03** — Print timing race (blank prints at events) ✅
+- [x] **TASK-B.04** — Move API key out of Vite env ✅
+- [x] **TASK-B.05** — Rate limiting on API endpoints ✅
+- [x] **TASK-B.06** — Config editor validation + discard button ✅
+- [x] **TASK-B.07** — Fix misleading "email sent" message ✅
+- [x] **UX-03 / TASK-B.15** — Empty themes guard in select.tsx ✅
+
+**All pre-Phase 5 items completed 2026-03-31.**

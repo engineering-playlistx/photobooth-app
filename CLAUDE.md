@@ -26,7 +26,7 @@ The app is being migrated from a hardcoded single-client app → config-driven m
 | `docs/scale-up/04-task-decomposition.md` | Atomic executable tasks with dependency graph |
 | `docs/scale-up/05-execution-strategy.md` | How to work with Claude Code on these tasks |
 
-**Current phase:** Phase 1 (EventId Threading) — complete ✅. Starting Phase 2 (kiosk.config.json + Config Endpoint).
+**Current phase:** Phases 1–4 complete ✅. Pre-Phase 5 backlog (TASK-B.01–B.07, B.15) complete ✅. Starting Phase 5 (Guest Portal).
 
 ---
 
