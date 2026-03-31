@@ -401,7 +401,7 @@ Seed the `config_json` with current Shell values: themes (pitcrew, motogp, f1), 
 
 ---
 
-### TASK-4.3: Config editor (branding + AI config + tech config)
+### ~~TASK-4.3: Config editor (branding + AI config + tech config)~~ ✅ DONE
 
 **What:** Form UI to edit `event_configs` in Supabase.
 

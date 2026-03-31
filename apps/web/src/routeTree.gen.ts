@@ -29,6 +29,9 @@ import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
 import { Route as DashboardLayoutEventsEventIdIndexRouteImport } from './routes/dashboard/_layout.events.$eventId.index'
+import { Route as DashboardLayoutEventsEventIdPhotosRouteImport } from './routes/dashboard/_layout.events.$eventId.photos'
+import { Route as DashboardLayoutEventsEventIdGuestsRouteImport } from './routes/dashboard/_layout.events.$eventId.guests'
+import { Route as DashboardLayoutEventsEventIdConfigRouteImport } from './routes/dashboard/_layout.events.$eventId.config'
 
 const DashboardRouteImport = createFileRoute('/dashboard')()
 
@@ -127,6 +130,24 @@ const DashboardLayoutEventsEventIdIndexRoute =
     path: '/events/$eventId/',
     getParentRoute: () => DashboardLayoutRoute,
   } as any)
+const DashboardLayoutEventsEventIdPhotosRoute =
+  DashboardLayoutEventsEventIdPhotosRouteImport.update({
+    id: '/events/$eventId/photos',
+    path: '/events/$eventId/photos',
+    getParentRoute: () => DashboardLayoutRoute,
+  } as any)
+const DashboardLayoutEventsEventIdGuestsRoute =
+  DashboardLayoutEventsEventIdGuestsRouteImport.update({
+    id: '/events/$eventId/guests',
+    path: '/events/$eventId/guests',
+    getParentRoute: () => DashboardLayoutRoute,
+  } as any)
+const DashboardLayoutEventsEventIdConfigRoute =
+  DashboardLayoutEventsEventIdConfigRouteImport.update({
+    id: '/events/$eventId/config',
+    path: '/events/$eventId/config',
+    getParentRoute: () => DashboardLayoutRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -146,6 +167,9 @@ export interface FileRoutesByFullPath {
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
+  '/dashboard/events/$eventId/config': typeof DashboardLayoutEventsEventIdConfigRoute
+  '/dashboard/events/$eventId/guests': typeof DashboardLayoutEventsEventIdGuestsRoute
+  '/dashboard/events/$eventId/photos': typeof DashboardLayoutEventsEventIdPhotosRoute
   '/dashboard/events/$eventId': typeof DashboardLayoutEventsEventIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -165,6 +189,9 @@ export interface FileRoutesByTo {
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
+  '/dashboard/events/$eventId/config': typeof DashboardLayoutEventsEventIdConfigRoute
+  '/dashboard/events/$eventId/guests': typeof DashboardLayoutEventsEventIdGuestsRoute
+  '/dashboard/events/$eventId/photos': typeof DashboardLayoutEventsEventIdPhotosRoute
   '/dashboard/events/$eventId': typeof DashboardLayoutEventsEventIdIndexRoute
 }
 export interface FileRoutesById {
@@ -187,6 +214,9 @@ export interface FileRoutesById {
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
+  '/dashboard/_layout/events/$eventId/config': typeof DashboardLayoutEventsEventIdConfigRoute
+  '/dashboard/_layout/events/$eventId/guests': typeof DashboardLayoutEventsEventIdGuestsRoute
+  '/dashboard/_layout/events/$eventId/photos': typeof DashboardLayoutEventsEventIdPhotosRoute
   '/dashboard/_layout/events/$eventId/': typeof DashboardLayoutEventsEventIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -209,6 +239,9 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
     | '/demo/start/ssr'
+    | '/dashboard/events/$eventId/config'
+    | '/dashboard/events/$eventId/guests'
+    | '/dashboard/events/$eventId/photos'
     | '/dashboard/events/$eventId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -228,6 +261,9 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
     | '/demo/start/ssr'
+    | '/dashboard/events/$eventId/config'
+    | '/dashboard/events/$eventId/guests'
+    | '/dashboard/events/$eventId/photos'
     | '/dashboard/events/$eventId'
   id:
     | '__root__'
@@ -249,6 +285,9 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
     | '/demo/start/ssr/'
+    | '/dashboard/_layout/events/$eventId/config'
+    | '/dashboard/_layout/events/$eventId/guests'
+    | '/dashboard/_layout/events/$eventId/photos'
     | '/dashboard/_layout/events/$eventId/'
   fileRoutesById: FileRoutesById
 }
@@ -405,16 +444,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLayoutEventsEventIdIndexRouteImport
       parentRoute: typeof DashboardLayoutRoute
     }
+    '/dashboard/_layout/events/$eventId/photos': {
+      id: '/dashboard/_layout/events/$eventId/photos'
+      path: '/events/$eventId/photos'
+      fullPath: '/dashboard/events/$eventId/photos'
+      preLoaderRoute: typeof DashboardLayoutEventsEventIdPhotosRouteImport
+      parentRoute: typeof DashboardLayoutRoute
+    }
+    '/dashboard/_layout/events/$eventId/guests': {
+      id: '/dashboard/_layout/events/$eventId/guests'
+      path: '/events/$eventId/guests'
+      fullPath: '/dashboard/events/$eventId/guests'
+      preLoaderRoute: typeof DashboardLayoutEventsEventIdGuestsRouteImport
+      parentRoute: typeof DashboardLayoutRoute
+    }
+    '/dashboard/_layout/events/$eventId/config': {
+      id: '/dashboard/_layout/events/$eventId/config'
+      path: '/events/$eventId/config'
+      fullPath: '/dashboard/events/$eventId/config'
+      preLoaderRoute: typeof DashboardLayoutEventsEventIdConfigRouteImport
+      parentRoute: typeof DashboardLayoutRoute
+    }
   }
 }
 
 interface DashboardLayoutRouteChildren {
   DashboardLayoutIndexRoute: typeof DashboardLayoutIndexRoute
+  DashboardLayoutEventsEventIdConfigRoute: typeof DashboardLayoutEventsEventIdConfigRoute
+  DashboardLayoutEventsEventIdGuestsRoute: typeof DashboardLayoutEventsEventIdGuestsRoute
+  DashboardLayoutEventsEventIdPhotosRoute: typeof DashboardLayoutEventsEventIdPhotosRoute
   DashboardLayoutEventsEventIdIndexRoute: typeof DashboardLayoutEventsEventIdIndexRoute
 }
 
 const DashboardLayoutRouteChildren: DashboardLayoutRouteChildren = {
   DashboardLayoutIndexRoute: DashboardLayoutIndexRoute,
+  DashboardLayoutEventsEventIdConfigRoute:
+    DashboardLayoutEventsEventIdConfigRoute,
+  DashboardLayoutEventsEventIdGuestsRoute:
+    DashboardLayoutEventsEventIdGuestsRoute,
+  DashboardLayoutEventsEventIdPhotosRoute:
+    DashboardLayoutEventsEventIdPhotosRoute,
   DashboardLayoutEventsEventIdIndexRoute:
     DashboardLayoutEventsEventIdIndexRoute,
 }
