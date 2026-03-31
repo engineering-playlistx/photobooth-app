@@ -363,7 +363,7 @@ Seed the `config_json` with current Shell values: themes (pitcrew, motogp, f1), 
 
 ## Phase 4 — Basic Dashboard
 
-### TASK-4.1: Dashboard authentication
+### ~~TASK-4.1: Dashboard authentication~~ ✅ DONE
 
 **What:** Simple login page for the operator. Session-based auth (cookie). No client access.
 

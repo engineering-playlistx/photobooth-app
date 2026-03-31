@@ -8,13 +8,18 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createFileRoute } from '@tanstack/react-router'
+
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardLoginRouteImport } from './routes/dashboard/login'
+import { Route as DashboardLayoutRouteImport } from './routes/dashboard/_layout'
 import { Route as ApiTestGoogleAiRouteImport } from './routes/api.test-google-ai'
 import { Route as ApiPhotoRouteImport } from './routes/api.photo'
 import { Route as ApiConfigRouteImport } from './routes/api.config'
 import { Route as ApiAiGenerateStatusRouteImport } from './routes/api.ai-generate-status'
 import { Route as ApiAiGenerateRouteImport } from './routes/api.ai-generate'
+import { Route as DashboardLayoutIndexRouteImport } from './routes/dashboard/_layout.index'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoSentryTestingRouteImport } from './routes/demo/sentry.testing'
@@ -24,10 +29,26 @@ import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
 
+const DashboardRouteImport = createFileRoute('/dashboard')()
+
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardLoginRoute = DashboardLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardLayoutRoute = DashboardLayoutRouteImport.update({
+  id: '/_layout',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const ApiTestGoogleAiRoute = ApiTestGoogleAiRouteImport.update({
   id: '/api/test-google-ai',
@@ -53,6 +74,11 @@ const ApiAiGenerateRoute = ApiAiGenerateRouteImport.update({
   id: '/api/ai-generate',
   path: '/api/ai-generate',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardLayoutIndexRoute = DashboardLayoutIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardLayoutRoute,
 } as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
   id: '/demo/start/server-funcs',
@@ -102,10 +128,13 @@ export interface FileRoutesByFullPath {
   '/api/config': typeof ApiConfigRoute
   '/api/photo': typeof ApiPhotoRoute
   '/api/test-google-ai': typeof ApiTestGoogleAiRoute
+  '/dashboard': typeof DashboardLayoutRouteWithChildren
+  '/dashboard/login': typeof DashboardLoginRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/dashboard/': typeof DashboardLayoutIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
@@ -118,6 +147,8 @@ export interface FileRoutesByTo {
   '/api/config': typeof ApiConfigRoute
   '/api/photo': typeof ApiPhotoRoute
   '/api/test-google-ai': typeof ApiTestGoogleAiRoute
+  '/dashboard': typeof DashboardLayoutIndexRoute
+  '/dashboard/login': typeof DashboardLoginRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -135,10 +166,14 @@ export interface FileRoutesById {
   '/api/config': typeof ApiConfigRoute
   '/api/photo': typeof ApiPhotoRoute
   '/api/test-google-ai': typeof ApiTestGoogleAiRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard/_layout': typeof DashboardLayoutRouteWithChildren
+  '/dashboard/login': typeof DashboardLoginRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/dashboard/_layout/': typeof DashboardLayoutIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
@@ -153,10 +188,13 @@ export interface FileRouteTypes {
     | '/api/config'
     | '/api/photo'
     | '/api/test-google-ai'
+    | '/dashboard'
+    | '/dashboard/login'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/dashboard/'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
@@ -169,6 +207,8 @@ export interface FileRouteTypes {
     | '/api/config'
     | '/api/photo'
     | '/api/test-google-ai'
+    | '/dashboard'
+    | '/dashboard/login'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -185,10 +225,14 @@ export interface FileRouteTypes {
     | '/api/config'
     | '/api/photo'
     | '/api/test-google-ai'
+    | '/dashboard'
+    | '/dashboard/_layout'
+    | '/dashboard/login'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/dashboard/_layout/'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
@@ -202,6 +246,7 @@ export interface RootRouteChildren {
   ApiConfigRoute: typeof ApiConfigRoute
   ApiPhotoRoute: typeof ApiPhotoRoute
   ApiTestGoogleAiRoute: typeof ApiTestGoogleAiRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoSentryTestingRoute: typeof DemoSentryTestingRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
@@ -214,12 +259,33 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/login': {
+      id: '/dashboard/login'
+      path: '/login'
+      fullPath: '/dashboard/login'
+      preLoaderRoute: typeof DashboardLoginRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/_layout': {
+      id: '/dashboard/_layout'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardLayoutRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/api/test-google-ai': {
       id: '/api/test-google-ai'
@@ -255,6 +321,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/ai-generate'
       preLoaderRoute: typeof ApiAiGenerateRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/_layout/': {
+      id: '/dashboard/_layout/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardLayoutIndexRouteImport
+      parentRoute: typeof DashboardLayoutRoute
     }
     '/demo/start/server-funcs': {
       id: '/demo/start/server-funcs'
@@ -315,6 +388,32 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DashboardLayoutRouteChildren {
+  DashboardLayoutIndexRoute: typeof DashboardLayoutIndexRoute
+}
+
+const DashboardLayoutRouteChildren: DashboardLayoutRouteChildren = {
+  DashboardLayoutIndexRoute: DashboardLayoutIndexRoute,
+}
+
+const DashboardLayoutRouteWithChildren = DashboardLayoutRoute._addFileChildren(
+  DashboardLayoutRouteChildren,
+)
+
+interface DashboardRouteChildren {
+  DashboardLayoutRoute: typeof DashboardLayoutRouteWithChildren
+  DashboardLoginRoute: typeof DashboardLoginRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardLayoutRoute: DashboardLayoutRouteWithChildren,
+  DashboardLoginRoute: DashboardLoginRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiAiGenerateRoute: ApiAiGenerateRoute,
@@ -322,6 +421,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiConfigRoute: ApiConfigRoute,
   ApiPhotoRoute: ApiPhotoRoute,
   ApiTestGoogleAiRoute: ApiTestGoogleAiRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoSentryTestingRoute: DemoSentryTestingRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
