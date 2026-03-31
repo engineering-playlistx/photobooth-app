@@ -12,6 +12,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ResultSessionIdRouteImport } from './routes/result.$sessionId'
 import { Route as DashboardLoginRouteImport } from './routes/dashboard/login'
 import { Route as DashboardLayoutRouteImport } from './routes/dashboard/_layout'
 import { Route as ApiTestGoogleAiRouteImport } from './routes/api.test-google-ai'
@@ -43,6 +44,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResultSessionIdRoute = ResultSessionIdRouteImport.update({
+  id: '/result/$sessionId',
+  path: '/result/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardLoginRoute = DashboardLoginRouteImport.update({
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/api/test-google-ai': typeof ApiTestGoogleAiRoute
   '/dashboard': typeof DashboardLayoutRouteWithChildren
   '/dashboard/login': typeof DashboardLoginRoute
+  '/result/$sessionId': typeof ResultSessionIdRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/api/test-google-ai': typeof ApiTestGoogleAiRoute
   '/dashboard': typeof DashboardLayoutIndexRoute
   '/dashboard/login': typeof DashboardLoginRoute
+  '/result/$sessionId': typeof ResultSessionIdRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/dashboard/_layout': typeof DashboardLayoutRouteWithChildren
   '/dashboard/login': typeof DashboardLoginRoute
+  '/result/$sessionId': typeof ResultSessionIdRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
     | '/api/test-google-ai'
     | '/dashboard'
     | '/dashboard/login'
+    | '/result/$sessionId'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -253,6 +263,7 @@ export interface FileRouteTypes {
     | '/api/test-google-ai'
     | '/dashboard'
     | '/dashboard/login'
+    | '/result/$sessionId'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dashboard/_layout'
     | '/dashboard/login'
+    | '/result/$sessionId'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -299,6 +311,7 @@ export interface RootRouteChildren {
   ApiPhotoRoute: typeof ApiPhotoRoute
   ApiTestGoogleAiRoute: typeof ApiTestGoogleAiRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  ResultSessionIdRoute: typeof ResultSessionIdRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoSentryTestingRoute: typeof DemoSentryTestingRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
@@ -323,6 +336,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/result/$sessionId': {
+      id: '/result/$sessionId'
+      path: '/result/$sessionId'
+      fullPath: '/result/$sessionId'
+      preLoaderRoute: typeof ResultSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/login': {
@@ -514,6 +534,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPhotoRoute: ApiPhotoRoute,
   ApiTestGoogleAiRoute: ApiTestGoogleAiRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  ResultSessionIdRoute: ResultSessionIdRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoSentryTestingRoute: DemoSentryTestingRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
