@@ -8,6 +8,8 @@ type Guest = {
   phone: string
   selected_theme: string
   created_at: string
+  photo_path: string | null
+  photo_url: string | null
 }
 
 const getGuests = createServerFn({ method: 'GET' }).handler(async (ctx) => {
@@ -15,11 +17,19 @@ const getGuests = createServerFn({ method: 'GET' }).handler(async (ctx) => {
   const admin = getSupabaseAdminClient()
   const { data, error } = await admin
     .from('users')
-    .select('name, email, phone, selected_theme, created_at')
+    .select('name, email, phone, selected_theme, created_at, photo_path')
     .eq('event_id', eventId)
     .order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
-  return data as Array<Guest>
+
+  return data.map((g) => {
+    const photo_url = g.photo_path
+      ? admin.storage
+          .from('photobooth-bucket')
+          .getPublicUrl(g.photo_path as string).data.publicUrl
+      : null
+    return { ...g, photo_url } as Guest
+  })
 })
 
 export const Route = createFileRoute(
@@ -30,14 +40,20 @@ export const Route = createFileRoute(
   component: GuestListPage,
 })
 
+function photoFilename(path: string | null): string {
+  if (!path) return '—'
+  return path.split('/').pop() ?? path
+}
+
 function downloadCSV(guests: Array<Guest>, eventId: string) {
-  const headers = ['Name', 'Email', 'Phone', 'Theme', 'Timestamp']
+  const headers = ['Name', 'Email', 'Phone', 'Theme', 'Timestamp', 'Photo File']
   const rows = guests.map((g) => [
     g.name,
     g.email,
     g.phone,
     g.selected_theme,
     new Date(g.created_at).toISOString(),
+    photoFilename(g.photo_path),
   ])
   const csv = [headers, ...rows]
     .map((row) =>
@@ -96,6 +112,9 @@ function GuestListPage() {
             <thead className="bg-slate-800">
               <tr>
                 <th className="px-4 py-3 text-left text-slate-400 font-medium">
+                  Photo
+                </th>
+                <th className="px-4 py-3 text-left text-slate-400 font-medium">
                   Name
                 </th>
                 <th className="px-4 py-3 text-left text-slate-400 font-medium">
@@ -118,6 +137,26 @@ function GuestListPage() {
                   key={i}
                   className="bg-slate-900/50 hover:bg-slate-800/50 transition-colors"
                 >
+                  <td className="px-4 py-3">
+                    {guest.photo_url ? (
+                      <a
+                        href={guest.photo_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={photoFilename(guest.photo_path)}
+                        className="block w-8 shrink-0"
+                      >
+                        <img
+                          src={guest.photo_url}
+                          alt={guest.name}
+                          className="w-8 aspect-[9/16] object-cover rounded hover:opacity-80 transition-opacity"
+                          loading="lazy"
+                        />
+                      </a>
+                    ) : (
+                      <span className="text-slate-600">—</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-white">{guest.name}</td>
                   <td className="px-4 py-3 text-slate-300">{guest.email}</td>
                   <td className="px-4 py-3 text-slate-300">{guest.phone}</td>
