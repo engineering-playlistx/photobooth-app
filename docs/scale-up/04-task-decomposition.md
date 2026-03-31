@@ -457,7 +457,7 @@ Seed the `config_json` with current Shell values: themes (pitcrew, motogp, f1), 
 
 ## Phase 5 — Guest Portal
 
-### TASK-5.1: Add sessions table to Supabase
+### ~~TASK-5.1: Add sessions table to Supabase~~ ✅ DONE
 
 ```sql
 CREATE TABLE IF NOT EXISTS sessions (
@@ -473,7 +473,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 ---
 
-### TASK-5.2: Create session record on photo submission
+### ~~TASK-5.2: Create session record on photo submission~~ ✅ DONE
 
 **What:** `POST /api/photo` creates a `sessions` row and returns `sessionId`.
 
@@ -490,7 +490,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 ---
 
-### TASK-5.3: Build /result/:sessionId web page
+### ~~TASK-5.3: Build /result/:sessionId web page~~ ✅ DONE
 
 **What:** Server-rendered page that shows the guest's photo and a download button. Uses event branding.
 
@@ -508,7 +508,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 ---
 
-### TASK-5.4: Update QR code on kiosk to use session portal URL
+### ~~TASK-5.4: Update QR code on kiosk to use session portal URL~~ ✅ DONE
 
 **What:** QR code URL changes from raw Supabase URL to `<apiBaseUrl>/result/<sessionId>`.
 
