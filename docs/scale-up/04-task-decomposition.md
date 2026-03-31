@@ -419,7 +419,7 @@ Seed the `config_json` with current Shell values: themes (pitcrew, motogp, f1), 
 
 ---
 
-### TASK-4.4: Guest list + CSV export
+### ~~TASK-4.4: Guest list + CSV export~~ ✅ DONE
 
 **What:** Table of guests filtered by eventId. CSV export button.
 

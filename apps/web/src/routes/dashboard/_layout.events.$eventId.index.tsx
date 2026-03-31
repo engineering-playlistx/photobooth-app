@@ -70,13 +70,46 @@ function EventDetailPage() {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <StatCard label="Total Guests" value={String(event.guestCount)} />
         <StatCard label="Event ID" value={event.id} mono />
         <StatCard
           label="Created"
           value={new Date(event.created_at).toLocaleDateString()}
         />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link
+          to="/dashboard/events/$eventId/guests"
+          params={{ eventId: event.id }}
+          className="flex items-center justify-between p-4 bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-lg transition-colors group"
+        >
+          <div>
+            <p className="font-medium text-white">Guests</p>
+            <p className="text-sm text-slate-400 mt-0.5">
+              View list and export CSV
+            </p>
+          </div>
+          <span className="text-slate-500 group-hover:text-slate-300 transition-colors">
+            →
+          </span>
+        </Link>
+        <Link
+          to="/dashboard/events/$eventId/photos"
+          params={{ eventId: event.id }}
+          className="flex items-center justify-between p-4 bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-lg transition-colors group"
+        >
+          <div>
+            <p className="font-medium text-white">Photos</p>
+            <p className="text-sm text-slate-400 mt-0.5">
+              Gallery and bulk download
+            </p>
+          </div>
+          <span className="text-slate-500 group-hover:text-slate-300 transition-colors">
+            →
+          </span>
+        </Link>
       </div>
     </div>
   )
