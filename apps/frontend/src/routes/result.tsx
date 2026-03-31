@@ -87,11 +87,13 @@ export default function ResultPage() {
         }
       }
 
-      const { data } = supabase.storage
-        .from(SUPABASE_BUCKET)
-        .getPublicUrl(filePath);
-
-      setQrUrl(data.publicUrl);
+      // Use session portal URL if already set by auto-save; fall back to raw Supabase URL
+      if (!qrUrl) {
+        const { data } = supabase.storage
+          .from(SUPABASE_BUCKET)
+          .getPublicUrl(filePath);
+        setQrUrl(data.publicUrl);
+      }
       setShowQrModal(true);
     } catch (error) {
       console.error("Error uploading photo:", error);
@@ -198,7 +200,11 @@ export default function ResultPage() {
             const errorData = await response.json();
             console.error("Failed to save user to Supabase:", errorData);
           } else {
+            const responseData = await response.json();
             console.log("User record saved to Supabase successfully");
+            if (responseData.sessionId) {
+              setQrUrl(`${apiBaseUrl}/result/${responseData.sessionId}`);
+            }
           }
         }
       } catch (error) {
