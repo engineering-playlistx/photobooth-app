@@ -437,7 +437,7 @@ Seed the `config_json` with current Shell values: themes (pitcrew, motogp, f1), 
 
 ---
 
-### TASK-4.5: Photo gallery + download
+### ~~TASK-4.5: Photo gallery + download~~ ✅ DONE
 
 **What:** Grid of generated photos for the event. Individual download and bulk ZIP.
 
