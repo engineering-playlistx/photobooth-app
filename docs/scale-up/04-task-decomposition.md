@@ -383,7 +383,7 @@ Seed the `config_json` with current Shell values: themes (pitcrew, motogp, f1), 
 
 ---
 
-### TASK-4.2: Event list + event detail overview
+### ~~TASK-4.2: Event list + event detail overview~~ ✅ DONE
 
 **What:** Dashboard home page listing events. Event detail page showing guest count and metadata.
 
