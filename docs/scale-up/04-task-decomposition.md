@@ -525,6 +525,62 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 ---
 
+### ~~TASK-5.5: Remove global header and footer branding from guest portal~~ ✅ DONE
+
+**What:** The global `Header` component ("PlaylistX Photobooth") renders on every route including the guest portal — clients' end-users should not see it. Remove it from the portal. Also remove the "Powered by Shell Photobooth" footer from the portal page.
+
+**Files:**
+- `apps/web/src/components/Header.tsx` (suppress on `/result/*`)
+- `apps/web/src/routes/result.$sessionId.tsx` (remove footer text)
+
+**Input:** TASK-5.3 complete.
+
+**Output:**
+- Guest portal shows no global nav header
+- Guest portal shows no "Powered by" footer
+- Dashboard and other routes are unaffected
+
+**Risk:** Low — route-check in Header, no structural change.
+
+---
+
+### ~~TASK-5.6: Make portal heading configurable via EventConfig~~ ✅ DONE
+
+**What:** The portal currently hardcodes "Ready to Race," as the first line of the heading. This should be configurable per event in `BrandingConfig`.
+
+**Files:**
+- `apps/web/src/types/event-config.ts` (add `portalHeading: string | null` to `BrandingConfig`)
+- `apps/web/src/routes/result.$sessionId.tsx` (use `branding.portalHeading`, fall back to guest name only if null)
+
+**Input:** TASK-5.5 complete.
+
+**Output:**
+- `BrandingConfig.portalHeading` is a new nullable field
+- Portal heading renders `{portalHeading}` + `{guestName}!` when set; renders just `{guestName}!` when null
+- Existing event configs without the field degrade gracefully (no crash, no empty heading)
+
+**Risk:** Low — additive type change, null-safe fallback.
+
+---
+
+### ~~TASK-5.7: Fix download button to trigger real on-device download~~ ✅ DONE
+
+**What:** `<a href={supabaseUrl} download>` does not trigger a download on mobile because the browser cannot force-download cross-origin URLs. Replace with a button that fetches the image as a blob and triggers a local download.
+
+**Files:**
+- `apps/web/src/routes/result.$sessionId.tsx`
+
+**Input:** TASK-5.5 complete.
+
+**Output:**
+- Tapping "Download Photo" saves the image to the device photo library / Downloads folder
+- Button shows a loading state while fetching
+- Error toast if fetch fails
+
+**Risk:** Low. Requires Supabase Storage CORS to allow the portal origin — already configured for the kiosk. Verify on a real mobile device.
+
+---
+
 ## Phase 6 — Resilience (Post-Migration Backlog)
 
 ### TASK-6.1: AI provider fallback chain (Replicate → Google → error)
