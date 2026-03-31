@@ -13,6 +13,7 @@ export interface BrandingConfig {
   secondaryColor: string
   fontFamily: string | null
   backgroundUrl: string | null
+  portalHeading: string | null
 }
 
 export interface AiThemeConfig {

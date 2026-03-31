@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
@@ -37,12 +37,14 @@ const getSessionData = createServerFn({ method: 'GET' }).handler(
       .eq('event_id', session.event_id)
       .single()
 
-    const branding: BrandingConfig = eventConfig?.config_json?.branding ?? {
+    const branding: BrandingConfig = {
       logoUrl: null,
       primaryColor: '#ffc600',
       secondaryColor: '#dd1d21',
       fontFamily: null,
       backgroundUrl: null,
+      portalHeading: null,
+      ...(eventConfig?.config_json?.branding ?? {}),
     }
 
     const userInfo = session.user_info as { name: string } | null
@@ -63,8 +65,22 @@ export const Route = createFileRoute('/result/$sessionId')({
   component: GuestPortalPage,
 })
 
+async function triggerBlobDownload(url: string, filename: string) {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error('Failed to fetch photo')
+  const blob = await res.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = objectUrl
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(objectUrl)
+}
+
 function GuestPortalPage() {
   const data = Route.useLoaderData()
+  const [downloading, setDownloading] = useState(false)
+  const [downloadError, setDownloadError] = useState<string | null>(null)
 
   if (!data) {
     return (
@@ -96,12 +112,14 @@ function GuestPortalPage() {
         )}
 
         <div className="text-center">
-          <p
-            className="text-3xl font-black"
-            style={{ color: branding.primaryColor }}
-          >
-            Ready to Race,
-          </p>
+          {branding.portalHeading && (
+            <p
+              className="text-3xl font-black"
+              style={{ color: branding.primaryColor }}
+            >
+              {branding.portalHeading}
+            </p>
+          )}
           <p className="text-3xl font-black text-white">{guestName}!</p>
         </div>
 
@@ -111,23 +129,29 @@ function GuestPortalPage() {
           className="w-full rounded-2xl shadow-2xl border border-white/10"
         />
 
-        <a
-          href={photoUrl}
-          download
-          target="_blank"
-          rel="noreferrer"
-          className="w-full text-center py-4 rounded-xl text-lg font-bold transition-opacity hover:opacity-90 active:opacity-75"
+        <button
+          type="button"
+          disabled={downloading}
+          onClick={() => {
+            setDownloading(true)
+            setDownloadError(null)
+            triggerBlobDownload(photoUrl, `${guestName}-photo.jpg`)
+              .catch(() =>
+                setDownloadError('Download failed. Please try again.'),
+              )
+              .finally(() => setDownloading(false))
+          }}
+          className="w-full text-center py-4 rounded-xl text-lg font-bold transition-opacity hover:opacity-90 active:opacity-75 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
             backgroundColor: branding.primaryColor,
             color: branding.secondaryColor,
           }}
         >
-          Download Photo
-        </a>
-
-        <p className="text-white/40 text-xs text-center">
-          Powered by Shell Photobooth
-        </p>
+          {downloading ? 'Downloading…' : 'Download Photo'}
+        </button>
+        {downloadError && (
+          <p className="text-red-400 text-sm text-center">{downloadError}</p>
+        )}
       </div>
     </div>
   )
