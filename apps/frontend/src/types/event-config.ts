@@ -1,9 +1,11 @@
+import type { ModuleConfig } from "./module-config";
+
 export interface EventConfig {
   eventId: string;
   branding: BrandingConfig;
-  moduleFlow: string[]; // stub — ordered list of step IDs
+  moduleFlow: ModuleConfig[];
   formFields: FormFieldsConfig;
-  aiConfig: AiConfig;
+  aiConfig: AiConfig; // removed in V2-3.15 after old routes are replaced by modules
   techConfig: TechConfig;
 }
 
