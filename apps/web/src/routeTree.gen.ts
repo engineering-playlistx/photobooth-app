@@ -25,6 +25,7 @@ import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.se
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoSentryTestingRouteImport } from './routes/demo/sentry.testing'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
+import { Route as ApiSessionStartRouteImport } from './routes/api.session.start'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
@@ -110,6 +111,11 @@ const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
   path: '/demo/api/names',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSessionStartRoute = ApiSessionStartRouteImport.update({
+  id: '/api/session/start',
+  path: '/api/session/start',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
   id: '/demo/start/ssr/',
   path: '/demo/start/ssr/',
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardLayoutRouteWithChildren
   '/dashboard/login': typeof DashboardLoginRoute
   '/result/$sessionId': typeof ResultSessionIdRoute
+  '/api/session/start': typeof ApiSessionStartRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardLayoutIndexRoute
   '/dashboard/login': typeof DashboardLoginRoute
   '/result/$sessionId': typeof ResultSessionIdRoute
+  '/api/session/start': typeof ApiSessionStartRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/dashboard/_layout': typeof DashboardLayoutRouteWithChildren
   '/dashboard/login': typeof DashboardLoginRoute
   '/result/$sessionId': typeof ResultSessionIdRoute
+  '/api/session/start': typeof ApiSessionStartRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dashboard/login'
     | '/result/$sessionId'
+    | '/api/session/start'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dashboard/login'
     | '/result/$sessionId'
+    | '/api/session/start'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/dashboard/_layout'
     | '/dashboard/login'
     | '/result/$sessionId'
+    | '/api/session/start'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -312,6 +324,7 @@ export interface RootRouteChildren {
   ApiTestGoogleAiRoute: typeof ApiTestGoogleAiRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   ResultSessionIdRoute: typeof ResultSessionIdRoute
+  ApiSessionStartRoute: typeof ApiSessionStartRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoSentryTestingRoute: typeof DemoSentryTestingRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
@@ -429,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoApiNamesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/session/start': {
+      id: '/api/session/start'
+      path: '/api/session/start'
+      fullPath: '/api/session/start'
+      preLoaderRoute: typeof ApiSessionStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo/start/ssr/': {
       id: '/demo/start/ssr/'
       path: '/demo/start/ssr'
@@ -535,6 +555,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTestGoogleAiRoute: ApiTestGoogleAiRoute,
   DashboardRoute: DashboardRouteWithChildren,
   ResultSessionIdRoute: ResultSessionIdRoute,
+  ApiSessionStartRoute: ApiSessionStartRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoSentryTestingRoute: DemoSentryTestingRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
