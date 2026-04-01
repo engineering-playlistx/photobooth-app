@@ -1,9 +1,10 @@
+import type { ModuleConfig } from './module-config'
+
 export interface EventConfig {
   eventId: string
   branding: BrandingConfig
-  moduleFlow: Array<string> // stub — ordered list of step IDs
+  moduleFlow: Array<ModuleConfig>
   formFields: FormFieldsConfig
-  aiConfig: AiConfig
   techConfig: TechConfig
 }
 
@@ -29,11 +30,6 @@ export interface AiThemeConfig {
   photoHeight: number
   photoOffsetX: number
   photoOffsetY: number
-}
-
-export interface AiConfig {
-  provider: 'replicate' | 'google'
-  themes: Array<AiThemeConfig>
 }
 
 export interface FormFieldsConfig {
