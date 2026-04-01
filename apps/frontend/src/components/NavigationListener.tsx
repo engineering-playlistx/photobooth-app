@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePipeline } from "../contexts/PipelineContext";
 
 export function NavigationListener() {
   const navigate = useNavigate();
+  const pipeline = usePipeline();
 
   useEffect(() => {
     if (!window.electronAPI) {
@@ -10,7 +12,7 @@ export function NavigationListener() {
     }
 
     const cleanupNavHome = window.electronAPI.onNavigateToHome(() => {
-      void navigate("/");
+      pipeline.reset();
     });
 
     const cleanupNavData = window.electronAPI.onNavigateToData(() => {
@@ -21,7 +23,7 @@ export function NavigationListener() {
       cleanupNavHome();
       cleanupNavData();
     };
-  }, [navigate]);
+  }, [navigate, pipeline]);
 
   return null;
 }
