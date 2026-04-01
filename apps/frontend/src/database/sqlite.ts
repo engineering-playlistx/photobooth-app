@@ -29,13 +29,19 @@ function getSQLiteDatabase(): DatabaseSync {
     CREATE INDEX IF NOT EXISTS idx_photo_results_photo_path ON photo_results(photo_path);
   `);
 
-  // Migration: add event_id column if it doesn't exist yet
+  // Migrations: add columns if they don't exist yet
   const columns = db
     .prepare("PRAGMA table_info(photo_results)")
     .all() as Array<{ name: string }>;
   const hasEventId = columns.some((col) => col.name === "event_id");
   if (!hasEventId) {
     db.exec("ALTER TABLE photo_results ADD COLUMN event_id TEXT");
+  }
+  const hasUpdatedAt = columns.some((col) => col.name === "updated_at");
+  if (!hasUpdatedAt) {
+    db.exec(
+      "ALTER TABLE photo_results ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''",
+    );
   }
 
   dbInstance = db;
