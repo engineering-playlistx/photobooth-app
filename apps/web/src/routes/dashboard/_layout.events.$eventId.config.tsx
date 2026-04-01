@@ -3,16 +3,7 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
 import type { ReactNode } from 'react'
-import type { AiThemeConfig, EventConfig } from '../../types/event-config'
-
-// TEMP (V2-1.3 → Phase 4): config_json in Supabase still has aiConfig until V2-1.5 runs.
-// This page reads the pre-migration shape and will be rebuilt in Phase 4 as the flow builder.
-type LegacyEventConfig = EventConfig & {
-  aiConfig: {
-    provider: 'replicate' | 'google'
-    themes: Array<AiThemeConfig>
-  }
-}
+import type { EventConfig } from '../../types/event-config'
 
 const getEventConfig = createServerFn({ method: 'GET' }).handler(
   async (ctx) => {
@@ -24,7 +15,7 @@ const getEventConfig = createServerFn({ method: 'GET' }).handler(
       .eq('event_id', eventId)
       .single()
     if (error) throw new Error(error.message)
-    return data.config_json as LegacyEventConfig
+    return data.config_json as EventConfig
   },
 )
 
@@ -32,7 +23,7 @@ const saveEventConfig = createServerFn({ method: 'POST' }).handler(
   async (ctx) => {
     const { eventId, config } = ctx.data as {
       eventId: string
-      config: LegacyEventConfig
+      config: EventConfig
     }
     const admin = getSupabaseAdminClient()
     const { error } = await admin
@@ -53,7 +44,7 @@ export const Route = createFileRoute(
 
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/
 
-function validateConfig(config: LegacyEventConfig): Record<string, string> {
+function validateConfig(config: EventConfig): Record<string, string> {
   const errors: Record<string, string> = {}
 
   if (!HEX_COLOR_RE.test(config.branding.primaryColor)) {
@@ -69,43 +60,13 @@ function validateConfig(config: LegacyEventConfig): Record<string, string> {
     errors['techConfig.inactivityTimeoutSeconds'] = 'Must be an integer ≥ 10'
   }
 
-  config.aiConfig.themes.forEach((theme, i) => {
-    if (!theme.label.trim()) {
-      errors[`theme[${i}].label`] = 'Label is required'
-    }
-    if (!theme.prompt.trim()) {
-      errors[`theme[${i}].prompt`] = 'Prompt is required'
-    }
-    if (!theme.previewImageUrl.trim()) {
-      errors[`theme[${i}].previewImageUrl`] = 'Preview image URL is required'
-    }
-    if (!theme.frameImageUrl.trim()) {
-      errors[`theme[${i}].frameImageUrl`] = 'Frame image URL is required'
-    }
-    if (!theme.templateImageUrl.trim()) {
-      errors[`theme[${i}].templateImageUrl`] = 'Template image URL is required'
-    }
-    const dims: Array<[keyof typeof theme, string]> = [
-      ['canvasWidth', 'Canvas width'],
-      ['canvasHeight', 'Canvas height'],
-      ['photoWidth', 'Photo width'],
-      ['photoHeight', 'Photo height'],
-    ]
-    for (const [field, label] of dims) {
-      const val = theme[field] as number
-      if (!Number.isInteger(val) || val <= 0) {
-        errors[`theme[${i}].${field}`] = `${label} must be a positive integer`
-      }
-    }
-  })
-
   return errors
 }
 
 function ConfigEditorPage() {
   const initial = Route.useLoaderData()
   const { eventId } = Route.useParams()
-  const [config, setConfig] = useState<LegacyEventConfig>(initial)
+  const [config, setConfig] = useState<EventConfig>(initial)
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -164,20 +125,6 @@ function ConfigEditorPage() {
       ...c,
       formFields: { ...c.formFields, [field]: value },
     }))
-
-  const updateAiProvider = (provider: 'replicate' | 'google') =>
-    setConfig((c) => ({ ...c, aiConfig: { ...c.aiConfig, provider } }))
-
-  const updateTheme = (
-    index: number,
-    field: keyof AiThemeConfig,
-    value: string | number,
-  ) =>
-    setConfig((c) => {
-      const themes = [...c.aiConfig.themes]
-      themes[index] = { ...themes[index], [field]: value }
-      return { ...c, aiConfig: { ...c.aiConfig, themes } }
-    })
 
   const SaveStatus = () => (
     <>
@@ -358,144 +305,6 @@ function ConfigEditorPage() {
                   {field}
                 </span>
               </label>
-            </div>
-          ))}
-        </Section>
-
-        {/* AI Config */}
-        <Section title="AI Config">
-          <Field label="Provider">
-            <select
-              value={config.aiConfig.provider}
-              onChange={(e) =>
-                updateAiProvider(e.target.value as 'replicate' | 'google')
-              }
-              className={inputClass}
-            >
-              <option value="replicate">Replicate</option>
-              <option value="google">Google</option>
-            </select>
-          </Field>
-
-          {config.aiConfig.themes.map((theme, i) => (
-            <div
-              key={theme.id}
-              className="mt-6 pt-6 border-t border-slate-700/60"
-            >
-              <h3 className="text-sm font-semibold text-slate-300 mb-4">
-                Theme:{' '}
-                <span className="font-mono text-blue-400">{theme.id}</span>
-              </h3>
-              <div className="space-y-3">
-                <Field label="Label">
-                  <input
-                    type="text"
-                    value={theme.label}
-                    onChange={(e) => updateTheme(i, 'label', e.target.value)}
-                    className={inputClass}
-                  />
-                </Field>
-                <Field label="Prompt">
-                  <textarea
-                    value={theme.prompt}
-                    onChange={(e) => updateTheme(i, 'prompt', e.target.value)}
-                    rows={4}
-                    className={`${inputClass} resize-y`}
-                  />
-                </Field>
-                <Field label="Preview Image URL">
-                  <input
-                    type="text"
-                    value={theme.previewImageUrl}
-                    onChange={(e) =>
-                      updateTheme(i, 'previewImageUrl', e.target.value)
-                    }
-                    className={inputClass}
-                  />
-                </Field>
-                <Field label="Frame Image URL">
-                  <input
-                    type="text"
-                    value={theme.frameImageUrl}
-                    onChange={(e) =>
-                      updateTheme(i, 'frameImageUrl', e.target.value)
-                    }
-                    className={inputClass}
-                  />
-                </Field>
-                <Field label="Template Image URL">
-                  <input
-                    type="text"
-                    value={theme.templateImageUrl}
-                    onChange={(e) =>
-                      updateTheme(i, 'templateImageUrl', e.target.value)
-                    }
-                    className={inputClass}
-                  />
-                </Field>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Canvas Width">
-                    <input
-                      type="number"
-                      value={theme.canvasWidth}
-                      onChange={(e) =>
-                        updateTheme(i, 'canvasWidth', Number(e.target.value))
-                      }
-                      className={inputClass}
-                    />
-                  </Field>
-                  <Field label="Canvas Height">
-                    <input
-                      type="number"
-                      value={theme.canvasHeight}
-                      onChange={(e) =>
-                        updateTheme(i, 'canvasHeight', Number(e.target.value))
-                      }
-                      className={inputClass}
-                    />
-                  </Field>
-                  <Field label="Photo Width">
-                    <input
-                      type="number"
-                      value={theme.photoWidth}
-                      onChange={(e) =>
-                        updateTheme(i, 'photoWidth', Number(e.target.value))
-                      }
-                      className={inputClass}
-                    />
-                  </Field>
-                  <Field label="Photo Height">
-                    <input
-                      type="number"
-                      value={theme.photoHeight}
-                      onChange={(e) =>
-                        updateTheme(i, 'photoHeight', Number(e.target.value))
-                      }
-                      className={inputClass}
-                    />
-                  </Field>
-                  <Field label="Photo Offset X">
-                    <input
-                      type="number"
-                      value={theme.photoOffsetX}
-                      onChange={(e) =>
-                        updateTheme(i, 'photoOffsetX', Number(e.target.value))
-                      }
-                      className={inputClass}
-                    />
-                  </Field>
-                  <Field label="Photo Offset Y">
-                    <input
-                      type="number"
-                      value={theme.photoOffsetY}
-                      onChange={(e) =>
-                        updateTheme(i, 'photoOffsetY', Number(e.target.value))
-                      }
-                      className={inputClass}
-                    />
-                  </Field>
-                </div>
-              </div>
             </div>
           ))}
         </Section>
