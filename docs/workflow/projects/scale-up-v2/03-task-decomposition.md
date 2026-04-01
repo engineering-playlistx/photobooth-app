@@ -1,6 +1,6 @@
 # Task Decomposition — V2 Phases 1 & 2
 
-**Status:** 🏗️ In progress — Phase 3 underway (Phases 1 and 2 complete ✅)
+**Status:** ✅ Phases 1, 2, and 3 complete
 **Scope:** Phase 1 (Type System + DB Migration) and Phase 2 (Session Model) only.
 Phase 3+ decomposition will be written before those phases begin.
 
@@ -429,7 +429,7 @@ All tests pass with `pnpm wb test`.
 
 ---
 
-### V2-3.1 — Create `ModuleProps` interface
+### ~~V2-3.1 — Create `ModuleProps` interface~~ ✅
 
 **What:** Create `apps/frontend/src/modules/types.ts` — the standard props contract every module component must satisfy.
 
@@ -459,7 +459,7 @@ export interface ModuleProps {
 
 ---
 
-### V2-3.2 — Create `PipelineContext`
+### ~~V2-3.2 — Create `PipelineContext`~~ ✅
 
 **What:** Create `apps/frontend/src/contexts/PipelineContext.tsx`. This is the central state store for the guest pipeline — it replaces `PhotoboothContext` entirely.
 
@@ -501,7 +501,7 @@ Export `PipelineProvider` and `usePipeline()` hook (throws if used outside provi
 
 ---
 
-### V2-3.3 — Create empty module registry
+### ~~V2-3.3 — Create empty module registry~~ ✅
 
 **What:** Create `apps/frontend/src/modules/registry.ts` — a static map from `moduleId` string to React component. Starts empty; modules register themselves in V2-3.5 through V2-3.10.
 
@@ -527,7 +527,7 @@ export const MODULE_REGISTRY: Record<string, React.ComponentType<ModuleProps>> =
 
 ---
 
-### V2-3.4 — Create `PipelineRenderer`
+### ~~V2-3.4 — Create `PipelineRenderer`~~ ✅
 
 **What:** Create `apps/frontend/src/components/PipelineRenderer.tsx`. This component drives the entire guest flow. It reads `moduleFlow` from `EventConfig`, maps `currentIndex` to a component in `MODULE_REGISTRY`, and renders it with the standard `ModuleProps`.
 
@@ -557,7 +557,7 @@ Read `apps/frontend/src/contexts/EventConfigContext.tsx` and `apps/frontend/src/
 
 ---
 
-### V2-3.5 — Create `WelcomeModule`
+### ~~V2-3.5 — Create `WelcomeModule`~~ ✅
 
 **What:** Create `apps/frontend/src/modules/WelcomeModule.tsx` — adapted from `apps/frontend/src/routes/index.tsx`. Register it in `MODULE_REGISTRY`.
 
@@ -589,7 +589,7 @@ Read `apps/frontend/src/routes/index.tsx` before writing.
 
 ---
 
-### V2-3.6 — Create `ThemeSelectionModule`
+### ~~V2-3.6 — Create `ThemeSelectionModule`~~ ✅
 
 **What:** Create `apps/frontend/src/modules/ThemeSelectionModule.tsx` — adapted from `apps/frontend/src/routes/select.tsx`. Register it in `MODULE_REGISTRY`.
 
@@ -621,7 +621,7 @@ Read `apps/frontend/src/routes/select.tsx` before writing.
 
 ---
 
-### V2-3.7 — Create `CameraModule`
+### ~~V2-3.7 — Create `CameraModule`~~ ✅
 
 **What:** Create `apps/frontend/src/modules/CameraModule.tsx` — adapted from `apps/frontend/src/routes/camera.tsx`. Register it in `MODULE_REGISTRY`.
 
@@ -653,7 +653,7 @@ Read `apps/frontend/src/routes/camera.tsx` before writing. It is the most comple
 
 ---
 
-### V2-3.8 — Create `FormModule`
+### ~~V2-3.8 — Create `FormModule`~~ ✅
 
 **What:** Create `apps/frontend/src/modules/FormModule.tsx` — adapted from `apps/frontend/src/routes/form.tsx`. Register it in `MODULE_REGISTRY`.
 
@@ -685,7 +685,7 @@ Read `apps/frontend/src/routes/form.tsx` before writing.
 
 ---
 
-### V2-3.9 — Create `AiGenerationModule`
+### ~~V2-3.9 — Create `AiGenerationModule`~~ ✅
 
 **What:** Create `apps/frontend/src/modules/AiGenerationModule.tsx` — adapted from `apps/frontend/src/routes/loading.tsx`. Register it in `MODULE_REGISTRY`.
 
@@ -726,7 +726,7 @@ Read `apps/frontend/src/routes/loading.tsx` and `apps/frontend/src/types/module-
 
 ---
 
-### V2-3.10 — Create `ResultModule`
+### ~~V2-3.10 — Create `ResultModule`~~ ✅
 
 **What:** Create `apps/frontend/src/modules/ResultModule.tsx` — adapted from `apps/frontend/src/routes/result.tsx`. Register it in `MODULE_REGISTRY`.
 
@@ -766,7 +766,7 @@ Read `apps/frontend/src/routes/result.tsx` before writing.
 
 ---
 
-### V2-3.11 — Wire session start into `PipelineRenderer`
+### ~~V2-3.11 — Wire session start into `PipelineRenderer`~~ ✅
 
 **What:** Add session-start logic to `apps/frontend/src/components/PipelineRenderer.tsx`. When `WelcomeModule` calls `onComplete`, the renderer must call `POST /api/session/start` before advancing the index.
 
@@ -814,7 +814,7 @@ handleComplete(output?) {
 
 ---
 
-### V2-3.12 — Move inactivity timeout to pipeline level; simplify `RootLayout`
+### ~~V2-3.12 — Move inactivity timeout to pipeline level; simplify `RootLayout`~~ ✅
 
 **What:** Two coordinated changes:
 1. Add `useInactivityTimeout` to `PipelineRenderer` — it fires `pipeline.reset()` on timeout
@@ -860,7 +860,7 @@ useInactivityTimeout({
 
 ---
 
-### V2-3.13 — Update `renderer.tsx`; update `NavigationListener`
+### ~~V2-3.13 — Update `renderer.tsx`; update `NavigationListener`~~ ✅
 
 **What:** Wire the pipeline into the app entry point. Replace the 6 guest-flow routes with a single `PipelineRenderer` route. Update `NavigationListener` so `Cmd+H` calls `pipeline.reset()`.
 
@@ -925,7 +925,7 @@ Read `apps/frontend/src/renderer.tsx` and `apps/frontend/src/components/Navigati
 
 ---
 
-### V2-3.14 — Delete `PhotoboothContext`
+### ~~V2-3.14 — Delete `PhotoboothContext`~~ ✅
 
 **What:** Delete `apps/frontend/src/contexts/PhotoboothContext.tsx` after confirming zero remaining usages.
 
@@ -947,7 +947,7 @@ Read `apps/frontend/src/renderer.tsx` and `apps/frontend/src/components/Navigati
 
 ---
 
-### V2-3.15 — Delete the 6 old route files
+### ~~V2-3.15 — Delete the 6 old route files~~ ✅
 
 **What:** Delete `apps/frontend/src/routes/index.tsx`, `select.tsx`, `camera.tsx`, `form.tsx`, `loading.tsx`, `result.tsx`.
 

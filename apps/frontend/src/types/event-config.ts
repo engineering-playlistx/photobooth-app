@@ -5,7 +5,6 @@ export interface EventConfig {
   branding: BrandingConfig;
   moduleFlow: ModuleConfig[];
   formFields: FormFieldsConfig;
-  aiConfig: AiConfig; // removed in V2-3.15 after old routes are replaced by modules
   techConfig: TechConfig;
 }
 
@@ -30,11 +29,6 @@ export interface AiThemeConfig {
   photoHeight: number;
   photoOffsetX: number;
   photoOffsetY: number;
-}
-
-export interface AiConfig {
-  provider: "replicate" | "google";
-  themes: AiThemeConfig[];
 }
 
 export interface FormFieldsConfig {
