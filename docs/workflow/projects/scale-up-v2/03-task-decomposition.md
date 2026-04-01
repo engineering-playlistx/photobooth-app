@@ -329,7 +329,7 @@ ALTER TABLE sessions ALTER COLUMN user_info   DROP NOT NULL;
 
 ---
 
-### V2-2.2 — Add `startSession` to `SessionRepository`
+### ~~V2-2.2 — Add `startSession` to `SessionRepository`~~ ✅
 
 **What:** Add a new `startSession(eventId: string): Promise<{ sessionId: string }>` method to the existing `SessionRepository` class. Do not modify the existing `createSession` method — it is still called by `submit-photo.usecase.ts` and will be refactored in Phase 3.
 
@@ -357,7 +357,7 @@ Read `apps/web/src/repositories/session.repository.ts` before starting.
 
 ---
 
-### V2-2.3 — Create `POST /api/session/start` endpoint
+### ~~V2-2.3 — Create `POST /api/session/start` endpoint~~ ✅
 
 **What:** New endpoint that creates a session row at the start of the guest flow and returns the session ID. Follow the same structure as `apps/web/src/routes/api.photo.ts` (auth guard, body parse, repository call, json response).
 
@@ -393,7 +393,7 @@ Read `apps/web/src/routes/api.photo.ts` before writing — replicate its auth pa
 
 ---
 
-### V2-2.4 — Unit tests for `SessionRepository.startSession`
+### ~~V2-2.4 — Unit tests for `SessionRepository.startSession`~~ ✅
 
 **What:** Write unit tests for the new `startSession` method. Follow the pattern in `apps/web/src/services/ai-generation.service.test.ts`: Vitest, `vi.resetModules()`, `vi.doMock()`, dynamic `import()`. Mock `getSupabaseAdminClient` to avoid hitting the real database.
 
