@@ -1,10 +1,8 @@
-import type { RacingTheme } from "../contexts/PhotoboothContext";
-
 export interface PhotoResultDocument {
   id: string;
   photoPath: string;
   selectedTheme: {
-    theme: RacingTheme;
+    theme: string;
   };
   userInfo: {
     name: string;

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllPhotoResults } from "../utils/database";
 import type { PhotoResultDocument } from "../utils/database";
-import { usePhotobooth } from "../contexts/PhotoboothContext";
-
 function escapeCSVValue(value: string): string {
   if (value.includes(",") || value.includes('"') || value.includes("\n")) {
     return `"${value.replace(/"/g, '""')}"`;
@@ -57,30 +55,9 @@ function downloadCSV(csvContent: string, filename: string) {
 
 export default function DataPage() {
   const navigate = useNavigate();
-  const { setFinalPhoto, setSelectedTheme, setUserInfo } = usePhotobooth();
   const [data, setData] = useState<PhotoResultDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const handleShowPhoto = async (item: PhotoResultDocument) => {
-    try {
-      const response = await fetch(
-        `local-file://${encodeURIComponent(item.photoPath)}`,
-      );
-      const blob = await response.blob();
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setFinalPhoto(base64);
-        setSelectedTheme(item.selectedTheme);
-        setUserInfo(item.userInfo);
-        void navigate("/result");
-      };
-      reader.readAsDataURL(blob);
-    } catch (err) {
-      console.error("Error loading photo:", err);
-    }
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -207,9 +184,6 @@ export default function DataPage() {
                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
                       Updated At
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
-                      Actions
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -245,16 +219,6 @@ export default function DataPage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
                         {new Date(item.updatedAt).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <button
-                          type="button"
-                          onClick={() => void handleShowPhoto(item)}
-                          className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-xs font-medium transition-colors cursor-pointer"
-                          aria-label={`Show photo for ${item.userInfo.name}`}
-                        >
-                          Show Photo
-                        </button>
                       </td>
                     </tr>
                   ))}
