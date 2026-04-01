@@ -1,6 +1,6 @@
 # Task Decomposition — V2 Phases 1 & 2
 
-**Status:** 🔜 Ready to execute
+**Status:** 🏗️ In progress — Phase 1 underway
 **Scope:** Phase 1 (Type System + DB Migration) and Phase 2 (Session Model) only.
 Phase 3+ decomposition will be written before those phases begin.
 
@@ -11,7 +11,7 @@ Phase 3+ decomposition will be written before those phases begin.
 
 ## Phase 1 — Type System + DB Migration
 
-### V2-1.1 — Define `ModuleConfig` union type in `apps/web`
+### ~~V2-1.1 — Define `ModuleConfig` union type in `apps/web`~~ ✅
 
 **What:** Create `apps/web/src/types/module-config.ts`. Canonical source of truth for the module type system. Define exactly as specified in `01-scope.md` decision D: `ModulePosition`, `BaseModuleConfig`, and the seven specific module config interfaces, plus the `ModuleConfig` discriminated union.
 
@@ -37,7 +37,7 @@ Phase 3+ decomposition will be written before those phases begin.
 
 ---
 
-### V2-1.2 — Mirror `ModuleConfig` type in `apps/frontend`
+### ~~V2-1.2 — Mirror `ModuleConfig` type in `apps/frontend`~~ ✅
 
 **What:** Create `apps/frontend/src/types/module-config.ts` as an exact structural copy of V2-1.1. Add a sync comment at the top.
 
@@ -60,7 +60,7 @@ Phase 3+ decomposition will be written before those phases begin.
 
 ---
 
-### V2-1.3 — Update `EventConfig` in `apps/web` — type `moduleFlow`, remove `aiConfig`
+### ~~V2-1.3 — Update `EventConfig` in `apps/web` — type `moduleFlow`, remove `aiConfig`~~ ✅
 
 **What:** Edit `apps/web/src/types/event-config.ts`:
 1. Add import: `import type { ModuleConfig } from './module-config'`
@@ -93,7 +93,7 @@ Note: Removing `aiConfig` will cause TypeScript errors in `apps/web/src/routes/a
 
 ---
 
-### V2-1.4 — Update `EventConfig` in `apps/frontend` — type `moduleFlow`, keep `aiConfig`
+### ~~V2-1.4 — Update `EventConfig` in `apps/frontend` — type `moduleFlow`, keep `aiConfig`~~ ✅
 
 **What:** Edit `apps/frontend/src/types/event-config.ts`:
 1. Add import: `import type { ModuleConfig } from './module-config'`
@@ -219,7 +219,7 @@ WHERE event_id = 'evt_shell_001';
 
 ---
 
-### V2-1.6 — Update `api.ai-generate.ts` to read from `moduleFlow` instead of `aiConfig`
+### ~~V2-1.6 — Update `api.ai-generate.ts` to read from `moduleFlow` instead of `aiConfig`~~ ✅
 
 **What:** The `resolveThemeConfig` function in `apps/web/src/routes/api.ai-generate.ts` reads `config.aiConfig.themes` and `config.aiConfig.provider` (lines 55–72). After V2-1.3 removed `aiConfig` from the type, these lines have TypeScript errors. Fix them to read the `ai-generation` module entry from `moduleFlow` instead.
 
@@ -253,7 +253,7 @@ The change is confined to `resolveThemeConfig` only — the rest of the handler 
 
 ---
 
-### V2-1.7 — Resolve any remaining TypeScript errors in `apps/frontend` from type changes
+### ~~V2-1.7 — Resolve any remaining TypeScript errors in `apps/frontend` from type changes~~ ✅
 
 **What:** After V2-1.4, verify the frontend compiles cleanly. Fix any TypeScript errors caused by `moduleFlow` changing from `string[]` to `ModuleConfig[]`. Expected to be a low-effort or zero-change task — existing routes do not read `moduleFlow`, so no route file should be affected.
 
