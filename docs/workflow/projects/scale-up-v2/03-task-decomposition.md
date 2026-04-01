@@ -279,7 +279,7 @@ Read `apps/frontend/src/contexts/EventConfigContext.tsx` before starting — it 
 
 ## Phase 2 — Session Model
 
-### V2-2.1 — Supabase SQL migration: extend `sessions` table
+### ~~V2-2.1 — Supabase SQL migration: extend `sessions` table~~ ✅
 
 **What:** The `sessions` table (created in TASK-5.1, V1) currently has: `id, event_id, photo_path, user_info, created_at`. V2 sessions are created at the start of the flow before a photo or user info exists. Extend the schema to support this.
 
