@@ -1,14 +1,28 @@
 import React, { useState, useCallback } from "react";
 import { useEventConfig } from "../contexts/EventConfigContext";
 import { usePipeline } from "../contexts/PipelineContext";
+import { useInactivityTimeout } from "../hooks/useInactivityTimeout";
 import { MODULE_REGISTRY } from "../modules/registry";
 
 export function PipelineRenderer() {
   const { config, apiBaseUrl, apiClientKey } = useEventConfig();
-  const { currentIndex, moduleOutputs, advance, back, setSessionId } =
-    usePipeline();
+  const {
+    currentIndex,
+    moduleOutputs,
+    advance,
+    back,
+    reset,
+    setSessionId,
+    suppressInactivity,
+  } = usePipeline();
   const [sessionStarting, setSessionStarting] = useState(false);
   const [sessionStartError, setSessionStartError] = useState(false);
+
+  useInactivityTimeout({
+    onTimeout: reset,
+    disabled: currentIndex === 0 || suppressInactivity,
+    timeoutMs: config.techConfig.inactivityTimeoutSeconds * 1000,
+  });
 
   const currentModule = config.moduleFlow[currentIndex];
   const Component = currentModule
