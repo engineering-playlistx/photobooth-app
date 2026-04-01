@@ -23,6 +23,23 @@ export class SessionRepository {
     }
   }
 
+  async startSession(eventId: string): Promise<{ sessionId: string }> {
+    const supabase = getSupabaseAdminClient()
+    const id = crypto.randomUUID()
+
+    const { error } = await supabase.from('sessions').insert({
+      id,
+      event_id: eventId,
+      status: 'in_progress',
+    })
+
+    if (error) {
+      throw new Error(`Failed to start session: ${error.message}`)
+    }
+
+    return { sessionId: id }
+  }
+
   async getSession(id: string): Promise<{
     id: string
     event_id: string
