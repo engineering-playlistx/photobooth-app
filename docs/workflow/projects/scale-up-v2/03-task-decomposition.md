@@ -1,8 +1,8 @@
 # Task Decomposition — V2 Phases 1 & 2
 
 **Status:** ✅ Phases 1, 2, and 3 complete
-**Scope:** Phase 1 (Type System + DB Migration) and Phase 2 (Session Model) only.
-Phase 3+ decomposition will be written before those phases begin.
+**Scope:** Phase 1 (Type System + DB Migration), Phase 2 (Session Model), and Phase 3 (Module Pipeline Renderer).
+Phase 4 decomposition: see `04-task-decomposition-phase4.md`.
 
 **Format per task:** What · Files · Input · Output · Verification · Risk
 **Per-task workflow:** read → change → lint → test → commit → mark done (see CLAUDE.md)

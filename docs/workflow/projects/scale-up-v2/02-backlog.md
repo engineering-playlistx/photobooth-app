@@ -222,6 +222,8 @@ All Part A items not resolved earlier are addressed here. Assign V2-6.x IDs duri
 | V2-6.15 | TASK-B.19 | `'photobooth-bucket'` constant extraction |
 | V2-6.16 | PERF-01 | Dashboard auth cache |
 | V2-6.17 | CODE-06 | `RacingTheme` stale reference |
+| V2-6.18 | SESSION-01 | `submit-photo.usecase.ts` calls `createSession()` with a new UUID instead of updating the existing `in_progress` session created by `startSession`. Fix: add `completeSession(sessionId, photoPath, userInfo, moduleOutputs)` to `SessionRepository`; replace `createSession()` call in `SubmitPhotoUseCase` with `completeSession()` using the `sessionId` passed in the request body; pass `sessionId` from `moduleOutputs` in `ResultModule`'s `/api/photo` call. | `session.repository.ts`, `submit-photo.usecase.ts`, `ResultModule.tsx`, `api.photo.ts` |
+| V2-6.19 | SESSION-02 | Session `status` is never updated to `'completed'` — all rows stay `in_progress` forever. Resolved by V2-6.18 (`completeSession` sets `status = 'completed'`). | Depends on V2-6.18 |
 
 ---
 
