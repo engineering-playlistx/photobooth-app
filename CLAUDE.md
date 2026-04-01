@@ -16,17 +16,29 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 
 ## Migration Status
 
-The app is being migrated from a hardcoded single-client app → config-driven multi-client platform. Migration is planned in phases. See `docs/scale-up/` for the full plan.
+**V1 is complete ✅ (2026-04-01).** The app is now config-driven and multi-client ready. V2 (Modular Pipeline) is the next project.
+
+### Workflow Documents
 
 | Document | Contents |
 |----------|----------|
-| `docs/scale-up/01-reality-check.md` | Active bugs + what breaks during migration |
-| `docs/scale-up/02-constraints-interview.md` | Settled constraints and invariants |
-| `docs/scale-up/03-migration-strategy.md` | Phase-by-phase migration plan (Phase 0–6) |
-| `docs/scale-up/04-task-decomposition.md` | Atomic executable tasks with dependency graph |
-| `docs/scale-up/05-execution-strategy.md` | How to work with Claude Code on these tasks |
+| `docs/workflow/MASTER-PLAN.md` | North-star: product vision, milestones, project registry, scope rules |
+| `docs/workflow/HOW-WE-WORK.md` | Execution methodology: sessions, verification, git, prompting |
+| `docs/workflow/projects/scale-up-v1/` | V1 migration — COMPLETE ✅ |
+| `docs/workflow/projects/scale-up-v2/` | V2 modular pipeline — planning 🔜 |
 
-**Current phase:** Phases 1–5 complete ✅. Starting Phase 6 (Resilience).
+### V1 Project Docs (`docs/workflow/projects/scale-up-v1/`)
+
+| File | Contents |
+|------|----------|
+| `01-reality-check.md` | Pre-migration risk analysis |
+| `02-constraints-interview.md` | Settled constraints and invariants |
+| `03-migration-strategy.md` | Phase-by-phase V1 migration plan (Phases 0–5) ✅ |
+| `04-task-decomposition.md` | Atomic executable tasks — all done ✅ |
+| `05-execution-strategy.md` | Project-specific execution notes |
+| `06-backlogs.md` | Bugs/risks found during V1; items deferred to V2 |
+
+**Current status:** V1 complete. Starting V2 planning — see `docs/workflow/projects/scale-up-v2/`.
 
 ---
 
@@ -42,7 +54,7 @@ The app is being migrated from a hardcoded single-client app → config-driven m
 
 ## Development Workflow
 
-Follow this for every task. Full rationale in `docs/scale-up/05-execution-strategy.md`.
+Follow this for every task. Full rationale in `docs/workflow/HOW-WE-WORK.md`.
 
 ### Per-task checklist
 
@@ -64,7 +76,7 @@ Follow this for every task. Full rationale in `docs/scale-up/05-execution-strate
    git commit -m "fix(phase-N): TASK-X.Y — <what changed>"
    ```
    Never batch multiple tasks into one commit. Never commit a broken build.
-6. **Mark done** — update `docs/scale-up/04-task-decomposition.md`: strikethrough the task heading + ✅
+6. **Mark done** — update the active project's task decomposition doc: strikethrough the task heading + ✅
 
 ### Commit conventions
 
@@ -413,14 +425,13 @@ All docs live in `/docs/`:
 |------|----------|
 | `design-document.md` | Full product architecture, V1/V2 roadmap, module system, data models |
 
-**Scale-up docs** (`docs/scale-up/`) — active migration planning:
+**Workflow docs** (`docs/workflow/`) — project planning and execution:
 | File | Contents |
 |------|----------|
-| `01-reality-check.md` | Active bugs, risks, and what breaks during migration |
-| `02-constraints-interview.md` | Settled constraints and invariants (answered) |
-| `03-migration-strategy.md` | Phase-by-phase migration plan |
-| `04-task-decomposition.md` | Atomic tasks with acceptance criteria and dependency graph |
-| `05-execution-strategy.md` | Claude Code session strategy and prompting guide |
+| `MASTER-PLAN.md` | North-star: milestones, project registry, scope rules |
+| `HOW-WE-WORK.md` | Execution methodology: sessions, verification, git |
+| `projects/scale-up-v1/` | V1 migration — complete ✅ |
+| `projects/scale-up-v2/` | V2 modular pipeline — planning 🔜 |
 
 **Other docs** (`docs/`):
 | File | Contents |

@@ -1,5 +1,10 @@
 # Task Decomposition — Executable Coding Tasks
 
+**Status: V1 COMPLETE ✅ — 2026-04-01**
+All phases 0–5 done. Phase 6 (resilience/V2) deferred to [`scale-up-v2`](../scale-up-v2/02-backlog.md).
+
+---
+
 **Purpose:** Break every migration phase into atomic, independently executable tasks. Each task is scoped to fit in a single Claude Code session.
 
 **Format per task:**
@@ -580,38 +585,6 @@ CREATE TABLE IF NOT EXISTS sessions (
 **Risk:** Low. Requires Supabase Storage CORS to allow the portal origin — already configured for the kiosk. Verify on a real mobile device.
 
 ---
-
-## Phase 6 — Resilience (Post-Migration Backlog)
-
-### TASK-6.1: AI provider fallback chain (Replicate → Google → error)
-
-**What:** When the primary AI provider (Replicate) fails at the prediction level, automatically retry with the Google provider before surfacing an error to the guest.
-
-**Background:** Observed during testing — Replicate occasionally marks predictions as `failed` immediately after creation (their infra issue, not ours). Currently the operator works around this by manually changing `EventConfig.aiConfig.provider` to `google`. This task automates that fallback.
-
-**Files:**
-- `apps/web/src/routes/api.ai-generate.ts`
-- `apps/web/src/routes/api.ai-generate-status.ts`
-- `apps/web/src/services/ai-generation.service.ts`
-
-**Input:** TASK-2.6 complete (AI config from EventConfig). TASK-3.1 complete (theme is `string`).
-
-**Proposed approach:**
-1. `EventConfig.aiConfig` gains an optional `fallbackProvider: "google" | null` field
-2. In `api.ai-generate-status.ts`, when status is `"failed"`, check if a fallback provider is configured for the event
-3. If yes, re-run the generation synchronously with the fallback provider and return the result as if it succeeded
-4. If no fallback or fallback also fails, return the existing 500 error
-
-**Output:**
-- A Replicate failure transparently retries with Google AI before returning an error to the guest
-- Fallback is optional and configurable per event (some events may not have a Google API key)
-- Guest sees at most a longer wait, not an error screen, when Replicate fails
-
-**Risk:** Medium — changes the status polling contract. The status endpoint currently returns quickly on failure; with fallback it may take 10–30s on the retry. Frontend polling timeout (`MAX_ATTEMPTS`) may need adjustment.
-
----
-
-
 
 ```
 TASK-0.1 ──→ TASK-1.2 ──→ TASK-1.3

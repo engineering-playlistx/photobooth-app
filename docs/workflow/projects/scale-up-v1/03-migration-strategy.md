@@ -1,6 +1,7 @@
 # Migration Strategy — Current → V1 → V2
 
-**Status:** Preliminary. Will be revised after constraints interview (`02-constraints-interview.md`) is answered.
+**Status: V1 COMPLETE ✅ — 2026-04-01**
+Phases 0–5 shipped. Phase 6 (V2 Modular Pipeline) is out of scope for this project — tracked in [`scale-up-v2`](../scale-up-v2/).
 
 ---
 
@@ -181,9 +182,11 @@ Frame alignment is pixel-precise. The current `PHOTO_WIDTH = 1004` values were t
 
 ## Phase 6 — V2: Modular Pipeline
 
+**Status: Out of scope for scale-up-v1. Tracked in [`scale-up-v2`](../scale-up-v2/).**
+
 **Goal:** The kiosk renders its flow from the `moduleFlow` array in `EventConfig`. Modules are registered React components. Flow builder in dashboard.
 
-This is a larger architectural change and is out of scope for detailed planning until Phases 0–5 are stable. Refer to the design document `docs/design/design-document.md` Section 9 for V2 scope.
+This is a separate project (`scale-up-v2`). Refer to `docs/design/design-document.md` Section 9 for V2 technical scope and `docs/workflow/projects/scale-up-v2/01-scope.md` for the project plan.
 
 ---
 

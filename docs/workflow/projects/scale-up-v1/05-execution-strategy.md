@@ -1,6 +1,14 @@
-# Execution Strategy — Working with Claude Code
+# Execution Strategy — scale-up-v1
 
-**Purpose:** Define how we work together to implement the migration. This covers what makes a task executable, how to prompt Claude effectively, what context to provide, and how to avoid common failure modes.
+**Project status: COMPLETE ✅ — 2026-04-01**
+
+This document captures project-specific notes for `scale-up-v1`. The general execution methodology (session structure, verification layers, git strategy, anti-patterns) has been extracted to the global reference:
+
+→ **[docs/workflow/HOW-WE-WORK.md](../../HOW-WE-WORK.md)**
+
+---
+
+**Original purpose:** Define how we work together to implement the migration. This covers what makes a task executable, how to prompt Claude effectively, what context to provide, and how to avoid common failure modes.
 
 ---
 
