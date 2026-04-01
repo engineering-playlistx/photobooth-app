@@ -5,6 +5,15 @@ import { getSupabaseAdminClient } from '../../utils/supabase-admin'
 import type { ReactNode } from 'react'
 import type { AiThemeConfig, EventConfig } from '../../types/event-config'
 
+// TEMP (V2-1.3 → Phase 4): config_json in Supabase still has aiConfig until V2-1.5 runs.
+// This page reads the pre-migration shape and will be rebuilt in Phase 4 as the flow builder.
+type LegacyEventConfig = EventConfig & {
+  aiConfig: {
+    provider: 'replicate' | 'google'
+    themes: Array<AiThemeConfig>
+  }
+}
+
 const getEventConfig = createServerFn({ method: 'GET' }).handler(
   async (ctx) => {
     const { eventId } = ctx.data as { eventId: string }
@@ -15,7 +24,7 @@ const getEventConfig = createServerFn({ method: 'GET' }).handler(
       .eq('event_id', eventId)
       .single()
     if (error) throw new Error(error.message)
-    return data.config_json as EventConfig
+    return data.config_json as LegacyEventConfig
   },
 )
 
@@ -23,7 +32,7 @@ const saveEventConfig = createServerFn({ method: 'POST' }).handler(
   async (ctx) => {
     const { eventId, config } = ctx.data as {
       eventId: string
-      config: EventConfig
+      config: LegacyEventConfig
     }
     const admin = getSupabaseAdminClient()
     const { error } = await admin
@@ -44,7 +53,7 @@ export const Route = createFileRoute(
 
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/
 
-function validateConfig(config: EventConfig): Record<string, string> {
+function validateConfig(config: LegacyEventConfig): Record<string, string> {
   const errors: Record<string, string> = {}
 
   if (!HEX_COLOR_RE.test(config.branding.primaryColor)) {
@@ -96,7 +105,7 @@ function validateConfig(config: EventConfig): Record<string, string> {
 function ConfigEditorPage() {
   const initial = Route.useLoaderData()
   const { eventId } = Route.useParams()
-  const [config, setConfig] = useState<EventConfig>(initial)
+  const [config, setConfig] = useState<LegacyEventConfig>(initial)
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')

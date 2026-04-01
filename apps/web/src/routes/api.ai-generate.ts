@@ -6,6 +6,7 @@ import {
 } from '../services/ai-generation.service'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
 import type { EventConfig } from '../types/event-config'
+import type { AiGenerationModuleConfig } from '../types/module-config'
 
 const SUPABASE_BUCKET = 'photobooth-bucket'
 
@@ -52,21 +53,32 @@ async function resolveThemeConfig(
     }
 
     const config = data.config_json as EventConfig
-    const themeConfig = config.aiConfig.themes.find((t) => t.id === theme)
+    const aiModule = config.moduleFlow.find(
+      (m): m is AiGenerationModuleConfig => m.moduleId === 'ai-generation',
+    )
+
+    if (!aiModule) {
+      console.warn(
+        `[ai-generate] No ai-generation module in event config for ${eventId} — using env fallback`,
+      )
+      return envFallback
+    }
+
+    const themeConfig = aiModule.themes.find((t) => t.id === theme)
 
     if (!themeConfig) {
       console.warn(
         `[ai-generate] Theme '${theme}' not in event config — using env fallback`,
       )
       return {
-        provider: config.aiConfig.provider,
+        provider: aiModule.provider,
         templateUrl: undefined,
         prompt: undefined,
       }
     }
 
     return {
-      provider: config.aiConfig.provider,
+      provider: aiModule.provider,
       templateUrl: themeConfig.templateImageUrl,
       prompt: themeConfig.prompt,
     }
