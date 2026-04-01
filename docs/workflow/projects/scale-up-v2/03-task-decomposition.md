@@ -121,7 +121,7 @@ Do **not** remove `aiConfig` or `AiConfig` in this task. The existing routes `ro
 
 ---
 
-### V2-1.5 — SQL migration: restructure `event_configs.config_json` to V2 shape
+### ~~V2-1.5 — SQL migration: restructure `event_configs.config_json` to V2 shape~~ ✅
 
 **What:** Update the Shell event's `event_configs.config_json` in Supabase:
 - Expand `moduleFlow` from the current stub string array to the fully typed 6-module array
