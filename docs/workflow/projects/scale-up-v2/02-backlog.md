@@ -199,9 +199,9 @@ Goal: First new module built on the V2 system — proves the system works end-to
 
 ---
 
-### V2-Phase 6 — V1 Carryover Closure
+### V2-Phase 6 — V1 Carryover Closure 🔜 In Progress
 
-All Part A items not resolved earlier are addressed here. Assign V2-6.x IDs during sprint planning from the table below.
+All Part A items not resolved earlier are addressed here. Full task decomposition: `06-task-decomposition-phase6.md`.
 
 | V2-6.x | Source ID | Notes |
 |---------|-----------|-------|
@@ -211,7 +211,7 @@ All Part A items not resolved earlier are addressed here. Assign V2-6.x IDs duri
 | V2-6.4 | DATA-04 | Temp photo cleanup on Replicate failure |
 | V2-6.5 | UX-01 | Saving indicator on result page (fix in `ResultModule.tsx`) |
 | V2-6.6 | CODE-08 | `"DS-RX1"` fallback in print handler |
-| V2-6.7 | TASK-B.08 | `getKioskConfig()` sync type |
+| ~~V2-6.7~~ | ~~TASK-B.08~~ | ✅ Already done — `getKioskConfig()` is already `Promise<KioskConfig>` in `global.d.ts:15` and `preload.ts:106`. Type and implementation match. |
 | V2-6.8 | TASK-B.09 | Dashboard pagination |
 | V2-6.9 | TASK-B.10 | Server-side ZIP download |
 | V2-6.10 | TASK-B.11 | Print after upload confirmed (fix in `ResultModule.tsx`) |
@@ -221,12 +221,12 @@ All Part A items not resolved earlier are addressed here. Assign V2-6.x IDs duri
 | V2-6.14 | TASK-B.18 | "Last retake" warning (fix in `CameraModule.tsx`) |
 | V2-6.15 | TASK-B.19 | `'photobooth-bucket'` constant extraction |
 | V2-6.16 | PERF-01 | Dashboard auth cache |
-| V2-6.17 | CODE-06 | `RacingTheme` stale reference |
+| ~~V2-6.17~~ | ~~CODE-06~~ | ✅ Already done — `RacingTheme` has zero references in `apps/frontend/src/`. Cleaned up during V2 work. |
 | ~~V2-6.18~~ | SESSION-01 | ✅ Fixed. `submit-photo.usecase.ts` now calls `completeSession()` (update) when `sessionId` is present, and writes `module_outputs`. `session.repository.ts` gains `completeSession`. Fix: add `completeSession(sessionId, photoPath, userInfo, moduleOutputs)` to `SessionRepository`; replace `createSession()` call in `SubmitPhotoUseCase` with `completeSession()` using the `sessionId` passed in the request body; pass `sessionId` from `moduleOutputs` in `ResultModule`'s `/api/photo` call. | `session.repository.ts`, `submit-photo.usecase.ts`, `ResultModule.tsx`, `api.photo.ts` |
 | ~~V2-6.19~~ | SESSION-02 | ✅ Fixed by V2-6.18 — `completeSession` sets `status = 'completed'`. | Depends on V2-6.18 |
 | ~~V2-6.20~~ | FLOW-01 | ✅ Fixed. `canMoveUp`/`canMoveDown` now allow `flexible` modules to cross `fixed-camera`; other positions still cannot. `flexible` modules (e.g. `mini-quiz`) cannot be moved before camera. Fix: update `canMoveUp`/`canMoveDown` in `flow.tsx` to allow modules with `position === 'flexible'` to swap with `fixed-camera`; other position types (`pre-photo`, `post-photo`) still cannot cross. Found in V2-5.4 E2E. | `apps/web/src/routes/dashboard/_layout.events.$eventId.flow.tsx` |
 | V2-6.21 | AI-01 | Google AI 503 ("high demand") error is forwarded as a raw internal error string from the backend 500 response to the user. Fix: in the AI generate backend, catch provider 5xx errors and return a user-friendly `{ error: 'AI service temporarily unavailable. Please retry.' }` with a 503 status instead of 500. Found in V2-5.4 E2E. | `apps/web/src/routes/api.ai-generate.ts` (or usecase) |
-| V2-6.22 | QR-01 | QR code on the result screen links to `${apiBaseUrl}/result/${sessionId}`, but no `/result/:sessionId` route exists in the web app — scans return 404. Fix: build a public result page that reads the session from Supabase and displays the guest's photo. Found in V2-5.4 E2E. | `apps/web/src/routes/result.$sessionId.tsx` (new) |
+| ~~V2-6.22~~ | ~~QR-01~~ | ✅ Already done — `apps/web/src/routes/result.$sessionId.tsx` exists and is fully implemented (reads session from Supabase, shows guest photo with download button, uses `BrandingConfig`). No action needed. | ~~`apps/web/src/routes/result.$sessionId.tsx` (new)~~ |
 
 ---
 
