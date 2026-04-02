@@ -470,70 +470,79 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
         />
         <video ref={videoRef} autoPlay playsInline muted className="hidden" />
 
-        <div className="z-10 absolute bottom-100 left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer flex items-center justify-center gap-8 lg:gap-16 w-full">
-          <button
-            onClick={handleRetake}
-            className="flex flex-col items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
-            aria-label="Retake photo"
-            disabled={capturedPhotos.length <= 0 || retakeCount >= maxRetakes}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleRetake();
+        <div className="z-10 absolute bottom-100 left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer flex flex-col items-center gap-6 w-full">
+          {capturedPhotos.length > 0 &&
+            maxRetakes > 0 &&
+            retakeCount === maxRetakes - 1 && (
+              <p className="text-white/70 text-3xl font-medium">
+                This is your last retake
+              </p>
+            )}
+          <div className="flex items-center justify-center gap-8 lg:gap-16 w-full">
+            <button
+              onClick={handleRetake}
+              className="flex flex-col items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+              aria-label="Retake photo"
+              disabled={capturedPhotos.length <= 0 || retakeCount >= maxRetakes}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleRetake();
+                }
+              }}
+            >
+              <img
+                src={getAssetPath("/images/ico-retake.png")}
+                alt="Retake"
+                className="size-32 object-contain"
+              />
+              <span className="text-white text-2xl lg:text-3xl absolute -bottom-4">
+                Retake
+              </span>
+            </button>
+            <button
+              onClick={handleCapturePhoto}
+              className="size-48 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+              disabled={
+                capturedPhotos.length >= 1 ||
+                !isCameraActive ||
+                countdown !== null
               }
-            }}
-          >
-            <img
-              src={getAssetPath("/images/ico-retake.png")}
-              alt="Retake"
-              className="size-32 object-contain"
-            />
-            <span className="text-white text-2xl lg:text-3xl absolute -bottom-4">
-              Retake
-            </span>
-          </button>
-          <button
-            onClick={handleCapturePhoto}
-            className="size-48 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
-            disabled={
-              capturedPhotos.length >= 1 ||
-              !isCameraActive ||
-              countdown !== null
-            }
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleCapturePhoto();
-              }
-            }}
-          >
-            <img
-              src={getAssetPath("/images/ico-capture.png")}
-              alt="Capture"
-              className="transition-all duration-200 active:brightness-[1.3] active:hue-rotate-15"
-            />
-          </button>
-          <button
-            onClick={handleNext}
-            className="flex flex-col items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
-            aria-label="Next"
-            disabled={capturedPhotos.length < 1}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleNext();
-              }
-            }}
-          >
-            <img
-              src={getAssetPath("/images/ico-next.png")}
-              alt="Next"
-              className="size-32 object-contain"
-            />
-            <span className="text-white text-2xl lg:text-3xl absolute -bottom-4">
-              Next
-            </span>
-          </button>
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleCapturePhoto();
+                }
+              }}
+            >
+              <img
+                src={getAssetPath("/images/ico-capture.png")}
+                alt="Capture"
+                className="transition-all duration-200 active:brightness-[1.3] active:hue-rotate-15"
+              />
+            </button>
+            <button
+              onClick={handleNext}
+              className="flex flex-col items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+              aria-label="Next"
+              disabled={capturedPhotos.length < 1}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleNext();
+                }
+              }}
+            >
+              <img
+                src={getAssetPath("/images/ico-next.png")}
+                alt="Next"
+                className="size-32 object-contain"
+              />
+              <span className="text-white text-2xl lg:text-3xl absolute -bottom-4">
+                Next
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
