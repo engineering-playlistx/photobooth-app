@@ -112,6 +112,7 @@ export const Route = createFileRoute('/api/ai-generate')({
   server: {
     handlers: {
       POST: async (ctx) => {
+        let tempPath = ''
         try {
           const request = ctx.request
 
@@ -150,7 +151,6 @@ export const Route = createFileRoute('/api/ai-generate')({
 
           const aiService = new AIGenerationService(provider)
           let predictionId: string
-          let tempPath = ''
 
           if (provider === 'google') {
             // Google AI: run entirely synchronously inside the request handler.
@@ -292,6 +292,18 @@ export const Route = createFileRoute('/api/ai-generate')({
           return json({ predictionId, tempPath })
         } catch (error) {
           console.error({ message: 'AI generation error', error })
+
+          if (tempPath) {
+            try {
+              const supabase = getSupabaseAdminClient()
+              await supabase.storage.from(SUPABASE_BUCKET).remove([tempPath])
+            } catch (cleanupErr) {
+              console.error(
+                '[ai-generate] Failed to clean up temp photo after error:',
+                cleanupErr,
+              )
+            }
+          }
 
           if (error instanceof Error) {
             return json({ error: error.message }, { status: 500 })
