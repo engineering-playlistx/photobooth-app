@@ -126,11 +126,25 @@ function FlowBuilderPage() {
 
   const isDirty = JSON.stringify(flow) !== JSON.stringify(savedFlow)
 
-  const canMoveUp = (i: number) =>
-    !isFixed(flow[i]) && i > 0 && !isFixed(flow[i - 1])
+  const canMoveUp = (i: number) => {
+    if (isFixed(flow[i]) || i <= 0) return false
+    const above = flow[i - 1]
+    if (above.position === 'fixed-first' || above.position === 'fixed-last')
+      return false
+    if (above.position === 'fixed-camera' && flow[i].position !== 'flexible')
+      return false
+    return true
+  }
 
-  const canMoveDown = (i: number) =>
-    !isFixed(flow[i]) && i < flow.length - 1 && !isFixed(flow[i + 1])
+  const canMoveDown = (i: number) => {
+    if (isFixed(flow[i]) || i >= flow.length - 1) return false
+    const below = flow[i + 1]
+    if (below.position === 'fixed-first' || below.position === 'fixed-last')
+      return false
+    if (below.position === 'fixed-camera' && flow[i].position !== 'flexible')
+      return false
+    return true
+  }
 
   const moveUp = (i: number) => {
     if (!canMoveUp(i)) return
