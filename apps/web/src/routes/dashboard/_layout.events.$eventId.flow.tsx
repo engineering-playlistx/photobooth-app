@@ -441,6 +441,9 @@ function ConfigPanel({
       />
     )
   }
+  if (module.moduleId === 'mini-quiz') {
+    return <MiniQuizPanel module={module} onUpdate={onUpdate} />
+  }
   return (
     <p className="text-xs text-slate-500">No configurable options for V2.</p>
   )
@@ -839,6 +842,127 @@ function AiGenerationPanel({
           + Add Theme{hasTs ? ' (syncs to Theme Selection)' : ''}
         </button>
       </div>
+    </div>
+  )
+}
+
+function MiniQuizPanel({
+  module,
+  onUpdate,
+}: {
+  module: MiniQuizModuleConfig
+  onUpdate: (patch: Partial<ModuleConfig>) => void
+}) {
+  const inputCls =
+    'flex-1 px-2 py-1 text-xs bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500'
+
+  const updateQuestion = (qi: number, text: string) => {
+    onUpdate({
+      questions: module.questions.map((q, i) =>
+        i === qi ? { ...q, text } : q,
+      ),
+    } as Partial<ModuleConfig>)
+  }
+
+  const updateOption = (qi: number, oi: number, value: string) => {
+    onUpdate({
+      questions: module.questions.map((q, i) =>
+        i === qi
+          ? { ...q, options: q.options.map((o, j) => (j === oi ? value : o)) }
+          : q,
+      ),
+    } as Partial<ModuleConfig>)
+  }
+
+  const addOption = (qi: number) => {
+    onUpdate({
+      questions: module.questions.map((q, i) =>
+        i === qi ? { ...q, options: [...q.options, ''] } : q,
+      ),
+    } as Partial<ModuleConfig>)
+  }
+
+  const removeOption = (qi: number, oi: number) => {
+    onUpdate({
+      questions: module.questions.map((q, i) =>
+        i === qi ? { ...q, options: q.options.filter((_, j) => j !== oi) } : q,
+      ),
+    } as Partial<ModuleConfig>)
+  }
+
+  const removeQuestion = (qi: number) => {
+    onUpdate({
+      questions: module.questions.filter((_, i) => i !== qi),
+    } as Partial<ModuleConfig>)
+  }
+
+  const addQuestion = () => {
+    onUpdate({
+      questions: [...module.questions, { text: '', options: ['', ''] }],
+    } as Partial<ModuleConfig>)
+  }
+
+  return (
+    <div className="space-y-4">
+      {module.questions.map((q, qi) => (
+        <div
+          key={qi}
+          className="border border-slate-700 rounded-lg p-3 space-y-2"
+        >
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Question text"
+              value={q.text}
+              onChange={(e) => updateQuestion(qi, e.target.value)}
+              className={inputCls}
+            />
+            <button
+              onClick={() => removeQuestion(qi)}
+              className="text-slate-500 hover:text-red-400 transition-colors text-sm leading-none"
+              title="Remove question"
+            >
+              ×
+            </button>
+          </div>
+          <div className="pl-3 space-y-1.5">
+            {q.options.map((opt, oi) => (
+              <div key={oi} className="flex items-center gap-2">
+                <span className="text-xs text-slate-500 w-4 shrink-0">
+                  {oi + 1}.
+                </span>
+                <input
+                  type="text"
+                  placeholder="Option"
+                  value={opt}
+                  onChange={(e) => updateOption(qi, oi, e.target.value)}
+                  className={inputCls}
+                />
+                <button
+                  onClick={() => removeOption(qi, oi)}
+                  disabled={q.options.length <= 2}
+                  className="text-slate-500 hover:text-red-400 disabled:text-slate-700 disabled:cursor-not-allowed transition-colors text-sm leading-none"
+                  title="Remove option"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => addOption(qi)}
+              className="text-xs text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              + Add option
+            </button>
+          </div>
+        </div>
+      ))}
+      <button
+        onClick={addQuestion}
+        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+      >
+        + Add Question
+      </button>
     </div>
   )
 }
