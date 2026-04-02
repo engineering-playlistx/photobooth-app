@@ -6,6 +6,7 @@ import { CameraModule } from "./CameraModule";
 import { FormModule } from "./FormModule";
 import { AiGenerationModule } from "./AiGenerationModule";
 import { ResultModule } from "./ResultModule";
+import { MiniQuizModule } from "./MiniQuizModule";
 
 export const MODULE_REGISTRY: Record<
   string,
@@ -18,3 +19,4 @@ MODULE_REGISTRY["camera"] = CameraModule;
 MODULE_REGISTRY["form"] = FormModule;
 MODULE_REGISTRY["ai-generation"] = AiGenerationModule;
 MODULE_REGISTRY["result"] = ResultModule;
+MODULE_REGISTRY["mini-quiz"] = MiniQuizModule;
