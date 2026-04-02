@@ -55,7 +55,11 @@ export const Route = createFileRoute('/api/config')({
             return json({ error: error.message }, { status: 500 })
           }
 
-          return json(data.config_json as EventConfig)
+          return json(data.config_json as EventConfig, {
+            headers: {
+              'Cache-Control': 'max-age=60, stale-while-revalidate=300',
+            },
+          })
         } catch (error) {
           console.error({ message: 'Config fetch error', error })
           if (error instanceof Error) {
