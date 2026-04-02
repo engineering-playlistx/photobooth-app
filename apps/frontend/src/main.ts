@@ -395,10 +395,14 @@ ipcMain.handle(
       };
 
       // Print the window; cleanup runs in the completion callback
+      if (!printerName) {
+        throw new Error("printerName is required but was not configured");
+      }
+
       printWindow.webContents.print(
         {
           silent: true,
-          deviceName: printerName ?? "DS-RX1",
+          deviceName: printerName,
           printBackground: true,
           landscape: true,
           color: true,
