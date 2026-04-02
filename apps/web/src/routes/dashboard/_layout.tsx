@@ -10,9 +10,9 @@ import { getSupabaseServerClient } from '../../utils/supabase'
 const getSession = createServerFn({ method: 'GET' }).handler(async () => {
   const supabase = getSupabaseServerClient()
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return { user }
+    data: { session },
+  } = await supabase.auth.getSession()
+  return { user: session?.user ?? null }
 })
 
 const signOut = createServerFn({ method: 'POST' }).handler(async () => {
