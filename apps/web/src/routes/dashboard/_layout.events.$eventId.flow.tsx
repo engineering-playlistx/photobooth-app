@@ -41,6 +41,13 @@ function isFixed(module: ModuleConfig): boolean {
   return FIXED_POSITIONS.has(module.position)
 }
 
+function hasNonEmptyConfig(module: ModuleConfig): boolean {
+  if (module.moduleId === 'ai-generation') return module.themes.length > 0
+  if (module.moduleId === 'theme-selection') return module.themes.length > 0
+  if (module.moduleId === 'mini-quiz') return module.questions.length > 0
+  return false
+}
+
 const POSITION_LABELS: Record<string, string> = {
   'fixed-first': 'fixed-first',
   'pre-photo': 'pre-photo',
@@ -81,6 +88,18 @@ function FlowBuilderPage() {
     })
   }
 
+  const removeModule = (i: number) => {
+    const module = flow[i]
+    if (
+      hasNonEmptyConfig(module) &&
+      !confirm(
+        `Remove "${MODULE_LABELS[module.moduleId] ?? module.moduleId}"? It has configured data that will be lost.`,
+      )
+    )
+      return
+    setFlow((f) => f.filter((_, idx) => idx !== i))
+  }
+
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
@@ -114,6 +133,7 @@ function FlowBuilderPage() {
               canMoveDown={canMoveDown(index)}
               onMoveUp={() => moveUp(index)}
               onMoveDown={() => moveDown(index)}
+              onRemove={() => removeModule(index)}
             />
           </li>
         ))}
@@ -129,6 +149,7 @@ function ModuleCard({
   canMoveDown,
   onMoveUp,
   onMoveDown,
+  onRemove,
 }: {
   module: ModuleConfig
   position: number
@@ -136,6 +157,7 @@ function ModuleCard({
   canMoveDown: boolean
   onMoveUp: () => void
   onMoveDown: () => void
+  onRemove: () => void
 }) {
   const fixed = isFixed(module)
   const label = MODULE_LABELS[module.moduleId] ?? module.moduleId
@@ -172,22 +194,31 @@ function ModuleCard({
           🔒
         </span>
       ) : (
-        <div className="flex flex-col gap-0.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-col gap-0.5">
+            <button
+              onClick={onMoveUp}
+              disabled={!canMoveUp}
+              className="px-1.5 py-0.5 text-slate-400 hover:text-white disabled:text-slate-700 disabled:cursor-not-allowed transition-colors text-xs leading-none"
+              title="Move up"
+            >
+              ▲
+            </button>
+            <button
+              onClick={onMoveDown}
+              disabled={!canMoveDown}
+              className="px-1.5 py-0.5 text-slate-400 hover:text-white disabled:text-slate-700 disabled:cursor-not-allowed transition-colors text-xs leading-none"
+              title="Move down"
+            >
+              ▼
+            </button>
+          </div>
           <button
-            onClick={onMoveUp}
-            disabled={!canMoveUp}
-            className="px-1.5 py-0.5 text-slate-400 hover:text-white disabled:text-slate-700 disabled:cursor-not-allowed transition-colors text-xs leading-none"
-            title="Move up"
+            onClick={onRemove}
+            className="px-1.5 py-1 text-slate-500 hover:text-red-400 transition-colors text-sm leading-none"
+            title="Remove module"
           >
-            ▲
-          </button>
-          <button
-            onClick={onMoveDown}
-            disabled={!canMoveDown}
-            className="px-1.5 py-0.5 text-slate-400 hover:text-white disabled:text-slate-700 disabled:cursor-not-allowed transition-colors text-xs leading-none"
-            title="Move down"
-          >
-            ▼
+            ×
           </button>
         </div>
       )}
