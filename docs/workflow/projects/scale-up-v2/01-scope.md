@@ -1,7 +1,7 @@
 # scale-up-v2 — Project Scope
 
 **Milestone:** V2 — Modular Pipeline
-**Status:** 🔜 Planning
+**Status:** 🔄 In Progress — Phases 1–4 complete ✅ · Phase 5 next
 **Depends on:** `scale-up-v1` complete ✅
 
 ---

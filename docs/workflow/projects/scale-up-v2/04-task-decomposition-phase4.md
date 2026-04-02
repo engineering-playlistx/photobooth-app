@@ -1,6 +1,6 @@
 # Task Decomposition — V2 Phase 4 (Flow Builder)
 
-**Status:** 🔜 Not started
+**Status:** ✅ Complete (2026-04-02)
 **Scope:** V2-Phase 4 — Flow Builder (Dashboard)
 **Depends on:** Phases 1, 2, 3 complete ✅ · V2-1.5 DB migration confirmed run ✅
 
@@ -69,7 +69,7 @@ V2-4.10 can be done as early as after V2-4.1 (the route exists), but is listed l
 
 ---
 
-### V2-4.0 — config.tsx: remove LegacyEventConfig, drop AI Config section
+### ~~V2-4.0 — config.tsx: remove LegacyEventConfig, drop AI Config section~~ ✅
 
 **What:**
 1. Remove the `LegacyEventConfig` type definition and the `// TEMP` comment block from `config.tsx`.
@@ -104,7 +104,7 @@ The config editor retains: Branding, Tech Config, Form Fields. The save handler 
 
 ---
 
-### V2-4.1 — Flow builder page: scaffold + read + display moduleFlow
+### ~~V2-4.1 — Flow builder page: scaffold + read + display moduleFlow~~ ✅
 
 **What:**
 1. Create `apps/web/src/routes/dashboard/_layout.events.$eventId.flow.tsx`.
@@ -139,7 +139,7 @@ The config editor retains: Branding, Tech Config, Form Fields. The save handler 
 
 ---
 
-### V2-4.2 — Flow builder: reorder (up/down buttons)
+### ~~V2-4.2 — Flow builder: reorder (up/down buttons)~~ ✅
 
 **What:**
 1. Convert the route data to local React state: `const [flow, setFlow] = useState<ModuleConfig[]>(routeData)`.
@@ -173,7 +173,7 @@ The config editor retains: Branding, Tech Config, Form Fields. The save handler 
 
 ---
 
-### V2-4.3 — Flow builder: remove non-fixed modules
+### ~~V2-4.3 — Flow builder: remove non-fixed modules~~ ✅
 
 **What:**
 1. Add a remove button (×) to each non-fixed, removable module card.
@@ -201,7 +201,7 @@ The config editor retains: Branding, Tech Config, Form Fields. The save handler 
 
 ---
 
-### V2-4.4 — Flow builder: add module action
+### ~~V2-4.4 — Flow builder: add module action~~ ✅
 
 **What:**
 1. Add an "Add Module" button (shown below the module list).
@@ -241,7 +241,7 @@ The config editor retains: Branding, Tech Config, Form Fields. The save handler 
 
 ---
 
-### V2-4.5 — Flow builder: config panels for Camera, Form, Welcome, Result
+### ~~V2-4.5 — Flow builder: config panels for Camera, Form, Welcome, Result~~ ✅
 
 **What:**
 1. Add a "Configure" expand/collapse toggle (chevron) to every module card. Clicking expands an inline config panel below the card header.
@@ -280,7 +280,7 @@ const updateModule = (index: number, patch: Partial<ModuleConfig>) =>
 
 ---
 
-### V2-4.6 — Flow builder: ThemeSelection config panel
+### ~~V2-4.6 — Flow builder: ThemeSelection config panel~~ ✅
 
 **What:**
 Expand `theme-selection` card to show a theme list editor.
@@ -324,7 +324,7 @@ Edits `flow[tsIndex].themes[i]` via `updateModule`.
 
 ---
 
-### V2-4.7 — Flow builder: AiGeneration config panel
+### ~~V2-4.7 — Flow builder: AiGeneration config panel~~ ✅
 
 **What:**
 Expand `ai-generation` card to show:
@@ -369,7 +369,7 @@ Removes by id from both modules atomically.
 
 ---
 
-### V2-4.8 — Flow builder: MiniQuiz config panel
+### ~~V2-4.8 — Flow builder: MiniQuiz config panel~~ ✅
 
 **What:**
 Expand `mini-quiz` card to show a question editor:
@@ -401,7 +401,7 @@ Expand `mini-quiz` card to show a question editor:
 
 ---
 
-### V2-4.9 — Flow builder: save server function + validation + UI wiring
+### ~~V2-4.9 — Flow builder: save server function + validation + UI wiring~~ ✅
 
 **What:**
 
@@ -461,7 +461,7 @@ Rules (non-exhaustive list — implement all):
 
 ---
 
-### V2-4.10 — Event index: add Flow Builder navigation card
+### ~~V2-4.10 — Event index: add Flow Builder navigation card~~ ✅
 
 **What:**
 1. Add a fourth navigation card "Flow Builder" to `_layout.events.$eventId.index.tsx`.
