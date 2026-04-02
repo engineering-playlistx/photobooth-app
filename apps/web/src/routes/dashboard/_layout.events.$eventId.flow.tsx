@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
-import type { EventConfig } from '../../types/event-config'
+import type { AiThemeConfig, EventConfig } from '../../types/event-config'
 import type {
   AiGenerationModuleConfig,
   FormModuleConfig,
@@ -73,6 +73,21 @@ const ADDABLE_MODULES: Array<{
   { type: 'form', label: 'Form', single: true },
   { type: 'mini-quiz', label: 'Mini Quiz', single: false },
 ]
+
+const BLANK_AI_THEME: AiThemeConfig = {
+  id: '',
+  label: '',
+  previewImageUrl: '',
+  frameImageUrl: '',
+  templateImageUrl: '',
+  prompt: '',
+  canvasWidth: 1080,
+  canvasHeight: 1920,
+  photoWidth: 1080,
+  photoHeight: 1920,
+  photoOffsetX: 0,
+  photoOffsetY: 0,
+}
 
 function FlowBuilderPage() {
   const initialFlow = Route.useLoaderData()
@@ -207,6 +222,7 @@ function FlowBuilderPage() {
               onMoveDown={() => moveDown(index)}
               onRemove={() => removeModule(index)}
               onUpdate={(patch) => updateModule(index, patch)}
+              onUpdateFlow={setFlow}
             />
           </li>
         ))}
@@ -273,6 +289,7 @@ function ModuleCard({
   onMoveDown,
   onRemove,
   onUpdate,
+  onUpdateFlow,
 }: {
   module: ModuleConfig
   flow: Array<ModuleConfig>
@@ -283,6 +300,9 @@ function ModuleCard({
   onMoveDown: () => void
   onRemove: () => void
   onUpdate: (patch: Partial<ModuleConfig>) => void
+  onUpdateFlow: (
+    updater: (f: Array<ModuleConfig>) => Array<ModuleConfig>,
+  ) => void
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const fixed = isFixed(module)
@@ -363,7 +383,12 @@ function ModuleCard({
 
       {isOpen && (
         <div className="border-t border-slate-700 px-4 pb-4 pt-3">
-          <ConfigPanel module={module} flow={flow} onUpdate={onUpdate} />
+          <ConfigPanel
+            module={module}
+            flow={flow}
+            onUpdate={onUpdate}
+            onUpdateFlow={onUpdateFlow}
+          />
         </div>
       )}
     </div>
@@ -374,10 +399,14 @@ function ConfigPanel({
   module,
   flow,
   onUpdate,
+  onUpdateFlow,
 }: {
   module: ModuleConfig
   flow: Array<ModuleConfig>
   onUpdate: (patch: Partial<ModuleConfig>) => void
+  onUpdateFlow: (
+    updater: (f: Array<ModuleConfig>) => Array<ModuleConfig>,
+  ) => void
 }) {
   if (module.moduleId === 'camera') {
     return (
@@ -400,6 +429,16 @@ function ConfigPanel({
   if (module.moduleId === 'theme-selection') {
     return (
       <ThemeSelectionPanel module={module} flow={flow} onUpdate={onUpdate} />
+    )
+  }
+  if (module.moduleId === 'ai-generation') {
+    return (
+      <AiGenerationPanel
+        module={module}
+        flow={flow}
+        onUpdate={onUpdate}
+        onUpdateFlow={onUpdateFlow}
+      />
     )
   }
   return (
@@ -578,6 +617,228 @@ function ThemeSelectionPanel({
       >
         + Add Theme
       </button>
+    </div>
+  )
+}
+
+function AiGenerationPanel({
+  module,
+  flow,
+  onUpdate,
+  onUpdateFlow,
+}: {
+  module: AiGenerationModuleConfig
+  flow: Array<ModuleConfig>
+  onUpdate: (patch: Partial<ModuleConfig>) => void
+  onUpdateFlow: (
+    updater: (f: Array<ModuleConfig>) => Array<ModuleConfig>,
+  ) => void
+}) {
+  const [openThemes, setOpenThemes] = useState<Set<number>>(new Set())
+  const hasTs = flow.some((m) => m.moduleId === 'theme-selection')
+
+  const inputCls =
+    'flex-1 px-2 py-1 text-xs bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500'
+  const labelCls = 'text-xs text-slate-400 w-28 shrink-0'
+
+  const updateThemeField = (
+    i: number,
+    field: keyof AiThemeConfig,
+    value: string | number,
+  ) => {
+    onUpdate({
+      themes: module.themes.map((t, j) =>
+        j === i ? { ...t, [field]: value } : t,
+      ),
+    } as Partial<ModuleConfig>)
+  }
+
+  const renameThemeId = (i: number, oldId: string, newId: string) => {
+    onUpdateFlow((f) =>
+      f.map((m) => {
+        if (m.moduleId === 'ai-generation')
+          return {
+            ...m,
+            themes: m.themes.map((t, j) => (j === i ? { ...t, id: newId } : t)),
+          }
+        if (m.moduleId === 'theme-selection')
+          return {
+            ...m,
+            themes: m.themes.map((t) =>
+              t.id === oldId ? { ...t, id: newId } : t,
+            ),
+          }
+        return m
+      }),
+    )
+  }
+
+  const addTheme = () => {
+    onUpdateFlow((f) =>
+      f.map((m) => {
+        if (m.moduleId === 'ai-generation')
+          return { ...m, themes: [...m.themes, { ...BLANK_AI_THEME }] }
+        if (m.moduleId === 'theme-selection')
+          return {
+            ...m,
+            themes: [...m.themes, { id: '', label: '', previewImageUrl: '' }],
+          }
+        return m
+      }),
+    )
+  }
+
+  const removeTheme = (i: number, id: string) => {
+    onUpdateFlow((f) =>
+      f.map((m) => {
+        if (m.moduleId === 'ai-generation')
+          return { ...m, themes: m.themes.filter((_, j) => j !== i) }
+        if (m.moduleId === 'theme-selection')
+          return { ...m, themes: m.themes.filter((t) => t.id !== id) }
+        return m
+      }),
+    )
+  }
+
+  const toggleTheme = (i: number) =>
+    setOpenThemes((prev) => {
+      const next = new Set(prev)
+      if (next.has(i)) next.delete(i)
+      else next.add(i)
+      return next
+    })
+
+  return (
+    <div className="space-y-4">
+      {/* Provider */}
+      <div className="flex items-center gap-2">
+        <label className={labelCls}>Provider</label>
+        <select
+          value={module.provider}
+          onChange={(e) =>
+            onUpdate({
+              provider: e.target.value as 'replicate' | 'google',
+            } as Partial<ModuleConfig>)
+          }
+          className="px-2 py-1 text-xs bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500"
+        >
+          <option value="replicate">replicate</option>
+          <option value="google">google</option>
+        </select>
+      </div>
+
+      {/* Themes */}
+      <div className="space-y-2">
+        <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+          Themes
+        </p>
+        {module.themes.map((theme, i) => (
+          <div
+            key={i}
+            className="border border-slate-700 rounded-lg overflow-hidden"
+          >
+            {/* Theme header row */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/50">
+              <button
+                onClick={() => toggleTheme(i)}
+                className="flex-1 text-left text-xs text-white font-medium"
+              >
+                {openThemes.has(i) ? '▼' : '▶'}{' '}
+                {theme.id || (
+                  <span className="text-slate-500 italic">unnamed</span>
+                )}
+              </button>
+              <button
+                onClick={() => removeTheme(i, theme.id)}
+                className="text-slate-500 hover:text-red-400 transition-colors text-sm leading-none"
+                title="Remove theme"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Theme fields */}
+            {openThemes.has(i) && (
+              <div className="px-3 pb-3 pt-2 space-y-1.5 border-t border-slate-700">
+                {/* ID */}
+                <div className="flex items-center gap-2">
+                  <label className={labelCls}>ID</label>
+                  <input
+                    type="text"
+                    value={theme.id}
+                    onChange={(e) => renameThemeId(i, theme.id, e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                {/* Text fields */}
+                {(
+                  [
+                    ['label', 'Label'],
+                    ['previewImageUrl', 'Preview URL'],
+                    ['frameImageUrl', 'Frame URL'],
+                    ['templateImageUrl', 'Template URL'],
+                  ] as const
+                ).map(([field, label]) => (
+                  <div key={field} className="flex items-center gap-2">
+                    <label className={labelCls}>{label}</label>
+                    <input
+                      type="text"
+                      value={theme[field]}
+                      onChange={(e) =>
+                        updateThemeField(i, field, e.target.value)
+                      }
+                      className={inputCls}
+                    />
+                  </div>
+                ))}
+                {/* Prompt textarea */}
+                <div className="flex items-start gap-2">
+                  <label className={`${labelCls} mt-1`}>Prompt</label>
+                  <textarea
+                    value={theme.prompt}
+                    rows={3}
+                    onChange={(e) =>
+                      updateThemeField(i, 'prompt', e.target.value)
+                    }
+                    className="flex-1 px-2 py-1 text-xs bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500 resize-y"
+                  />
+                </div>
+                {/* Number fields */}
+                {(
+                  [
+                    ['canvasWidth', 'Canvas W'],
+                    ['canvasHeight', 'Canvas H'],
+                    ['photoWidth', 'Photo W'],
+                    ['photoHeight', 'Photo H'],
+                    ['photoOffsetX', 'Offset X'],
+                    ['photoOffsetY', 'Offset Y'],
+                  ] as const
+                ).map(([field, label]) => (
+                  <div key={field} className="flex items-center gap-2">
+                    <label className={labelCls}>{label}</label>
+                    <input
+                      type="number"
+                      value={theme[field]}
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value, 10)
+                        if (!isNaN(v)) updateThemeField(i, field, v)
+                      }}
+                      className="w-24 px-2 py-1 text-xs bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+
+        <button
+          onClick={addTheme}
+          className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+        >
+          + Add Theme{hasTs ? ' (syncs to Theme Selection)' : ''}
+        </button>
+      </div>
     </div>
   )
 }
