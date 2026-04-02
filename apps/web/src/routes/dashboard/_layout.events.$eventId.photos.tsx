@@ -1,9 +1,12 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { useState } from 'react'
 import { zipSync } from 'fflate'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
 import { SUPABASE_BUCKET } from '../../utils/constants'
+
+// Grid-friendly: 4 columns × 12 rows
+const PAGE_SIZE = 48
 
 type Photo = {
   name: string
@@ -11,27 +14,41 @@ type Photo = {
 }
 
 const getPhotos = createServerFn({ method: 'GET' }).handler(async (ctx) => {
-  const { eventId } = ctx.data as { eventId: string }
+  const { eventId, page = 1 } = ctx.data as { eventId: string; page?: number }
   const admin = getSupabaseAdminClient()
   const folder = `events/${eventId}/photos`
+
+  // Fetch all file metadata server-side (names + metadata only, no image data).
+  // Storage .list() has no built-in count/range — we paginate the metadata slice here.
   const { data, error } = await admin.storage
     .from(SUPABASE_BUCKET)
     .list(folder, { sortBy: { column: 'created_at', order: 'desc' } })
   if (error) throw new Error(error.message)
 
-  return data.map((f) => {
+  const allFiles = data
+  const totalCount = allFiles.length
+  const from = (page - 1) * PAGE_SIZE
+  const pageFiles = allFiles.slice(from, from + PAGE_SIZE)
+
+  const photos = pageFiles.map((f) => {
     const { data: urlData } = admin.storage
       .from(SUPABASE_BUCKET)
       .getPublicUrl(`${folder}/${f.name}`)
     return { name: f.name, url: urlData.publicUrl } satisfies Photo
   })
+
+  return { photos, totalCount }
 })
 
 export const Route = createFileRoute(
   '/dashboard/_layout/events/$eventId/photos',
 )({
-  loader: async ({ params }) =>
-    await getPhotos({ data: { eventId: params.eventId } }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    page: Number(search.page ?? 1),
+  }),
+  loaderDeps: ({ search: { page } }) => ({ page }),
+  loader: async ({ params, deps: { page } }) =>
+    await getPhotos({ data: { eventId: params.eventId, page } }),
   component: PhotoGalleryPage,
 })
 
@@ -55,9 +72,16 @@ async function downloadAll(photos: Array<Photo>, eventId: string) {
 }
 
 function PhotoGalleryPage() {
-  const photos = Route.useLoaderData()
+  const { photos, totalCount } = Route.useLoaderData()
   const { eventId } = Route.useParams()
+  const { page } = Route.useSearch()
+  const navigate = useNavigate({ from: Route.fullPath })
   const [zipping, setZipping] = useState(false)
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+
+  const goToPage = (p: number) =>
+    navigate({ search: (prev) => ({ ...prev, page: p }) })
 
   const handleDownloadAll = async () => {
     setZipping(true)
@@ -86,7 +110,7 @@ function PhotoGalleryPage() {
         <h1 className="text-2xl font-bold text-white">
           Photos{' '}
           <span className="text-base font-normal text-slate-400">
-            ({photos.length})
+            ({totalCount}) — Page {page} of {totalPages}
           </span>
         </h1>
         {photos.length > 0 && (
@@ -103,28 +127,54 @@ function PhotoGalleryPage() {
       {photos.length === 0 ? (
         <p className="text-slate-400">No photos yet for this event.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {photos.map((photo) => (
-            <a
-              key={photo.name}
-              href={photo.url}
-              download={photo.name}
-              target="_blank"
-              rel="noreferrer"
-              className="group relative aspect-[9/16] bg-slate-800 rounded-lg overflow-hidden border border-slate-700 hover:border-slate-500 transition-colors"
-            >
-              <img
-                src={photo.url}
-                alt={photo.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-xs text-white font-medium">Download</span>
-              </div>
-            </a>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {photos.map((photo) => (
+              <a
+                key={photo.name}
+                href={photo.url}
+                download={photo.name}
+                target="_blank"
+                rel="noreferrer"
+                className="group relative aspect-[9/16] bg-slate-800 rounded-lg overflow-hidden border border-slate-700 hover:border-slate-500 transition-colors"
+              >
+                <img
+                  src={photo.url}
+                  alt={photo.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="text-xs text-white font-medium">
+                    Download
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <button
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1}
+                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              >
+                ← Previous
+              </button>
+              <span className="text-sm text-slate-400">
+                {page} / {totalPages}
+              </span>
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages}
+                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              >
+                Next →
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
