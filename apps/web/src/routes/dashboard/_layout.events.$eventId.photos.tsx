@@ -52,24 +52,47 @@ export const Route = createFileRoute(
   component: PhotoGalleryPage,
 })
 
-async function downloadAll(photos: Array<Photo>, eventId: string) {
-  const entries: Record<string, Uint8Array> = {}
-  await Promise.all(
-    photos.map(async (photo) => {
-      const res = await fetch(photo.url)
-      const buf = await res.arrayBuffer()
-      entries[photo.name] = new Uint8Array(buf)
-    }),
-  )
-  const zipped = zipSync(entries)
-  const blob = new Blob([zipped], { type: 'application/zip' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `photos-${eventId}.zip`
-  a.click()
-  URL.revokeObjectURL(url)
-}
+// Cloudflare Workers memory limit: ~128MB. Cap at 25 photos (~2MB each = ~50MB).
+// If the event has more photos, instruct the operator to use the download-photos script.
+const ZIP_PHOTO_LIMIT = 25
+
+const downloadPhotosZip = createServerFn({ method: 'GET' }).handler(
+  async (ctx) => {
+    const { eventId } = ctx.data as { eventId: string }
+    const admin = getSupabaseAdminClient()
+    const folder = `events/${eventId}/photos`
+
+    const { data, error } = await admin.storage
+      .from(SUPABASE_BUCKET)
+      .list(folder, { sortBy: { column: 'created_at', order: 'desc' } })
+    if (error) throw new Error(error.message)
+
+    const allFiles = data
+    if (allFiles.length > ZIP_PHOTO_LIMIT) {
+      return {
+        tooLarge: true as const,
+        count: allFiles.length,
+        zipBase64: null,
+      }
+    }
+
+    const entries: Record<string, Uint8Array> = {}
+    await Promise.all(
+      allFiles.map(async (f) => {
+        const { data: blob, error: dlErr } = await admin.storage
+          .from(SUPABASE_BUCKET)
+          .download(`${folder}/${f.name}`)
+        if (dlErr) return
+        const buf = await blob.arrayBuffer()
+        entries[f.name] = new Uint8Array(buf)
+      }),
+    )
+
+    const zipped = zipSync(entries)
+    const zipBase64 = Buffer.from(zipped).toString('base64')
+    return { tooLarge: false as const, count: allFiles.length, zipBase64 }
+  },
+)
 
 function PhotoGalleryPage() {
   const { photos, totalCount } = Route.useLoaderData()
@@ -86,7 +109,23 @@ function PhotoGalleryPage() {
   const handleDownloadAll = async () => {
     setZipping(true)
     try {
-      await downloadAll(photos, eventId)
+      const result = await downloadPhotosZip({ data: { eventId } })
+      if (result.tooLarge) {
+        alert(
+          `This event has ${result.count} photos. ZIP download is limited to ${ZIP_PHOTO_LIMIT} photos to avoid memory issues.\n\nUse the download-photos script to bulk-download all photos.`,
+        )
+        return
+      }
+      const binary = atob(result.zipBase64)
+      const bytes = new Uint8Array(binary.length)
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+      const blob = new Blob([bytes], { type: 'application/zip' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `photos-${eventId}.zip`
+      a.click()
+      URL.revokeObjectURL(url)
     } finally {
       setZipping(false)
     }
