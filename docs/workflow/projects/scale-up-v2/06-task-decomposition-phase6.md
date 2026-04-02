@@ -1,6 +1,6 @@
 # Task Decomposition — V2 Phase 6 (V1 Carryover Closure)
 
-**Status:** 🔜 In Progress
+**Status:** ✅ Complete (2026-04-02)
 **Scope:** V2-Phase 6 — address all V1 carryover items from `02-backlog.md` Part A that were not resolved in Phases 1–5
 **Depends on:** Phases 1–5 complete ✅
 
