@@ -53,6 +53,7 @@ export function ResultModule({ outputs }: ModuleProps) {
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(true);
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
   const [savedPhotoPath, setSavedPhotoPath] = useState<string | null>(null);
@@ -163,6 +164,7 @@ export function ResultModule({ outputs }: ModuleProps) {
     }
 
     const saveToDatabase = async () => {
+      setIsSaving(true);
       try {
         hasSaved.current = true;
 
@@ -229,6 +231,8 @@ export function ResultModule({ outputs }: ModuleProps) {
         console.error("Failed to save photo result:", error);
         addToast("Failed to save photo result. Please try again.", "error");
         hasSaved.current = false;
+      } finally {
+        setIsSaving(false);
       }
     };
 
@@ -268,12 +272,20 @@ export function ResultModule({ outputs }: ModuleProps) {
 
           <button
             type="button"
-            className="mt-12 mb-6 w-full text-5xl px-7 py-5 bg-tertiary text-white rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+            className="mt-12 mb-2 w-full text-5xl px-7 py-5 bg-tertiary text-white rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
             onClick={() => void handlePrintAndDownload()}
-            disabled={isProcessing}
+            disabled={isProcessing || isSaving}
           >
             {isProcessing ? "Processing..." : "Print & Download"}
           </button>
+          <div className="mb-4 h-8 flex items-center justify-center">
+            {isSaving && (
+              <p className="text-3xl text-white/50">Saving your photo…</p>
+            )}
+            {!isSaving && hasSaved.current && (
+              <p className="text-3xl text-white/50">✓ Saved</p>
+            )}
+          </div>
 
           <div className="text-center text-4xl grid grid-cols-2 gap-6 w-full">
             <button
