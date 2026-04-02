@@ -3,7 +3,13 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
 import type { EventConfig } from '../../types/event-config'
-import type { ModuleConfig } from '../../types/module-config'
+import type {
+  AiGenerationModuleConfig,
+  FormModuleConfig,
+  MiniQuizModuleConfig,
+  ModuleConfig,
+  ThemeSelectionModuleConfig,
+} from '../../types/module-config'
 
 const getModuleFlow = createServerFn({ method: 'GET' }).handler(async (ctx) => {
   const { eventId } = ctx.data as { eventId: string }
@@ -57,6 +63,17 @@ const POSITION_LABELS: Record<string, string> = {
   flexible: 'flexible',
 }
 
+const ADDABLE_MODULES: Array<{
+  type: 'theme-selection' | 'ai-generation' | 'form' | 'mini-quiz'
+  label: string
+  single: boolean
+}> = [
+  { type: 'theme-selection', label: 'Theme Selection', single: true },
+  { type: 'ai-generation', label: 'AI Generation', single: true },
+  { type: 'form', label: 'Form', single: true },
+  { type: 'mini-quiz', label: 'Mini Quiz', single: false },
+]
+
 function FlowBuilderPage() {
   const initialFlow = Route.useLoaderData()
   const { eventId } = Route.useParams()
@@ -100,6 +117,57 @@ function FlowBuilderPage() {
     setFlow((f) => f.filter((_, idx) => idx !== i))
   }
 
+  const [showPicker, setShowPicker] = useState(false)
+
+  const hasModule = (id: string) => flow.some((m) => m.moduleId === id)
+
+  const addModule = (
+    type: 'theme-selection' | 'ai-generation' | 'form' | 'mini-quiz',
+  ) => {
+    setShowPicker(false)
+    setFlow((f) => {
+      const next = [...f]
+      if (type === 'theme-selection') {
+        const newModule: ThemeSelectionModuleConfig = {
+          moduleId: 'theme-selection',
+          position: 'pre-photo',
+          outputKey: 'selectedTheme',
+          themes: [],
+        }
+        const cameraIdx = next.findIndex((m) => m.moduleId === 'camera')
+        next.splice(cameraIdx, 0, newModule)
+      } else if (type === 'ai-generation') {
+        const newModule: AiGenerationModuleConfig = {
+          moduleId: 'ai-generation',
+          position: 'post-photo',
+          outputKey: 'finalPhoto',
+          provider: 'replicate',
+          themes: [],
+        }
+        const resultIdx = next.findIndex((m) => m.moduleId === 'result')
+        next.splice(resultIdx, 0, newModule)
+      } else if (type === 'form') {
+        const newModule: FormModuleConfig = {
+          moduleId: 'form',
+          position: 'post-photo',
+          outputKey: 'userInfo',
+        }
+        const resultIdx = next.findIndex((m) => m.moduleId === 'result')
+        next.splice(resultIdx, 0, newModule)
+      } else {
+        const newModule: MiniQuizModuleConfig = {
+          moduleId: 'mini-quiz',
+          position: 'flexible',
+          outputKey: 'quizAnswer',
+          questions: [],
+        }
+        const resultIdx = next.findIndex((m) => m.moduleId === 'result')
+        next.splice(resultIdx, 0, newModule)
+      }
+      return next
+    })
+  }
+
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
@@ -138,6 +206,54 @@ function FlowBuilderPage() {
           </li>
         ))}
       </ol>
+
+      <div className="mt-4">
+        {showPicker ? (
+          <div className="border border-slate-700 rounded-lg bg-slate-800/50 p-4">
+            <p className="text-xs text-slate-400 mb-3 font-medium uppercase tracking-wide">
+              Add Module
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {ADDABLE_MODULES.map(({ type, label, single }) => {
+                const disabled = single && hasModule(type)
+                return (
+                  <button
+                    key={type}
+                    onClick={() => !disabled && addModule(type)}
+                    disabled={disabled}
+                    className="flex flex-col items-start p-3 rounded-lg border border-slate-700 bg-slate-800 hover:border-slate-500 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-left"
+                  >
+                    <span className="text-sm font-medium text-white">
+                      {label}
+                    </span>
+                    <span className="font-mono text-xs text-slate-500 mt-0.5">
+                      {type}
+                    </span>
+                    {disabled && (
+                      <span className="text-xs text-slate-500 mt-1">
+                        already in flow
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            <button
+              onClick={() => setShowPicker(false)}
+              className="mt-3 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowPicker(true)}
+            className="w-full py-2.5 border border-dashed border-slate-700 hover:border-slate-500 text-slate-400 hover:text-slate-300 rounded-lg text-sm transition-colors"
+          >
+            + Add Module
+          </button>
+        )}
+      </div>
     </div>
   )
 }
