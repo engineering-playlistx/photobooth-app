@@ -45,7 +45,12 @@ function validateApiKey(request: Request): boolean {
 }
 
 function sanitizeName(name: string): string {
-  return name.trim().replace(/[<>]/g, '')
+  // eslint-disable-next-line no-control-regex
+  return name
+    .trim()
+    .replace(/[<>]/g, '')
+    .replace(/[\x00-\x1F\x7F]/g, '')
+    .slice(0, 100)
 }
 
 function validateEmail(email: string): boolean {
