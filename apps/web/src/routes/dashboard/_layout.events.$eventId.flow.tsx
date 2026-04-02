@@ -199,6 +199,7 @@ function FlowBuilderPage() {
           <li key={`${module.moduleId}-${index}`}>
             <ModuleCard
               module={module}
+              flow={flow}
               position={index + 1}
               canMoveUp={canMoveUp(index)}
               canMoveDown={canMoveDown(index)}
@@ -264,6 +265,7 @@ function FlowBuilderPage() {
 
 function ModuleCard({
   module,
+  flow,
   position,
   canMoveUp,
   canMoveDown,
@@ -273,6 +275,7 @@ function ModuleCard({
   onUpdate,
 }: {
   module: ModuleConfig
+  flow: Array<ModuleConfig>
   position: number
   canMoveUp: boolean
   canMoveDown: boolean
@@ -360,7 +363,7 @@ function ModuleCard({
 
       {isOpen && (
         <div className="border-t border-slate-700 px-4 pb-4 pt-3">
-          <ConfigPanel module={module} onUpdate={onUpdate} />
+          <ConfigPanel module={module} flow={flow} onUpdate={onUpdate} />
         </div>
       )}
     </div>
@@ -369,9 +372,11 @@ function ModuleCard({
 
 function ConfigPanel({
   module,
+  flow,
   onUpdate,
 }: {
   module: ModuleConfig
+  flow: Array<ModuleConfig>
   onUpdate: (patch: Partial<ModuleConfig>) => void
 }) {
   if (module.moduleId === 'camera') {
@@ -392,7 +397,187 @@ function ConfigPanel({
       </div>
     )
   }
+  if (module.moduleId === 'theme-selection') {
+    return (
+      <ThemeSelectionPanel module={module} flow={flow} onUpdate={onUpdate} />
+    )
+  }
   return (
     <p className="text-xs text-slate-500">No configurable options for V2.</p>
+  )
+}
+
+function ThemeSelectionPanel({
+  module,
+  flow,
+  onUpdate,
+}: {
+  module: ThemeSelectionModuleConfig
+  flow: Array<ModuleConfig>
+  onUpdate: (patch: Partial<ModuleConfig>) => void
+}) {
+  const aiModule = flow.find(
+    (m): m is AiGenerationModuleConfig => m.moduleId === 'ai-generation',
+  )
+
+  const inputCls =
+    'flex-1 px-2 py-1 text-xs bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500'
+
+  if (aiModule) {
+    // Sync mode — IDs come from ai-generation; operator edits label + previewImageUrl only
+    const rebuildThemes = (
+      id: string,
+      field: 'label' | 'previewImageUrl',
+      value: string,
+    ) => {
+      const updated = aiModule.themes.map((at) => {
+        const existing = module.themes.find((t) => t.id === at.id) ?? {
+          id: at.id,
+          label: '',
+          previewImageUrl: '',
+        }
+        return at.id === id ? { ...existing, [field]: value } : existing
+      })
+      onUpdate({ themes: updated } as Partial<ModuleConfig>)
+    }
+
+    return (
+      <div className="space-y-4">
+        <p className="text-xs text-slate-500 italic">
+          Theme IDs are controlled by the AI Generation module.
+        </p>
+        {aiModule.themes.map((aiTheme) => {
+          const ts = module.themes.find((t) => t.id === aiTheme.id) ?? {
+            id: aiTheme.id,
+            label: '',
+            previewImageUrl: '',
+          }
+          return (
+            <div
+              key={aiTheme.id}
+              className="border border-slate-700 rounded p-3 space-y-1.5"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 w-24 shrink-0">
+                  Theme ID
+                </span>
+                <span className="font-mono text-xs text-blue-400">
+                  {aiTheme.id}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-400 w-24 shrink-0">
+                  Label
+                </label>
+                <input
+                  type="text"
+                  value={ts.label}
+                  onChange={(e) =>
+                    rebuildThemes(aiTheme.id, 'label', e.target.value)
+                  }
+                  className={inputCls}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-400 w-24 shrink-0">
+                  Preview URL
+                </label>
+                <input
+                  type="text"
+                  value={ts.previewImageUrl}
+                  onChange={(e) =>
+                    rebuildThemes(aiTheme.id, 'previewImageUrl', e.target.value)
+                  }
+                  className={inputCls}
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // Standalone mode — full theme list editor
+  const updateTheme = (
+    i: number,
+    field: 'id' | 'label' | 'previewImageUrl',
+    value: string,
+  ) => {
+    const updated = module.themes.map((t, j) =>
+      j === i ? { ...t, [field]: value } : t,
+    )
+    onUpdate({ themes: updated } as Partial<ModuleConfig>)
+  }
+
+  return (
+    <div className="space-y-3">
+      {module.themes.map((theme, i) => (
+        <div
+          key={i}
+          className="border border-slate-700 rounded p-3 space-y-1.5"
+        >
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-slate-400 w-24 shrink-0">
+              Theme ID
+            </label>
+            <input
+              type="text"
+              value={theme.id}
+              onChange={(e) => updateTheme(i, 'id', e.target.value)}
+              className={inputCls}
+            />
+            <button
+              onClick={() =>
+                onUpdate({
+                  themes: module.themes.filter((_, j) => j !== i),
+                } as Partial<ModuleConfig>)
+              }
+              className="text-slate-500 hover:text-red-400 transition-colors text-sm leading-none"
+              title="Remove theme"
+            >
+              ×
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-slate-400 w-24 shrink-0">
+              Label
+            </label>
+            <input
+              type="text"
+              value={theme.label}
+              onChange={(e) => updateTheme(i, 'label', e.target.value)}
+              className={inputCls}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-slate-400 w-24 shrink-0">
+              Preview URL
+            </label>
+            <input
+              type="text"
+              value={theme.previewImageUrl}
+              onChange={(e) =>
+                updateTheme(i, 'previewImageUrl', e.target.value)
+              }
+              className={inputCls}
+            />
+          </div>
+        </div>
+      ))}
+      <button
+        onClick={() =>
+          onUpdate({
+            themes: [
+              ...module.themes,
+              { id: '', label: '', previewImageUrl: '' },
+            ],
+          } as Partial<ModuleConfig>)
+        }
+        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+      >
+        + Add Theme
+      </button>
+    </div>
   )
 }
