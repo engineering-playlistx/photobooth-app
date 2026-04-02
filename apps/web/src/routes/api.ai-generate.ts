@@ -306,6 +306,22 @@ export const Route = createFileRoute('/api/ai-generate')({
           }
 
           if (error instanceof Error) {
+            const msg = error.message.toLowerCase()
+            const isProviderOverload =
+              error.message.includes('503') ||
+              msg.includes('overloaded') ||
+              msg.includes('high demand') ||
+              msg.includes('resource_exhausted') ||
+              msg.includes('too many requests')
+            if (isProviderOverload) {
+              return json(
+                {
+                  error:
+                    'AI service is temporarily unavailable due to high demand. Please try again in a moment.',
+                },
+                { status: 503 },
+              )
+            }
             return json({ error: error.message }, { status: 500 })
           }
 
