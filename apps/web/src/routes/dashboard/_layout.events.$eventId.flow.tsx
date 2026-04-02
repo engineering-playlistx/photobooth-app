@@ -168,6 +168,9 @@ function FlowBuilderPage() {
     })
   }
 
+  const updateModule = (index: number, patch: Partial<ModuleConfig>) =>
+    setFlow((f) => f.map((m, i) => (i === index ? { ...m, ...patch } : m)))
+
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
@@ -202,6 +205,7 @@ function FlowBuilderPage() {
               onMoveUp={() => moveUp(index)}
               onMoveDown={() => moveDown(index)}
               onRemove={() => removeModule(index)}
+              onUpdate={(patch) => updateModule(index, patch)}
             />
           </li>
         ))}
@@ -266,6 +270,7 @@ function ModuleCard({
   onMoveUp,
   onMoveDown,
   onRemove,
+  onUpdate,
 }: {
   module: ModuleConfig
   position: number
@@ -274,70 +279,120 @@ function ModuleCard({
   onMoveUp: () => void
   onMoveDown: () => void
   onRemove: () => void
+  onUpdate: (patch: Partial<ModuleConfig>) => void
 }) {
+  const [isOpen, setIsOpen] = useState(false)
   const fixed = isFixed(module)
   const label = MODULE_LABELS[module.moduleId] ?? module.moduleId
 
   return (
     <div
-      className={`flex items-center gap-4 p-4 rounded-lg border ${
+      className={`rounded-lg border ${
         fixed
           ? 'bg-slate-800/30 border-slate-700/50'
           : 'bg-slate-800/50 border-slate-700'
       }`}
     >
-      <span className="text-slate-500 text-sm font-mono w-6 text-center shrink-0">
-        {position}
-      </span>
+      <div className="flex items-center gap-4 p-4">
+        <span className="text-slate-500 text-sm font-mono w-6 text-center shrink-0">
+          {position}
+        </span>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-medium text-white">{label}</span>
-          <span className="font-mono text-xs text-blue-400 bg-blue-400/10 border border-blue-400/20 px-1.5 py-0.5 rounded">
-            {module.moduleId}
-          </span>
-          <span className="text-xs text-slate-500 bg-slate-700/50 border border-slate-600/50 px-1.5 py-0.5 rounded">
-            {POSITION_LABELS[module.position] ?? module.position}
-          </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-medium text-white">{label}</span>
+            <span className="font-mono text-xs text-blue-400 bg-blue-400/10 border border-blue-400/20 px-1.5 py-0.5 rounded">
+              {module.moduleId}
+            </span>
+            <span className="text-xs text-slate-500 bg-slate-700/50 border border-slate-600/50 px-1.5 py-0.5 rounded">
+              {POSITION_LABELS[module.position] ?? module.position}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => setIsOpen((v) => !v)}
+            className="px-2 py-1 text-xs text-slate-400 hover:text-white transition-colors"
+            title={isOpen ? 'Collapse' : 'Configure'}
+          >
+            {isOpen ? '▲ Configure' : '▼ Configure'}
+          </button>
+
+          {fixed ? (
+            <span
+              className="text-slate-500"
+              title="Fixed — cannot be moved or removed"
+            >
+              🔒
+            </span>
+          ) : (
+            <>
+              <div className="flex flex-col gap-0.5">
+                <button
+                  onClick={onMoveUp}
+                  disabled={!canMoveUp}
+                  className="px-1.5 py-0.5 text-slate-400 hover:text-white disabled:text-slate-700 disabled:cursor-not-allowed transition-colors text-xs leading-none"
+                  title="Move up"
+                >
+                  ▲
+                </button>
+                <button
+                  onClick={onMoveDown}
+                  disabled={!canMoveDown}
+                  className="px-1.5 py-0.5 text-slate-400 hover:text-white disabled:text-slate-700 disabled:cursor-not-allowed transition-colors text-xs leading-none"
+                  title="Move down"
+                >
+                  ▼
+                </button>
+              </div>
+              <button
+                onClick={onRemove}
+                className="px-1.5 py-1 text-slate-500 hover:text-red-400 transition-colors text-sm leading-none"
+                title="Remove module"
+              >
+                ×
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {fixed ? (
-        <span
-          className="text-slate-500 shrink-0"
-          title="Fixed — cannot be moved or removed"
-        >
-          🔒
-        </span>
-      ) : (
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex flex-col gap-0.5">
-            <button
-              onClick={onMoveUp}
-              disabled={!canMoveUp}
-              className="px-1.5 py-0.5 text-slate-400 hover:text-white disabled:text-slate-700 disabled:cursor-not-allowed transition-colors text-xs leading-none"
-              title="Move up"
-            >
-              ▲
-            </button>
-            <button
-              onClick={onMoveDown}
-              disabled={!canMoveDown}
-              className="px-1.5 py-0.5 text-slate-400 hover:text-white disabled:text-slate-700 disabled:cursor-not-allowed transition-colors text-xs leading-none"
-              title="Move down"
-            >
-              ▼
-            </button>
-          </div>
-          <button
-            onClick={onRemove}
-            className="px-1.5 py-1 text-slate-500 hover:text-red-400 transition-colors text-sm leading-none"
-            title="Remove module"
-          >
-            ×
-          </button>
+      {isOpen && (
+        <div className="border-t border-slate-700 px-4 pb-4 pt-3">
+          <ConfigPanel module={module} onUpdate={onUpdate} />
         </div>
       )}
     </div>
+  )
+}
+
+function ConfigPanel({
+  module,
+  onUpdate,
+}: {
+  module: ModuleConfig
+  onUpdate: (patch: Partial<ModuleConfig>) => void
+}) {
+  if (module.moduleId === 'camera') {
+    return (
+      <div>
+        <label className="block text-xs text-slate-400 mb-1">Max Retakes</label>
+        <input
+          type="number"
+          min={1}
+          max={10}
+          value={module.maxRetakes}
+          onChange={(e) => {
+            const v = parseInt(e.target.value, 10)
+            if (!isNaN(v)) onUpdate({ maxRetakes: v } as Partial<ModuleConfig>)
+          }}
+          className="w-24 px-2 py-1 text-sm bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500"
+        />
+      </div>
+    )
+  }
+  return (
+    <p className="text-xs text-slate-500">No configurable options for V2.</p>
   )
 }
