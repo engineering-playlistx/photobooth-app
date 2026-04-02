@@ -73,17 +73,15 @@ export class SubmitPhotoUseCase {
       })
     }
 
-    // Email sending disabled — kept for future use
-    // try {
-    //   await this.emailService.sendPhotoEmail({
-    //     recipientEmail: request.email,
-    //     recipientName: request.name,
-    //     photoUrl,
-    //   })
-    // } catch (emailError) {
-    //   console.error('Failed to send email:', emailError)
-    //   throw new Error('User created but failed to send email')
-    // }
+    try {
+      await this.emailService.sendPhotoEmail({
+        recipientEmail: request.email,
+        recipientName: request.name,
+        photoUrl,
+      })
+    } catch (emailError) {
+      console.error('Failed to send email:', emailError)
+    }
 
     return {
       photoUrl,
