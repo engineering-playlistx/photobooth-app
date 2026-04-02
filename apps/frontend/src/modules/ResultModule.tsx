@@ -206,7 +206,11 @@ export function ResultModule({ outputs }: ModuleProps) {
               selectedTheme: selectedTheme.id,
               eventId,
               sessionId,
-              moduleOutputs: outputs,
+              moduleOutputs: Object.fromEntries(
+                Object.entries(outputs).filter(
+                  ([key]) => key !== "finalPhoto" && key !== "originalPhoto",
+                ),
+              ),
             }),
           });
 
