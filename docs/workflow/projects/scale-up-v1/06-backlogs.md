@@ -692,6 +692,59 @@ Add a "Discard changes" button that resets the form to the loaded state.
 
 ---
 
+### TASK-B.22 — Replicate transient "failed" status causes premature abort (P1, production bug)
+
+**Root cause:** Replicate sometimes briefly reports a prediction as `status: "failed"` before its infrastructure retries it internally. The prediction ultimately succeeds, but our polling loop treats the first `"failed"` as final and aborts immediately.
+
+**Observed behavior:**
+- Both prediction IDs (`5asw88mdqdrmt0cx9ktsnrmnsm`, `vf7jwqa8k1rmy0cx9kybq16b8c`) confirmed `succeeded` in the Replicate dashboard with valid output URLs
+- The app reported failure on Poll #1 (at T+2.5s) — before Replicate even completed (took 13–22s)
+- The status endpoint also deletes the Supabase temp file on first `"failed"`, which is irreversible
+
+**Fix — two parts:**
+
+1. **Status endpoint** (`api.ai-generate-status.ts`): don't delete the temp file or return a definitive failure on the first `"failed"` status. Instead, pass the status through to the frontend and let the frontend accumulate consecutive failures before giving up. Or: only treat `"failed"` as final if `error !== null` in the Replicate prediction object.
+
+2. **Frontend** (`AiGenerationModule.tsx`): add a consecutive-failure counter. Only throw after N consecutive `"failed"` statuses (e.g. 3), treating isolated `"failed"` polls as transient.
+
+**Files:**
+- `apps/web/src/routes/api.ai-generate-status.ts:59–68`
+- `apps/frontend/src/modules/AiGenerationModule.tsx` (polling loop)
+
+**Risk:** Low — the happy path is unchanged. Failed predictions that genuinely fail will still be caught after N retries.
+
+---
+
+### TASK-B.21 — Surface Replicate failure reason to the client (P2)
+
+**What:** When Replicate reports `status: "failed"`, the backend logs the prediction `output` (which contains the model's error detail) but returns only a generic `{ error: "AI generation failed" }` to the frontend. The frontend then throws `Error: AI generation failed` with no actionable detail.
+
+Two changes needed:
+1. **Backend** (`api.ai-generate-status.ts`): include the Replicate error output in the response body — e.g. `{ status: 'failed', error: 'AI generation failed', detail: output }`
+2. **Frontend** (`AiGenerationModule.tsx`): log the `detail` field to the console so it's visible without opening the Replicate dashboard, and optionally surface a short reason to the error UI
+
+**Files:**
+- `apps/web/src/routes/api.ai-generate-status.ts:59–68`
+- `apps/frontend/src/modules/AiGenerationModule.tsx` (error handling block)
+
+**Risk:** None — additive logging only; no change to the happy path.
+
+---
+
+### TASK-B.20 — Validate theme name early in `/api/ai-generate` (P2)
+
+**What:** Before uploading the user photo or calling the AI provider, check that the requested theme has a configured template URL and prompt. If not, return a `400` immediately with a clear error message instead of letting the AI provider receive a bad or missing URL and return an opaque failure.
+
+The check should also be done in the frontend `AiGenerationModule` — if the theme string is not in the event config's `aiConfig.themes`, show an operator-visible error before making any network call.
+
+**Files:**
+- `apps/web/src/routes/api.ai-generate.ts` — add guard before Supabase upload
+- `apps/frontend/src/modules/AiGenerationModule.tsx` — add guard before fetch
+
+**Risk:** None — purely additive validation; does not change the happy path.
+
+---
+
 ### TASK-B.19 — Centralize `SUPABASE_BUCKET` constant (P3)
 
 **What:** Define `export const SUPABASE_BUCKET = 'photobooth-bucket'` in a shared constants file for the web app and import it in all files that currently hardcode the string.
@@ -740,6 +793,9 @@ Add a "Discard changes" button that resets the form to the loaded state.
 | PERF-01 | Session auth hits Supabase on every dashboard nav | P2 | Backlog |
 | PERF-02 | Config endpoint has no HTTP caching | P2 | Backlog |
 | PERF-03 | `getPublicUrl()` in guest list map (minor) | P3 | Backlog |
+| NEW-01 | No early validation of theme name in `/api/ai-generate` | P2 | Backlog (TASK-B.20) |
+| NEW-02 | Replicate failure reason swallowed — client sees only generic error | P2 | Backlog (TASK-B.21) |
+| NEW-03 | Replicate transient "failed" status causes premature abort | P1 | Backlog (TASK-B.22) |
 
 ---
 
