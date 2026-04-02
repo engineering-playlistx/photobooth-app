@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
+import { validateModuleFlow } from '../../utils/validate-module-flow'
 import type { AiThemeConfig, EventConfig } from '../../types/event-config'
 import type {
   AiGenerationModuleConfig,
@@ -22,6 +23,28 @@ const getModuleFlow = createServerFn({ method: 'GET' }).handler(async (ctx) => {
   if (error) throw new Error(error.message)
   return (data.config_json as EventConfig).moduleFlow
 })
+
+const saveModuleFlow = createServerFn({ method: 'POST' }).handler(
+  async (ctx) => {
+    const { eventId, moduleFlow } = ctx.data as {
+      eventId: string
+      moduleFlow: Array<ModuleConfig>
+    }
+    const admin = getSupabaseAdminClient()
+    const { data, error } = await admin
+      .from('event_configs')
+      .select('config_json')
+      .eq('event_id', eventId)
+      .single()
+    if (error) throw new Error(error.message)
+    const merged = { ...(data.config_json as EventConfig), moduleFlow }
+    const { error: updateError } = await admin
+      .from('event_configs')
+      .update({ config_json: merged, updated_at: new Date().toISOString() })
+      .eq('event_id', eventId)
+    if (updateError) throw new Error(updateError.message)
+  },
+)
 
 export const Route = createFileRoute('/dashboard/_layout/events/$eventId/flow')(
   {
@@ -93,8 +116,15 @@ function FlowBuilderPage() {
   const initialFlow = Route.useLoaderData()
   const { eventId } = Route.useParams()
   const [flow, setFlow] = useState<Array<ModuleConfig>>(initialFlow)
+  const [savedFlow, setSavedFlow] = useState<Array<ModuleConfig>>(initialFlow)
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({})
+  const [saveStatus, setSaveStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle')
 
-  const isDirty = JSON.stringify(flow) !== JSON.stringify(initialFlow)
+  const isDirty = JSON.stringify(flow) !== JSON.stringify(savedFlow)
 
   const canMoveUp = (i: number) =>
     !isFixed(flow[i]) && i > 0 && !isFixed(flow[i - 1])
@@ -186,6 +216,30 @@ function FlowBuilderPage() {
   const updateModule = (index: number, patch: Partial<ModuleConfig>) =>
     setFlow((f) => f.map((m, i) => (i === index ? { ...m, ...patch } : m)))
 
+  const handleDiscard = () => {
+    setFlow(savedFlow)
+    setValidationErrors({})
+    setSaveStatus('idle')
+  }
+
+  const handleSave = async () => {
+    const errors = validateModuleFlow(flow)
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors)
+      return
+    }
+    if (!confirm('Save flow changes to Supabase?')) return
+    setValidationErrors({})
+    setSaveStatus('saving')
+    try {
+      await saveModuleFlow({ data: { eventId, moduleFlow: flow } })
+      setSavedFlow(flow)
+      setSaveStatus('saved')
+    } catch {
+      setSaveStatus('error')
+    }
+  }
+
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
@@ -200,14 +254,53 @@ function FlowBuilderPage() {
         <span className="text-sm text-white">Flow Builder</span>
       </div>
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-white">Flow Builder</h1>
-        {isDirty && (
-          <span className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full">
-            Unsaved changes
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {saveStatus === 'saved' && !isDirty && (
+            <span className="text-xs text-green-400">Saved</span>
+          )}
+          {saveStatus === 'error' && (
+            <span className="text-xs text-red-400">Save failed</span>
+          )}
+          {saveStatus === 'saving' && (
+            <span className="text-xs text-slate-400">Saving…</span>
+          )}
+          {isDirty && (
+            <>
+              <span className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full">
+                Unsaved changes
+              </span>
+              <button
+                onClick={handleDiscard}
+                className="text-xs text-slate-400 hover:text-white transition-colors px-3 py-1.5 border border-slate-700 rounded-lg"
+              >
+                Discard
+              </button>
+              <button
+                onClick={() => void handleSave()}
+                disabled={saveStatus === 'saving'}
+                className="text-xs text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors px-3 py-1.5 rounded-lg"
+              >
+                Save Flow
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
+      {Object.keys(validationErrors).length > 0 && (
+        <div className="mb-4 p-3 border border-red-500/30 bg-red-500/10 rounded-lg space-y-1">
+          <p className="text-xs font-medium text-red-400">
+            Fix the following errors before saving:
+          </p>
+          {Object.entries(validationErrors).map(([key, msg]) => (
+            <p key={key} className="text-xs text-red-300">
+              {msg}
+            </p>
+          ))}
+        </div>
+      )}
 
       <ol className="space-y-3">
         {flow.map((module, index) => (
