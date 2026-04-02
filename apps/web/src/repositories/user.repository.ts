@@ -25,14 +25,17 @@ export class UserRepository {
 
     const { data: user, error } = await supabase
       .from('users')
-      .insert({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        photo_path: data.photoPath,
-        selected_theme: data.selectedTheme ?? null,
-        event_id: data.eventId ?? null,
-      })
+      .upsert(
+        {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          photo_path: data.photoPath,
+          selected_theme: data.selectedTheme ?? null,
+          event_id: data.eventId ?? null,
+        },
+        { onConflict: 'email,event_id' },
+      )
       .select()
       .single()
 
