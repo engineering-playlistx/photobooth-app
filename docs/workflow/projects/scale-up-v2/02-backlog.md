@@ -12,9 +12,9 @@ These are unfinished items from `scale-up-v1/06-backlogs.md`. They are resolved 
 
 | ID | Issue | Origin | File(s) |
 |----|-------|--------|---------|
-| RISK-02 | Supabase upload failure leaves an irrecoverable partial save. If the network drops between the local SQLite write and Supabase upload, and the inactivity timer fires before the retry succeeds, the guest's record is permanently lost from the cloud. | `06-backlogs.md` | `apps/frontend/src/routes/result.tsx` |
+| ~~RISK-02~~ | ~~Supabase upload failure leaves an irrecoverable partial save. If the network drops between the local SQLite write and Supabase upload, and the inactivity timer fires before the retry succeeds, the guest's record is permanently lost from the cloud.~~ | `06-backlogs.md` | `apps/frontend/src/routes/result.tsx` |
 
-**Note:** RISK-02 is structurally resolved by decision B (session row created on Welcome tap, not on `/api/photo`). The session always exists in Supabase before any upload attempt. Confirm full resolution in V2-3.10 (ResultModule migration).
+**Note:** ✅ RISK-02 confirmed resolved by V2-3.10. Session row is created on Welcome tap via `startSession`; the guest record exists in Supabase before any upload attempt.
 
 ---
 
@@ -31,7 +31,7 @@ These are unfinished items from `scale-up-v1/06-backlogs.md`. They are resolved 
 
 | ID | Issue | Fix Summary | File(s) |
 |----|-------|-------------|---------|
-| DATA-02 | `hasSaved.current` is a `useRef` — resets on component remount, causing double-saves if user navigates back to `/result` | Resolved by pipeline architecture — modules don't remount via navigation. Confirm no remount path exists in V2-3.10. | `routes/result.tsx` → `modules/ResultModule.tsx` |
+| ~~DATA-02~~ | ~~`hasSaved.current` is a `useRef` — resets on component remount, causing double-saves if user navigates back to `/result`~~ | ✅ Confirmed resolved by V2-3.10 — pipeline architecture prevents remount via navigation. `hasSaved.current` guard kept as a low-cost safety net. | ~~`routes/result.tsx`~~ → `modules/ResultModule.tsx` |
 | DATA-03 | No unique constraint on `(email, event_id)` in Supabase `users` table — duplicates possible | Add unique index; change repository to upsert | `user.repository.ts` + Supabase SQL |
 | DATA-04 | Temp photo in `photobooth-bucket/temp/` not cleaned up if Replicate prediction creation fails | Add cleanup in the catch block | `api.ai-generate.ts` |
 
@@ -42,7 +42,7 @@ These are unfinished items from `scale-up-v1/06-backlogs.md`. They are resolved 
 | ID | Issue | Fix Summary | File(s) |
 |----|-------|-------------|---------|
 | UX-01 | No visual feedback during Supabase save on result page | Show "Saving…" / "Ready" indicator near QR code area | `modules/ResultModule.tsx` |
-| UX-02 | Inactivity timeout fires mid-generation if config timeout < AI generation time | Resolved by pipeline-level inactivity timeout (V2-3.12) — suppression logic is centralized, not per-route | `useInactivityTimeout.ts` |
+| ~~UX-02~~ | ~~Inactivity timeout fires mid-generation if config timeout < AI generation time~~ | ✅ Confirmed resolved by V2-3.12 — pipeline-level inactivity timeout, suppression centralized. | ~~`useInactivityTimeout.ts`~~ |
 | CODE-08 | `"DS-RX1"` fallback hardcoded in print handler | Throw error if `printerName` is empty instead of silently falling back | `apps/frontend/src/main.ts` |
 
 ---
@@ -58,7 +58,7 @@ These are unfinished items from `scale-up-v1/06-backlogs.md`. They are resolved 
 | TASK-B.12 | `/api/config` returns no caching headers — every session triggers a fresh Supabase read | Add `Cache-Control: max-age=60, stale-while-revalidate=300` | `api.config.ts` |
 | TASK-B.14 | Email sending is disabled; success message says "email sent" | Re-enable email; fix attachment logic | `submit-photo.usecase.ts`, `email.service.tsx` |
 | TASK-B.16 | SQLite `JSON.parse` calls have no error handling — corrupt row crashes the renderer | Wrap in try/catch; return sentinel value on failure | `sqlite.ts` |
-| TASK-B.17 | `useEffect` in `index.tsx` missing dependency array — runs on every render | Resolved by deletion of `routes/index.tsx` in V2-3.15 | `routes/index.tsx` |
+| ~~TASK-B.17~~ | ~~`useEffect` in `index.tsx` missing dependency array — runs on every render~~ | ✅ Confirmed resolved by V2-3.15 — `routes/index.tsx` deleted. | ~~`routes/index.tsx`~~ |
 | TASK-B.18 | No "last retake" warning on camera page | Show "This is your last retake" when at limit | `modules/CameraModule.tsx` |
 | TASK-B.19 | `'photobooth-bucket'` hardcoded in 3+ files | Extract to `utils/constants.ts` | Multiple files |
 | PERF-01 | Dashboard auth check hits Supabase on every page navigation | Cache session in a short-lived store (Cloudflare KV or encrypted cookie) | `dashboard/_layout.tsx` |
@@ -74,7 +74,7 @@ Each task lists: what to do, files touched, and what it depends on. Full accepta
 
 ---
 
-### V2-Phase 1 — Type System + DB Migration
+### V2-Phase 1 — Type System + DB Migration ✅ Complete
 
 Goal: Replace the `moduleFlow: string[]` stub with the full typed union. Migrate existing `event_configs` rows. No kiosk code changes yet.
 
@@ -124,7 +124,7 @@ Goal: Replace the `moduleFlow: string[]` stub with the full typed union. Migrate
 
 ---
 
-### V2-Phase 2 — Session Model
+### V2-Phase 2 — Session Model ✅ Complete
 
 Goal: Session row exists in Supabase from the moment the guest taps "Start". `module_outputs` column added for V2 data.
 
@@ -137,7 +137,7 @@ Goal: Session row exists in Supabase from the moment the guest taps "Start". `mo
 
 ---
 
-### V2-Phase 3 — Module Pipeline Renderer
+### V2-Phase 3 — Module Pipeline Renderer ✅ Complete
 
 Goal: Replace the 6 hardcoded route files with a state machine pipeline. Delete `PhotoboothContext`. Move inactivity timeout to pipeline level. This is the largest phase — execute tasks in order.
 
@@ -173,7 +173,7 @@ Goal: Replace the 6 hardcoded route files with a state machine pipeline. Delete 
 
 ---
 
-### V2-Phase 4 — Flow Builder (Dashboard)
+### V2-Phase 4 — Flow Builder (Dashboard) ✅ Complete
 
 Goal: Operator can view, reorder, add, remove, and configure modules in the kiosk flow without touching code.
 
@@ -186,16 +186,16 @@ Goal: Operator can view, reorder, add, remove, and configure modules in the kios
 
 ---
 
-### V2-Phase 5 — Mini Quiz Module
+### V2-Phase 5 — Mini Quiz Module ✅ Complete
 
 Goal: First new module built on the V2 system — proves the system works end-to-end for a net-new module.
 
-| ID | Task | Files | Depends On |
-|----|------|-------|------------|
-| V2-5.1 | Build `apps/frontend/src/modules/MiniQuizModule.tsx`: renders questions from `(config as MiniQuizModuleConfig).questions` one at a time, records selected option, calls `onComplete({ quizAnswer: selectedOption })` after the last question. Calls `onBack()` on back. | `apps/frontend/src/modules/MiniQuizModule.tsx` (new) | V2-3.4 |
-| V2-5.2 | Register `'mini-quiz'` in `MODULE_REGISTRY`. | `apps/frontend/src/modules/registry.ts` | V2-5.1 |
-| V2-5.3 | Add Mini Quiz config panel to the flow builder (V2-4.3): add/remove questions, edit question text and options. | `apps/web/src/routes/dashboard/[eventId]/flow.tsx` | V2-4.3, V2-5.1 |
-| V2-5.4 | Manual verification: configure a Mini Quiz module before Camera in the flow builder; run through the kiosk flow; confirm `quizAnswer` appears in the session's `module_outputs` in Supabase. | Manual test | V2-5.2, V2-5.3 |
+| ID | Task | Files | Status |
+|----|------|-------|--------|
+| ~~V2-5.1~~ | ~~Build `apps/frontend/src/modules/MiniQuizModule.tsx`~~ | ~~`apps/frontend/src/modules/MiniQuizModule.tsx` (new)~~ | ✅ Done |
+| ~~V2-5.2~~ | ~~Register `'mini-quiz'` in `MODULE_REGISTRY`.~~ | ~~`apps/frontend/src/modules/registry.ts`~~ | ✅ Done |
+| ~~V2-5.3~~ | ~~Add Mini Quiz config panel to the flow builder (V2-4.3): add/remove questions, edit question text and options.~~ | ~~`apps/web/src/routes/dashboard/[eventId]/flow.tsx`~~ | ✅ Done (as V2-4.8) |
+| ~~V2-5.4~~ | ~~Manual verification~~ | ~~Manual test~~ | ✅ Done — `quizAnswer` confirmed in Supabase `module_outputs` |
 
 ---
 
@@ -222,8 +222,11 @@ All Part A items not resolved earlier are addressed here. Assign V2-6.x IDs duri
 | V2-6.15 | TASK-B.19 | `'photobooth-bucket'` constant extraction |
 | V2-6.16 | PERF-01 | Dashboard auth cache |
 | V2-6.17 | CODE-06 | `RacingTheme` stale reference |
-| V2-6.18 | SESSION-01 | `submit-photo.usecase.ts` calls `createSession()` with a new UUID instead of updating the existing `in_progress` session created by `startSession`. Fix: add `completeSession(sessionId, photoPath, userInfo, moduleOutputs)` to `SessionRepository`; replace `createSession()` call in `SubmitPhotoUseCase` with `completeSession()` using the `sessionId` passed in the request body; pass `sessionId` from `moduleOutputs` in `ResultModule`'s `/api/photo` call. | `session.repository.ts`, `submit-photo.usecase.ts`, `ResultModule.tsx`, `api.photo.ts` |
-| V2-6.19 | SESSION-02 | Session `status` is never updated to `'completed'` — all rows stay `in_progress` forever. Resolved by V2-6.18 (`completeSession` sets `status = 'completed'`). | Depends on V2-6.18 |
+| ~~V2-6.18~~ | SESSION-01 | ✅ Fixed. `submit-photo.usecase.ts` now calls `completeSession()` (update) when `sessionId` is present, and writes `module_outputs`. `session.repository.ts` gains `completeSession`. Fix: add `completeSession(sessionId, photoPath, userInfo, moduleOutputs)` to `SessionRepository`; replace `createSession()` call in `SubmitPhotoUseCase` with `completeSession()` using the `sessionId` passed in the request body; pass `sessionId` from `moduleOutputs` in `ResultModule`'s `/api/photo` call. | `session.repository.ts`, `submit-photo.usecase.ts`, `ResultModule.tsx`, `api.photo.ts` |
+| ~~V2-6.19~~ | SESSION-02 | ✅ Fixed by V2-6.18 — `completeSession` sets `status = 'completed'`. | Depends on V2-6.18 |
+| ~~V2-6.20~~ | FLOW-01 | ✅ Fixed. `canMoveUp`/`canMoveDown` now allow `flexible` modules to cross `fixed-camera`; other positions still cannot. `flexible` modules (e.g. `mini-quiz`) cannot be moved before camera. Fix: update `canMoveUp`/`canMoveDown` in `flow.tsx` to allow modules with `position === 'flexible'` to swap with `fixed-camera`; other position types (`pre-photo`, `post-photo`) still cannot cross. Found in V2-5.4 E2E. | `apps/web/src/routes/dashboard/_layout.events.$eventId.flow.tsx` |
+| V2-6.21 | AI-01 | Google AI 503 ("high demand") error is forwarded as a raw internal error string from the backend 500 response to the user. Fix: in the AI generate backend, catch provider 5xx errors and return a user-friendly `{ error: 'AI service temporarily unavailable. Please retry.' }` with a 503 status instead of 500. Found in V2-5.4 E2E. | `apps/web/src/routes/api.ai-generate.ts` (or usecase) |
+| V2-6.22 | QR-01 | QR code on the result screen links to `${apiBaseUrl}/result/${sessionId}`, but no `/result/:sessionId` route exists in the web app — scans return 404. Fix: build a public result page that reads the session from Supabase and displays the guest's photo. Found in V2-5.4 E2E. | `apps/web/src/routes/result.$sessionId.tsx` (new) |
 
 ---
 

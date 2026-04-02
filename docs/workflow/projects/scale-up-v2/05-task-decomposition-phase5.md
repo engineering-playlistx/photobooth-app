@@ -1,6 +1,6 @@
 # Task Decomposition — V2 Phase 5 (Mini Quiz Module)
 
-**Status:** 🔜 Not started
+**Status:** ✅ Complete (2026-04-02)
 **Scope:** V2-Phase 5 — Mini Quiz Module (first net-new V2 module)
 **Depends on:** Phases 1, 2, 3, 4 complete ✅
 
@@ -67,7 +67,7 @@ Done as V2-4.8. No action needed.
 
 ---
 
-### V2-5.1 — Build `MiniQuizModule.tsx`
+### ~~V2-5.1 — Build `MiniQuizModule.tsx`~~ ✅
 
 **What:**
 1. Create `apps/frontend/src/modules/MiniQuizModule.tsx`.
@@ -108,7 +108,7 @@ Done as V2-4.8. No action needed.
 
 ---
 
-### V2-5.2 — Register `'mini-quiz'` in `MODULE_REGISTRY`
+### ~~V2-5.2 — Register `'mini-quiz'` in `MODULE_REGISTRY`~~ ✅
 
 **What:**
 1. Import `MiniQuizModule` from `./MiniQuizModule` in `registry.ts`.
@@ -131,7 +131,7 @@ Done as V2-4.8. No action needed.
 
 ---
 
-### V2-5.4 — Manual E2E verification
+### ~~V2-5.4 — Manual E2E verification~~ ✅
 
 **What:**
 Full end-to-end test of the Mini Quiz module in the kiosk flow.
@@ -165,9 +165,9 @@ Full end-to-end test of the Mini Quiz module in the kiosk flow.
 | Task | What | Files | Depends On |
 |------|------|-------|------------|
 | ~~V2-5.3~~ | ~~Flow builder Mini Quiz config panel~~ | ~~flow.tsx~~ | ~~Done (V2-4.8)~~ |
-| V2-5.1 | Build `MiniQuizModule.tsx` | `modules/MiniQuizModule.tsx` (new) | Phase 3 ✅ |
-| V2-5.2 | Register `'mini-quiz'` in `MODULE_REGISTRY` | `modules/registry.ts` | V2-5.1 |
-| V2-5.4 | Manual E2E verification | — (manual) | V2-5.2 |
+| ~~V2-5.1~~ | ~~Build `MiniQuizModule.tsx`~~ | ~~`modules/MiniQuizModule.tsx` (new)~~ | ~~Phase 3 ✅~~ |
+| ~~V2-5.2~~ | ~~Register `'mini-quiz'` in `MODULE_REGISTRY`~~ | ~~`modules/registry.ts`~~ | ~~V2-5.1~~ |
+| ~~V2-5.4~~ | ~~Manual E2E verification~~ | ~~— (manual)~~ | ~~V2-5.2~~ |
 
 ---
 
