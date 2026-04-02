@@ -48,6 +48,19 @@ function getSQLiteDatabase(): DatabaseSync {
   return db;
 }
 
+function safeParse<T>(json: string | null | undefined, fallback: T): T {
+  if (!json) return fallback;
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    console.warn(
+      "[sqlite] JSON.parse failed — returning fallback. Raw value:",
+      json,
+    );
+    return fallback;
+  }
+}
+
 export function savePhotoResultToSQLite(document: PhotoResultDocument): void {
   const db = getSQLiteDatabase();
 
@@ -80,8 +93,12 @@ export function getAllPhotoResultsFromSQLite(): PhotoResultDocument[] {
     return {
       id: r.id as string,
       photoPath: r.photo_path as string,
-      selectedTheme: JSON.parse(r.selected_theme as string),
-      userInfo: JSON.parse(r.user_info as string),
+      selectedTheme: safeParse(r.selected_theme as string, { theme: "" }),
+      userInfo: safeParse(r.user_info as string, {
+        name: "",
+        email: "",
+        phone: "",
+      }),
       eventId: (r.event_id as string | null) ?? null,
       createdAt: r.created_at as string,
       updatedAt: r.updated_at as string,
@@ -103,8 +120,12 @@ export function getPhotoResultByIdFromSQLite(
   return {
     id: row.id as string,
     photoPath: row.photo_path as string,
-    selectedTheme: JSON.parse(row.selected_theme as string),
-    userInfo: JSON.parse(row.user_info as string),
+    selectedTheme: safeParse(row.selected_theme as string, { theme: "" }),
+    userInfo: safeParse(row.user_info as string, {
+      name: "",
+      email: "",
+      phone: "",
+    }),
     eventId: (row.event_id as string | null) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
