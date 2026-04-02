@@ -46,6 +46,7 @@ export function ResultModule({ outputs }: ModuleProps) {
   const userInfo = outputs["userInfo"] as
     | { name: string; email: string; phone: string }
     | undefined;
+  const sessionId = outputs["sessionId"] as string | undefined;
 
   const eventId = eventConfig.eventId;
   const supabaseFolder = eventId ? `events/${eventId}/photos` : "public";
@@ -204,6 +205,8 @@ export function ResultModule({ outputs }: ModuleProps) {
               phone: userInfo.phone,
               selectedTheme: selectedTheme.id,
               eventId,
+              sessionId,
+              moduleOutputs: outputs,
             }),
           });
 

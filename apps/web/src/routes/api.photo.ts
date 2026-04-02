@@ -9,6 +9,8 @@ interface RequestBody {
   phone: string
   selectedTheme?: string
   eventId?: string
+  sessionId?: string
+  moduleOutputs?: Record<string, unknown>
 }
 
 function validateApiKey(request: Request): boolean {
@@ -117,6 +119,8 @@ export const Route = createFileRoute('/api/photo')({
             phone: standardizedPhone,
             selectedTheme: body.selectedTheme,
             eventId: body.eventId,
+            sessionId: body.sessionId,
+            moduleOutputs: body.moduleOutputs,
           })
 
           return json({

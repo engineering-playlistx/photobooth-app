@@ -7,6 +7,12 @@ export interface CreateSessionData {
   userInfo: { name: string; email: string; phone: string }
 }
 
+export interface CompleteSessionData {
+  photoPath: string
+  userInfo: { name: string; email: string; phone: string }
+  moduleOutputs: Record<string, unknown>
+}
+
 export class SessionRepository {
   async createSession(data: CreateSessionData): Promise<void> {
     const supabase = getSupabaseAdminClient()
@@ -20,6 +26,27 @@ export class SessionRepository {
 
     if (error) {
       throw new Error(`Failed to create session: ${error.message}`)
+    }
+  }
+
+  async completeSession(
+    sessionId: string,
+    data: CompleteSessionData,
+  ): Promise<void> {
+    const supabase = getSupabaseAdminClient()
+
+    const { error } = await supabase
+      .from('sessions')
+      .update({
+        photo_path: data.photoPath,
+        user_info: data.userInfo,
+        module_outputs: data.moduleOutputs,
+        status: 'completed',
+      })
+      .eq('id', sessionId)
+
+    if (error) {
+      throw new Error(`Failed to complete session: ${error.message}`)
     }
   }
 

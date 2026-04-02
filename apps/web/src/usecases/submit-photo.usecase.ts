@@ -12,6 +12,8 @@ export interface SubmitPhotoRequest {
   phone: string
   selectedTheme?: string
   eventId?: string
+  sessionId?: string
+  moduleOutputs?: Record<string, unknown>
 }
 
 export interface SubmitPhotoResult {
@@ -47,17 +49,29 @@ export class SubmitPhotoUseCase {
       data: { publicUrl: photoUrl },
     } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(request.photoPath)
 
-    const sessionId = crypto.randomUUID()
-    await this.sessionRepository.createSession({
-      id: sessionId,
-      eventId: request.eventId ?? 'evt_shell_001',
-      photoPath: request.photoPath,
-      userInfo: {
-        name: request.name,
-        email: request.email,
-        phone: request.phone,
-      },
-    })
+    const sessionId = request.sessionId ?? crypto.randomUUID()
+    if (request.sessionId) {
+      await this.sessionRepository.completeSession(request.sessionId, {
+        photoPath: request.photoPath,
+        userInfo: {
+          name: request.name,
+          email: request.email,
+          phone: request.phone,
+        },
+        moduleOutputs: request.moduleOutputs ?? {},
+      })
+    } else {
+      await this.sessionRepository.createSession({
+        id: sessionId,
+        eventId: request.eventId ?? 'evt_shell_001',
+        photoPath: request.photoPath,
+        userInfo: {
+          name: request.name,
+          email: request.email,
+          phone: request.phone,
+        },
+      })
+    }
 
     // Email sending disabled — kept for future use
     // try {
