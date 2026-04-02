@@ -2,9 +2,8 @@ import React, { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
+import { SUPABASE_BUCKET } from '../utils/constants'
 import type { BrandingConfig } from '../types/event-config'
-
-const SUPABASE_BUCKET = 'photobooth-bucket'
 
 type SessionPageData = {
   photoUrl: string

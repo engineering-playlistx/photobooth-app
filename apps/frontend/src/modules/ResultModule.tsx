@@ -11,8 +11,7 @@ import QRCodeModal from "../components/QRCodeModal";
 import { useEventConfig } from "../contexts/EventConfigContext";
 import { usePipeline } from "../contexts/PipelineContext";
 import type { ModuleProps } from "./types";
-
-const SUPABASE_BUCKET = "photobooth-bucket";
+import { SUPABASE_BUCKET } from "../utils/constants";
 
 function base64ToBlob(base64: string, contentType = "", sliceSize = 512) {
   const byteCharacters = atob(base64.split(",")[1]);

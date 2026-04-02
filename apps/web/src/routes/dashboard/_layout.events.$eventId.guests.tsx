@@ -1,6 +1,7 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
+import { SUPABASE_BUCKET } from '../../utils/constants'
 
 type Guest = {
   name: string
@@ -24,9 +25,8 @@ const getGuests = createServerFn({ method: 'GET' }).handler(async (ctx) => {
 
   return data.map((g) => {
     const photo_url = g.photo_path
-      ? admin.storage
-          .from('photobooth-bucket')
-          .getPublicUrl(g.photo_path as string).data.publicUrl
+      ? admin.storage.from(SUPABASE_BUCKET).getPublicUrl(g.photo_path as string)
+          .data.publicUrl
       : null
     return { ...g, photo_url } as Guest
   })

@@ -3,6 +3,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { useState } from 'react'
 import { zipSync } from 'fflate'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
+import { SUPABASE_BUCKET } from '../../utils/constants'
 
 type Photo = {
   name: string
@@ -14,13 +15,13 @@ const getPhotos = createServerFn({ method: 'GET' }).handler(async (ctx) => {
   const admin = getSupabaseAdminClient()
   const folder = `events/${eventId}/photos`
   const { data, error } = await admin.storage
-    .from('photobooth-bucket')
+    .from(SUPABASE_BUCKET)
     .list(folder, { sortBy: { column: 'created_at', order: 'desc' } })
   if (error) throw new Error(error.message)
 
   return data.map((f) => {
     const { data: urlData } = admin.storage
-      .from('photobooth-bucket')
+      .from(SUPABASE_BUCKET)
       .getPublicUrl(`${folder}/${f.name}`)
     return { name: f.name, url: urlData.publicUrl } satisfies Photo
   })

@@ -2,8 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { json } from '@tanstack/react-start'
 import { AIGenerationService } from '../services/ai-generation.service'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
-
-const SUPABASE_BUCKET = 'photobooth-bucket'
+import { SUPABASE_BUCKET } from '../utils/constants'
 
 function validateApiKey(request: Request): boolean {
   const apiKey = request.headers.get('Authorization')

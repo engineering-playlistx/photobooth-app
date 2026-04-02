@@ -2,8 +2,7 @@ import { SessionRepository } from '../repositories/session.repository'
 import { UserRepository } from '../repositories/user.repository'
 import { EmailService } from '../services/email.service'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
-
-const SUPABASE_BUCKET = 'photobooth-bucket'
+import { SUPABASE_BUCKET } from '../utils/constants'
 
 export interface SubmitPhotoRequest {
   photoPath: string
