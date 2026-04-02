@@ -15,7 +15,7 @@ const signIn = createServerFn({ method: 'POST' }).handler(async (ctx) => {
   const { email, password } = ctx.data as { email: string; password: string }
   const supabase = getSupabaseServerClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) return { error: error.message }
+  if (error) return { error: 'Incorrect email or password.' }
   return { error: null }
 })
 
