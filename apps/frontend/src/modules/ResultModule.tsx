@@ -122,9 +122,8 @@ export function ResultModule({ outputs }: ModuleProps) {
 
     setIsProcessing(true);
     try {
-      // Fire print and upload in parallel
-      void handlePrint();
       await uploadToSupabaseAndShowQR();
+      await handlePrint();
     } finally {
       setIsProcessing(false);
     }
