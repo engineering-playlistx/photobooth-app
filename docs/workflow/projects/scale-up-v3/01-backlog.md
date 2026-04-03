@@ -61,6 +61,22 @@ Each entry has:
 
 ---
 
+### DATA-02 — Upsert on (email, event_id) discards repeat-visit history
+
+**Category:** Data / UX
+**Issue:** V2-6.3 switched user creation to `.upsert()` on `(email, event_id)` to prevent duplicate rows. This is correct for deduplication, but it silently discards any value in knowing how many times the same guest visited a booth — which is useful for event engagement reporting.
+**Context:** Raised after Phase 6 completion. The previous duplicate-row behavior was a bug, but the visit count insight it incidentally provided had value.
+**Suggested fix:** Add a `visit_count` integer column to the `users` table (default `1`). In `user.repository.ts`, change the upsert to increment on conflict:
+```sql
+INSERT INTO users (...) VALUES (...)
+ON CONFLICT (email, event_id) DO UPDATE SET
+  visit_count = users.visit_count + 1,
+  updated_at = now()
+```
+Supabase JS does not support `DO UPDATE SET ... + 1` directly via the client — use a raw SQL RPC or a Postgres function. Alternatively, query for an existing row first; if found, increment `visit_count` and update; if not, insert with `visit_count = 1`. Surface `visit_count` in the guests dashboard table.
+
+---
+
 ### DATA-01 — `downloadCSV` on guests page exports only the current page, not all guests
 
 **Category:** Data / UX
