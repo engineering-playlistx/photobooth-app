@@ -59,10 +59,11 @@ export function EventConfigProvider({ children }: { children: ReactNode }) {
         apiBaseUrl: baseUrl,
         apiClientKey: clientKey,
       } = kioskConfigRef.current;
-      const data = await fetchConfig(baseUrl, clientKey, eventId);
+      const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
+      const data = await fetchConfig(normalizedBaseUrl, clientKey, eventId);
       configRef.current = data;
       setConfig(data);
-      setApiBaseUrl(baseUrl);
+      setApiBaseUrl(normalizedBaseUrl);
       setApiClientKey(clientKey);
       setStatus("ready");
     } catch (err) {
