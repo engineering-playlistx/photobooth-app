@@ -122,9 +122,40 @@ Supabase JS does not support `DO UPDATE SET ... + 1` directly via the client —
 
 ---
 
-## Part B — Known Gaps Not Addressed in V2
+## Part B — Deferred from V2 (Explicit Carryover)
 
-These are items that were deferred from V2 scope and should be considered for V3 planning:
+These items were explicitly marked "deferred to V3" in `scale-up-v2/02-backlog.md`. They are concrete work items, not new discoveries.
+
+### CARRY-01 — AI provider fallback chain
+
+**Category:** Resilience / Scale
+**Issue:** When Replicate fails, the app errors out. There is no fallback to Google or any other provider — a single provider outage takes down AI generation for the entire event.
+**Context:** Deferred from V2 scope. V2-6.21 added a user-friendly 503 message, but that is a UX patch, not a structural fix. A real fallback requires an `ai_jobs` table or an API contract change to support retrying with a different provider.
+**Suggested fix:** Introduce an `ai_jobs` table that tracks provider, status, and retry count per generation attempt. `AiGenerationService` tries Replicate first; on 5xx, retries with Google. Result is written back to the job row. This decouples provider selection from the HTTP request lifecycle.
+
+---
+
+### CARRY-02 — Config version history and rollback snapshots
+
+**Category:** Ops / Data
+**Issue:** The flow builder (V2-Phase 4) lets operators edit and save `moduleFlow`. A "Discard changes" UX was built, but there is no snapshot history — if an operator saves a bad config, there is no way to roll back to a previous known-good state without manually editing Supabase.
+**Context:** Deferred from V2 scope. Snapshots were out of scope for V2 but become important once real clients have live configs.
+**Suggested fix:** On every `PATCH /api/config` save, write the previous `config_json` to a `config_snapshots` table with a timestamp and author. Dashboard shows a "Version history" panel with restore buttons. Keep the last N snapshots (e.g. 10) per event.
+
+---
+
+### CARRY-03 — Shared `packages/types` workspace
+
+**Category:** Code / DX
+**Issue:** `apps/web/src/types/module-config.ts` and `apps/frontend/src/types/module-config.ts` are manual mirrors. Any type change requires editing both files. A missed sync causes silent type drift between backend and frontend.
+**Context:** Deferred from V2 scope (`01-scope.md`). Acceptable while the type surface is small, but will become a maintenance burden as V3 adds more module types and data models.
+**Suggested fix:** Create `packages/types` as a pnpm workspace package. Move `module-config.ts` and `event-config.ts` there. Both apps import from `@photobooth/types`. Remove the `// MIRRORED` comment pattern entirely.
+
+---
+
+## Part C — Known Gaps Not Addressed in V2
+
+These are items that were deferred from earlier scope and should be considered for V3 planning:
 
 | ID | Category | Issue | Notes |
 |----|----------|-------|-------|

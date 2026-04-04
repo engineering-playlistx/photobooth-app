@@ -52,8 +52,15 @@ Definition of done:
 
 Being planned by: [`scale-up-v2`](projects/scale-up-v2/)
 
-### V3 — Multi-Tenant SaaS (Future)
-Organizations layer, client dashboard access, automated reporting, email delivery, asset management via dashboard.
+### V3 — Remote Asset Management + Carryover (Next)
+Per-event, per-module asset uploads via dashboard (frames, templates, backgrounds). Multi-event support gap closure. Known carryover fixes from V2.
+
+Multi-tenancy (organizations layer, client dashboard access) is deferred to a future project — out of V3 scope.
+
+Being planned by: [`scale-up-v3`](projects/scale-up-v3/)
+
+### V4 — Multi-Tenant SaaS (Future)
+Organizations layer, client dashboard access, automated reporting, email delivery pipeline.
 
 ---
 
@@ -62,7 +69,8 @@ Organizations layer, client dashboard access, automated reporting, email deliver
 | Project | Milestone | Status | Docs |
 |---------|-----------|--------|------|
 | `scale-up-v1` | V1 | ✅ Done | [projects/scale-up-v1/](projects/scale-up-v1/) |
-| `scale-up-v2` | V2 | 🔜 Planning | [projects/scale-up-v2/](projects/scale-up-v2/) |
+| `scale-up-v2` | V2 | ✅ Done | [projects/scale-up-v2/](projects/scale-up-v2/) |
+| `scale-up-v3` | V3 | 🔜 Planning | [projects/scale-up-v3/](projects/scale-up-v3/) |
 
 ---
 

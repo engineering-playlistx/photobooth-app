@@ -1,8 +1,8 @@
 # Shell Photobooth — Product Design Document
 
-**Version:** 2.0
-**Status:** Draft
-**Last updated:** 2026-03-30
+**Version:** 3.0
+**Status:** Active
+**Last updated:** 2026-04-04
 
 ---
 
@@ -18,9 +18,10 @@
    - [Guest — Web Result Portal](#53-guest--web-result-portal)
 6. [Module System](#6-module-system)
 7. [Technical Architecture](#7-technical-architecture)
-8. [V1 Roadmap — Immediate Priorities](#8-v1-roadmap--immediate-priorities)
-9. [V2 Roadmap — New Architecture](#9-v2-roadmap--new-architecture)
-10. [Resolved Decisions](#10-resolved-decisions)
+8. [V1 Roadmap — Complete ✅](#8-v1-roadmap--complete-)
+9. [V2 Roadmap — Complete ✅](#9-v2-roadmap--complete-)
+10. [V3 Roadmap — In Planning](#10-v3-roadmap--in-planning)
+11. [Resolved Decisions](#11-resolved-decisions)
 
 ---
 
@@ -503,18 +504,20 @@ Keep the current stack and file structure. Add these capabilities on top:
 | Multi-tenancy foundation | `organizations` table; all data scoped behind org ID |
 | Guest portal V2 | Multiple result items, social share, brand CTA |
 
-### Data Model (V2 Target)
+### Data Model (Current — V2)
 
 ```
-organizations
-  └─ events
-       ├─ event_config       (1:1 JSON blob)
-       ├─ kiosk_instances    (many — each physical device)
-       └─ sessions           (one per guest run)
-            ├─ guest_info
-            ├─ module_outputs (JSON — keyed by outputKey)
-            └─ photos         (one or more per session)
+events
+  ├─ event_configs     (1:1 JSON blob — moduleFlow, branding, techConfig, formFields)
+  └─ sessions          (one per guest run)
+       ├─ user_info    (JSON — guest name, email, phone)
+       ├─ module_outputs (JSON — keyed by outputKey per module)
+       └─ photo_path   (Supabase Storage path)
+
+users                  (one row per unique email+event_id, upserted on session complete)
 ```
+
+**Note:** An `organizations` table is planned for V4 (Multi-Tenant SaaS). All entities are currently flat under `events`. Multi-tenancy is explicitly out of V3 scope.
 
 ### Config Fetch Flow (V1+)
 
@@ -540,9 +543,10 @@ New guest session starts (tap "Welcome")
 
 ---
 
-## 8. V1 Roadmap — Immediate Priorities
+## 8. V1 Roadmap — Complete ✅
 
 > Goal: enable remote configuration without code changes, basic dashboard, proper guest portal.
+> **Delivered:** 2026-04-01. See [`scale-up-v1`](../workflow/projects/scale-up-v1/).
 
 ### P0 — Remote Configuration (Unlocks Everything Else)
 
@@ -574,25 +578,80 @@ New guest session starts (tap "Welcome")
 
 ---
 
-## 9. V2 Roadmap — New Architecture
+## 9. V2 Roadmap — Complete ✅
 
-> Goal: full modular system, proper event/session data model, groundwork for multi-tenancy.
+> Goal: full modular system, proper event/session data model, V1 carryover closure.
+> **Delivered:** 2026-04-02. See [`scale-up-v2`](../workflow/projects/scale-up-v2/).
 
-| Area | Tasks |
-|------|-------|
-| **Module system** | Module registry, position types, dynamic pipeline renderer in kiosk |
-| **Flow builder** | Dashboard UI to add/remove/reorder modules; per-module config panels |
-| **Session model** | `sessions` table; create on session start, close on result; links guest + photos |
-| **Data model migration** | Move from flat `users` table to `events / sessions / photos` schema |
-| **Asset management** | Dashboard upload for frames, templates, backgrounds → Supabase Storage |
-| **Form field builder** | Add/remove/configure fields in dashboard; kiosk renders dynamically |
-| **Multi-tenancy foundation** | `organizations` table; scope all entities behind org ID |
-| **Guest portal V2** | Multiple result items (photo, GIF, video), social share, brand CTA |
-| **Mini Quiz module** | First new module built on the V2 module system |
+| Area | Status | Notes |
+|------|--------|-------|
+| **Module system** | ✅ Done | Module registry, position types, dynamic pipeline renderer |
+| **Flow builder** | ✅ Done | Dashboard add/remove/reorder + per-module config panels |
+| **Session model** | ✅ Done | `sessions` table, created on Welcome tap, completed on Result |
+| **Mini Quiz module** | ✅ Done | First new module built on the V2 system |
+| **V1 carryover closure** | ✅ Done | All P0/P1 security, data integrity, UX, and code quality items |
+| **Asset management** | 🔜 V3 | Upload UI deferred — type system is ready, implementation is not |
+| **Form field builder** | 🔜 Future | Custom fields beyond name/email/phone deferred |
+| **Multi-tenancy** | 🔜 V4 | `organizations` table explicitly out of V3 scope |
+| **Guest portal V2** | 🔜 Future | Social share, multiple result items deferred |
 
 ---
 
-## 10. Resolved Decisions
+## 10. V3 Roadmap — In Planning
+
+> Goal: per-event, per-module remote asset management via the dashboard; multi-event gap closure; V2 carryover fixes.
+> **Milestone:** V3 — Remote Asset Management + Carryover. See [`scale-up-v3`](../workflow/projects/scale-up-v3/).
+
+### What V3 Delivers
+
+**Asset management (primary goal)**
+
+The operator can upload all event assets directly from the dashboard — no manual Supabase console access or code changes needed. Assets are stored in Supabase Storage under `events/<eventId>/` and their URLs flow into `EventConfig` automatically.
+
+| Asset type | Scope | Current state | V3 target |
+|------------|-------|---------------|-----------|
+| Frame overlays | Per event, per AI theme | Baked into Electron build (`public/images/`) | Uploaded via dashboard → URL in `AiGenerationModuleConfig.themes[].frameImageUrl` |
+| AI template images | Per event, per AI theme | Backend env vars | Uploaded via dashboard → URL in `AiGenerationModuleConfig.themes[].templateImageUrl` |
+| Module backgrounds | Per event, per module | Global `branding.backgroundUrl` only | Uploaded via dashboard → URL in `branding.screenBackgrounds[moduleId]` |
+| Event logo | Per event | URL field in branding config | Upload UI (already has URL field, needs file picker) |
+
+**Kiosk rendering of per-module backgrounds**
+
+The kiosk already receives `branding.screenBackgrounds` in `EventConfig` but does not yet apply it per module. Each module component needs to read `screenBackgrounds[moduleId]` and apply it as its background.
+
+**Multi-event gap closure**
+
+Remove the hardcoded `?? 'evt_shell_001'` fallback in `submit-photo.usecase.ts`. Already architecturally clean — one line to fix.
+
+**V2 carryover fixes**
+
+Small items from the V3 backlog: CSV export bug (DATA-01), visit count tracking (DATA-02), input length guards (SEC-01), CSV injection guard (CODE-03), AI provider fallback chain (CARRY-01), config snapshots (CARRY-02), shared types workspace (CARRY-03).
+
+### What V3 Does NOT Cover
+
+- `organizations` table / multi-tenancy → V4
+- Client dashboard access → V4
+- Form field builder (custom fields beyond name/email/phone) → Future
+- Guest portal V2 (social share, multiple result items) → Future
+- Electron auto-update → Future
+
+### Asset Storage Layout (V3 Convention)
+
+```
+photobooth-bucket/
+  events/
+    <eventId>/
+      frames/          ← frame overlay PNGs per theme
+      templates/       ← AI template images per theme
+      backgrounds/     ← per-module background images
+      logos/           ← event logo
+  temp/                ← transient Replicate uploads (cleaned up after use)
+  public/              ← permanent guest photos
+```
+
+---
+
+## 11. Resolved Decisions
 
 | Decision | Resolution |
 |----------|------------|
