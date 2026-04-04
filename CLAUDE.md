@@ -406,6 +406,14 @@ Racing template images for the face-swap model are hosted externally (Supabase/C
 
 ---
 
+## Supabase / Postgres Notes
+
+- **PL/pgSQL `RETURNS SETOF` requires `RETURN QUERY`** — functions declared `RETURNS SETOF <table>` must use `RETURN QUERY INSERT/SELECT ... RETURNING *`. Omitting `RETURN QUERY` compiles silently but throws at call time: `"query has no destination for result data"`. Always verify new Postgres functions with a direct `SELECT * FROM fn(...)` call in the Supabase SQL editor before deploying.
+- **Supabase Storage responses are discriminated unions** — `.list()`, `.download()`, and `.upload()` return `{ data: T; error: null } | { data: null; error: Error }`. After an `if (error) throw` check, TypeScript narrows `data` to non-null — do not add `?? []` or `!data` guards after the check or `@typescript-eslint/no-unnecessary-condition` will fire.
+- **Migration files must stay in sync** — all manual schema changes run in the Supabase SQL editor must also be committed as a migration file in `apps/web/supabase/migrations/`. Use the next timestamp (`YYYYMMDDHHMMSS`) as the filename prefix.
+
+---
+
 ## Security Notes
 
 - `SUPABASE_SERVICE_KEY` — server-side only, never in frontend or git

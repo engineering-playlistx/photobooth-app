@@ -175,7 +175,7 @@ const createWindow = () => {
       "default-src 'self' blob:",
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
+      "img-src 'self' data: blob: https:",
       // `connect-src 'self' https://api.iconify.design ${process.env.VITE_API_BASE_URL || ""} ${process.env.VITE_SUPABASE_URL || ""}`,
       `connect-src 'self' local-file: https://api.iconify.design http://localhost:* https://*`,
       "font-src 'self'",

@@ -146,13 +146,6 @@ export const Route = createFileRoute('/api/photo')({
           console.error({ message: 'API error', error })
 
           if (error instanceof Error) {
-            if (error.message.includes('Failed to create user')) {
-              return json(
-                { error: 'Failed to save user data' },
-                { status: 500 },
-              )
-            }
-
             if (error.message.includes('failed to send email')) {
               return json(
                 { error: 'Photo uploaded but failed to send email' },

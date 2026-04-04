@@ -216,6 +216,7 @@ RETURNS SETOF users
 LANGUAGE plpgsql
 AS $$
 BEGIN
+  RETURN QUERY
   INSERT INTO users (name, email, phone, photo_path, selected_theme, event_id, visit_count)
   VALUES (p_name, p_email, p_phone, p_photo_path, p_selected_theme, p_event_id, 1)
   ON CONFLICT (email, event_id)
@@ -455,7 +456,7 @@ For the PATCH call, use the existing `patchConfig` mechanism from `_layout.event
 
 ---
 
-### V3-3.3 — Verify kiosk reads frame and preview URLs from config after upload
+### ~~V3-3.3 — Verify kiosk reads frame and preview URLs from config after upload~~ ✅
 
 **What:** Smoke-test and fix (if needed) that the kiosk correctly renders frames and theme previews sourced from Supabase URLs (not local `/images/` paths). The kiosk's `resolveImageUrl` in `AiGenerationModule.tsx` already handles HTTP URLs vs local paths — confirm it works for Supabase-hosted images, including cross-origin loading on canvas (`img.crossOrigin = "anonymous"` is already set in `loadImage`).
 
