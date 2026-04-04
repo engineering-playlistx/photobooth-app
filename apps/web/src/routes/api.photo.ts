@@ -98,6 +98,10 @@ export const Route = createFileRoute('/api/photo')({
             return json({ error: 'Invalid name' }, { status: 400 })
           }
 
+          if (body.email.length > 254 || body.phone.length > 20) {
+            return json({ error: 'Invalid input' }, { status: 400 })
+          }
+
           if (!validateEmail(body.email)) {
             return json({ error: 'Invalid email format' }, { status: 400 })
           }
