@@ -8,7 +8,7 @@ interface RequestBody {
   email: string
   phone: string
   selectedTheme?: string
-  eventId?: string
+  eventId: string
   sessionId?: string
   moduleOutputs?: Record<string, unknown>
 }
@@ -83,7 +83,13 @@ export const Route = createFileRoute('/api/photo')({
 
           const body = (await request.json()) as RequestBody
 
-          if (!body.photoPath || !body.name || !body.email || !body.phone) {
+          if (
+            !body.photoPath ||
+            !body.name ||
+            !body.email ||
+            !body.phone ||
+            !body.eventId
+          ) {
             return json({ error: 'Missing required fields' }, { status: 400 })
           }
 

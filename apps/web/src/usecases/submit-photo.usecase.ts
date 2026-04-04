@@ -10,7 +10,7 @@ export interface SubmitPhotoRequest {
   email: string
   phone: string
   selectedTheme?: string
-  eventId?: string
+  eventId: string
   sessionId?: string
   moduleOutputs?: Record<string, unknown>
 }
@@ -62,7 +62,7 @@ export class SubmitPhotoUseCase {
     } else {
       await this.sessionRepository.createSession({
         id: sessionId,
-        eventId: request.eventId ?? 'evt_shell_001',
+        eventId: request.eventId,
         photoPath: request.photoPath,
         userInfo: {
           name: request.name,
