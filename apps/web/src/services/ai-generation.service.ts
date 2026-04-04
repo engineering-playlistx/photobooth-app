@@ -8,26 +8,14 @@ export interface GenerateFaceSwapParams {
   templateBase64?: string // pre-fetched by route handler (skips background fetch)
   templateMimeType?: string
   theme: string
-  templateUrl?: string // override env-var lookup (comes from EventConfig)
-  prompt?: string // override env-var lookup (comes from EventConfig)
-}
-
-const TEMPLATE_URLS: Record<string, string | undefined> = {
-  pitcrew: process.env.RACING_TEMPLATE_PITCREW_URL,
-  motogp: process.env.RACING_TEMPLATE_MOTOGP_URL,
-  f1: process.env.RACING_TEMPLATE_F1_URL,
+  templateUrl?: string // comes from EventConfig; required at runtime
+  prompt?: string // comes from EventConfig; required at runtime
 }
 
 const DEFAULT_MODEL = 'google/nano-banana-pro'
 const REPLICATE_MODEL = process.env.REPLICATE_MODEL || DEFAULT_MODEL
 const GOOGLE_AI_MODEL = process.env.GOOGLE_AI_MODEL || 'gemini-2.5-flash-image'
 export const AI_PROVIDER = process.env.AI_PROVIDER || 'replicate' // 'replicate' | 'google'
-
-const THEME_PROMPTS: Record<string, string | undefined> = {
-  pitcrew: process.env.RACING_PROMPT_PITCREW,
-  motogp: process.env.RACING_PROMPT_MOTOGP,
-  f1: process.env.RACING_PROMPT_F1,
-}
 
 // ---------------------------------------------------------------------------
 // Supabase-backed job store for Google AI predictions.
@@ -74,16 +62,18 @@ export class AIGenerationService {
   private async createReplicatePrediction(
     params: GenerateFaceSwapParams,
   ): Promise<string> {
-    const targetImageUrl = params.templateUrl ?? TEMPLATE_URLS[params.theme]
+    const targetImageUrl = params.templateUrl
     if (!targetImageUrl) {
       throw new Error(
-        `Template image URL not configured for theme: ${params.theme}`,
+        `No template URL configured for theme: ${params.theme} — set templateImageUrl in event config`,
       )
     }
 
-    const prompt = params.prompt ?? THEME_PROMPTS[params.theme]
+    const prompt = params.prompt
     if (!prompt) {
-      throw new Error(`Prompt not configured for theme: ${params.theme}`)
+      throw new Error(
+        `No prompt configured for theme: ${params.theme} — set prompt in event config`,
+      )
     }
 
     console.log(
@@ -179,16 +169,18 @@ export class AIGenerationService {
     jobId: string,
     params: GenerateFaceSwapParams,
   ): Promise<string> {
-    const targetImageUrl = params.templateUrl ?? TEMPLATE_URLS[params.theme]
+    const targetImageUrl = params.templateUrl
     if (!targetImageUrl) {
       throw new Error(
-        `Template image URL not configured for theme: ${params.theme}`,
+        `No template URL configured for theme: ${params.theme} — set templateImageUrl in event config`,
       )
     }
 
-    const prompt = params.prompt ?? THEME_PROMPTS[params.theme]
+    const prompt = params.prompt
     if (!prompt) {
-      throw new Error(`Prompt not configured for theme: ${params.theme}`)
+      throw new Error(
+        `No prompt configured for theme: ${params.theme} — set prompt in event config`,
+      )
     }
 
     // Parse user photo base64

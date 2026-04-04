@@ -1,9 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { json } from '@tanstack/react-start'
-import {
-  AIGenerationService,
-  AI_PROVIDER,
-} from '../services/ai-generation.service'
+import { AIGenerationService } from '../services/ai-generation.service'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
 import { SUPABASE_BUCKET } from '../utils/constants'
 import type { AiGenerationModuleConfig, EventConfig } from '@photobooth/types'
@@ -11,27 +8,22 @@ import type { AiGenerationModuleConfig, EventConfig } from '@photobooth/types'
 interface RequestBody {
   userPhotoBase64: string
   theme: string
-  eventId?: string
+  eventId: string
 }
 
-interface ResolvedThemeConfig {
-  provider: 'replicate' | 'google'
-  templateUrl: string | undefined
-  prompt: string | undefined
-}
+type ResolvedThemeConfig =
+  | {
+      ok: true
+      provider: 'replicate' | 'google'
+      templateUrl: string
+      prompt: string
+    }
+  | { ok: false; status: number; error: string }
 
 async function resolveThemeConfig(
-  eventId: string | undefined,
+  eventId: string,
   theme: string,
 ): Promise<ResolvedThemeConfig> {
-  const envFallback: ResolvedThemeConfig = {
-    provider: AI_PROVIDER as 'replicate' | 'google',
-    templateUrl: undefined,
-    prompt: undefined,
-  }
-
-  if (!eventId) return envFallback
-
   try {
     const supabase = getSupabaseAdminClient()
     const { data, error } = await supabase
@@ -41,13 +33,11 @@ async function resolveThemeConfig(
       .single()
 
     if (error) {
-      if (error.code !== 'PGRST116') {
-        console.warn(
-          `[ai-generate] Event config DB error for ${eventId}:`,
-          error.message,
-        )
+      return {
+        ok: false,
+        status: 503,
+        error: `Event config not found for eventId: ${eventId}`,
       }
-      return envFallback
     }
 
     const config = data.config_json as EventConfig
@@ -56,36 +46,36 @@ async function resolveThemeConfig(
     )
 
     if (!aiModule) {
-      console.warn(
-        `[ai-generate] No ai-generation module in event config for ${eventId} — using env fallback`,
-      )
-      return envFallback
+      return {
+        ok: false,
+        status: 503,
+        error: `No ai-generation module configured for event: ${eventId}`,
+      }
     }
 
     const themeConfig = aiModule.themes.find((t) => t.id === theme)
 
     if (!themeConfig) {
-      console.warn(
-        `[ai-generate] Theme '${theme}' not in event config — using env fallback`,
-      )
       return {
-        provider: aiModule.provider,
-        templateUrl: undefined,
-        prompt: undefined,
+        ok: false,
+        status: 400,
+        error: `Theme '${theme}' not found in event config for: ${eventId}`,
       }
     }
 
     return {
+      ok: true,
       provider: aiModule.provider,
       templateUrl: themeConfig.templateImageUrl,
       prompt: themeConfig.prompt,
     }
   } catch (err) {
-    console.warn(
-      '[ai-generate] Failed to fetch event config — using env fallback:',
-      err,
-    )
-    return envFallback
+    console.error('[ai-generate] Failed to fetch event config:', err)
+    return {
+      ok: false,
+      status: 503,
+      error: 'Failed to load event configuration',
+    }
   }
 }
 
@@ -120,9 +110,12 @@ export const Route = createFileRoute('/api/ai-generate')({
 
           const body = (await request.json()) as Partial<RequestBody>
 
-          if (!body.userPhotoBase64 || !body.theme) {
+          if (!body.userPhotoBase64 || !body.theme || !body.eventId) {
             return json(
-              { error: 'Missing required fields: userPhotoBase64 and theme' },
+              {
+                error:
+                  'Missing required fields: userPhotoBase64, theme, and eventId',
+              },
               { status: 400 },
             )
           }
@@ -136,16 +129,18 @@ export const Route = createFileRoute('/api/ai-generate')({
             `[ai-generate] Photo payload size: ${Math.round(userPhotoBase64.length / 1024)}KB`,
           )
 
-          const { provider, templateUrl, prompt } = await resolveThemeConfig(
-            body.eventId,
-            theme,
-          )
-
-          if (body.eventId) {
-            console.log(
-              `[ai-generate] Using event config — eventId: ${body.eventId}, provider: ${provider}`,
+          const themeConfig = await resolveThemeConfig(body.eventId, theme)
+          if (!themeConfig.ok) {
+            return json(
+              { error: themeConfig.error },
+              { status: themeConfig.status },
             )
           }
+          const { provider, templateUrl, prompt } = themeConfig
+
+          console.log(
+            `[ai-generate] Using event config — eventId: ${body.eventId}, provider: ${provider}`,
+          )
 
           const aiService = new AIGenerationService(provider)
           let predictionId: string
@@ -158,23 +153,11 @@ export const Route = createFileRoute('/api/ai-generate')({
               `[ai-generate] Using Google AI provider — synchronous mode`,
             )
 
-            const resolvedTemplateUrl =
-              templateUrl ??
-              process.env[`RACING_TEMPLATE_${theme.toUpperCase()}_URL`]
-            if (!resolvedTemplateUrl) {
-              return json(
-                { error: `Template URL not configured for theme: ${theme}` },
-                { status: 500 },
-              )
-            }
-
-            console.log(
-              `[ai-generate] Pre-fetching template: ${resolvedTemplateUrl}`,
-            )
+            console.log(`[ai-generate] Pre-fetching template: ${templateUrl}`)
             let templateBase64: string
             let templateMimeType: string
             try {
-              const templateResponse = await fetch(resolvedTemplateUrl)
+              const templateResponse = await fetch(templateUrl)
               if (!templateResponse.ok) {
                 throw new Error(
                   `${templateResponse.status} ${templateResponse.statusText}`,
@@ -208,7 +191,7 @@ export const Route = createFileRoute('/api/ai-generate')({
               templateBase64,
               templateMimeType,
               theme,
-              templateUrl: resolvedTemplateUrl,
+              templateUrl,
               prompt,
             })
 
