@@ -17,6 +17,7 @@ export interface User {
   photo_path: string
   selected_theme: string | null
   created_at: string
+  visit_count: number
 }
 
 export class UserRepository {
@@ -24,19 +25,14 @@ export class UserRepository {
     const supabase = getSupabaseAdminClient()
 
     const { data: user, error } = await supabase
-      .from('users')
-      .upsert(
-        {
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          photo_path: data.photoPath,
-          selected_theme: data.selectedTheme ?? null,
-          event_id: data.eventId ?? null,
-        },
-        { onConflict: 'email,event_id' },
-      )
-      .select()
+      .rpc('upsert_user_with_visit_count', {
+        p_name: data.name,
+        p_email: data.email,
+        p_phone: data.phone,
+        p_photo_path: data.photoPath,
+        p_selected_theme: data.selectedTheme ?? null,
+        p_event_id: data.eventId ?? null,
+      })
       .single()
 
     if (error) {

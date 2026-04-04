@@ -14,6 +14,7 @@ type Guest = {
   created_at: string
   photo_path: string | null
   photo_url: string | null
+  visit_count: number
 }
 
 const getGuests = createServerFn({ method: 'GET' }).handler(async (ctx) => {
@@ -23,9 +24,10 @@ const getGuests = createServerFn({ method: 'GET' }).handler(async (ctx) => {
   const to = from + PAGE_SIZE - 1
   const { data, error, count } = await admin
     .from('users')
-    .select('name, email, phone, selected_theme, created_at, photo_path', {
-      count: 'exact',
-    })
+    .select(
+      'name, email, phone, selected_theme, created_at, photo_path, visit_count',
+      { count: 'exact' },
+    )
     .eq('event_id', eventId)
     .order('created_at', { ascending: false })
     .range(from, to)
@@ -48,7 +50,9 @@ const getAllGuestsForExport = createServerFn({ method: 'GET' }).handler(
     const admin = getSupabaseAdminClient()
     const { data, error } = await admin
       .from('users')
-      .select('name, email, phone, selected_theme, created_at, photo_path')
+      .select(
+        'name, email, phone, selected_theme, created_at, photo_path, visit_count',
+      )
       .eq('event_id', eventId)
       .order('created_at', { ascending: false })
     if (error) throw new Error(error.message)
@@ -79,12 +83,21 @@ function sanitizeCsvCell(val: string | null): string {
 }
 
 function downloadCSV(guests: Array<Guest>, eventId: string) {
-  const headers = ['Name', 'Email', 'Phone', 'Theme', 'Timestamp', 'Photo File']
+  const headers = [
+    'Name',
+    'Email',
+    'Phone',
+    'Theme',
+    'Visits',
+    'Timestamp',
+    'Photo File',
+  ]
   const rows = guests.map((g) => [
     g.name,
     g.email,
     g.phone,
     g.selected_theme,
+    String(g.visit_count),
     new Date(g.created_at).toISOString(),
     photoFilename(g.photo_path),
   ])
@@ -184,6 +197,9 @@ function GuestListPage() {
                     Theme
                   </th>
                   <th className="px-4 py-3 text-left text-slate-400 font-medium">
+                    Visits
+                  </th>
+                  <th className="px-4 py-3 text-left text-slate-400 font-medium">
                     Time
                   </th>
                 </tr>
@@ -219,6 +235,9 @@ function GuestListPage() {
                     <td className="px-4 py-3 text-slate-300">{guest.phone}</td>
                     <td className="px-4 py-3 text-slate-300 capitalize">
                       {guest.selected_theme}
+                    </td>
+                    <td className="px-4 py-3 text-slate-400">
+                      {guest.visit_count}
                     </td>
                     <td className="px-4 py-3 text-slate-400">
                       {new Date(guest.created_at).toLocaleString()}
