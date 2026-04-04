@@ -1,6 +1,6 @@
 # Task Decomposition — V3 All Phases
 
-**Status:** 🔄 In progress
+**Status:** ✅ Complete
 **Scope:** Phase 1 (Carryover Fixes), Phase 2 (Asset Type System + Wiring), Phase 3 (Dashboard Upload UI), Phase 4 (Kiosk Background Rendering)
 
 **Format per task:** What · Files · Input · Output · Verification · Risk
@@ -480,7 +480,7 @@ For the PATCH call, use the existing `patchConfig` mechanism from `_layout.event
 
 ## Phase 4 — Kiosk Per-Module Background Rendering
 
-### V3-4.1 — Create `useModuleBackground` hook in `apps/frontend`
+### ~~V3-4.1 — Create `useModuleBackground` hook in `apps/frontend`~~ ✅
 
 **What:** Add a hook that reads `branding.screenBackgrounds[moduleId]` from `EventConfig` and returns the URL (or `null`).
 
@@ -508,7 +508,7 @@ export function useModuleBackground(moduleId: string): string | null {
 
 ---
 
-### V3-4.2 — Apply per-module backgrounds in kiosk module components
+### ~~V3-4.2 — Apply per-module backgrounds in kiosk module components~~ ✅
 
 **What:** Each module component that occupies the full screen should read its background from `useModuleBackground(moduleId)` and apply it as a CSS background image. If no background is set for the module, the existing solid-color background is shown (no visible change).
 
