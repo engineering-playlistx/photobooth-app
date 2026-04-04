@@ -414,7 +414,7 @@ Grid changes from `lg:grid-cols-4` to `lg:grid-cols-5` (or wraps naturally).
 
 ---
 
-### V3-3.2 — Create `/dashboard/events/$eventId/assets` route
+### ~~V3-3.2 — Create `/dashboard/events/$eventId/assets` route~~ ✅
 
 **What:** Create the assets management page. For each asset slot, show the current value (thumbnail if URL is an image, path label otherwise), an upload button, and on success: update the relevant field in `EventConfig`.
 
