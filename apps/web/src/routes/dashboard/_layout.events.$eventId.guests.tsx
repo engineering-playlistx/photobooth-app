@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
@@ -40,6 +41,20 @@ const getGuests = createServerFn({ method: 'GET' }).handler(async (ctx) => {
 
   return { guests, totalCount: count ?? 0 }
 })
+
+const getAllGuestsForExport = createServerFn({ method: 'GET' }).handler(
+  async (ctx) => {
+    const { eventId } = ctx.data as { eventId: string }
+    const admin = getSupabaseAdminClient()
+    const { data, error } = await admin
+      .from('users')
+      .select('name, email, phone, selected_theme, created_at, photo_path')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: false })
+    if (error) throw new Error(error.message)
+    return data.map((g) => ({ ...g, photo_url: null })) as Array<Guest>
+  },
+)
 
 export const Route = createFileRoute(
   '/dashboard/_layout/events/$eventId/guests',
@@ -94,6 +109,7 @@ function GuestListPage() {
   const { eventId } = Route.useParams()
   const { page } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
+  const [isExporting, setIsExporting] = useState(false)
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
@@ -123,10 +139,23 @@ function GuestListPage() {
         </h1>
         {guests.length > 0 && (
           <button
-            onClick={() => downloadCSV(guests, eventId)}
-            className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+            disabled={isExporting}
+            onClick={() => {
+              void (async () => {
+                setIsExporting(true)
+                try {
+                  const allGuests = await getAllGuestsForExport({
+                    data: { eventId },
+                  })
+                  downloadCSV(allGuests, eventId)
+                } finally {
+                  setIsExporting(false)
+                }
+              })()
+            }}
+            className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
           >
-            Export CSV
+            {isExporting ? 'Exporting...' : 'Export CSV'}
           </button>
         )}
       </div>
