@@ -15,6 +15,7 @@ export interface BrandingConfig {
   fontFamily: string | null
   backgroundUrl: string | null
   portalHeading: string | null
+  screenBackgrounds: Record<string, string | null> | null
 }
 
 export interface AiThemeConfig {
