@@ -1,4 +1,4 @@
-import type { ModuleConfig } from "../types/module-config";
+import type { ModuleConfig } from "@photobooth/types";
 
 export interface ModuleProps {
   config: ModuleConfig;

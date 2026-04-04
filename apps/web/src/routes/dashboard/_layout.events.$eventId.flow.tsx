@@ -3,14 +3,15 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
 import { validateModuleFlow } from '../../utils/validate-module-flow'
-import type { AiThemeConfig, EventConfig } from '../../types/event-config'
 import type {
   AiGenerationModuleConfig,
+  AiThemeConfig,
+  EventConfig,
   FormModuleConfig,
   MiniQuizModuleConfig,
   ModuleConfig,
   ThemeSelectionModuleConfig,
-} from '../../types/module-config'
+} from '@photobooth/types'
 
 const getModuleFlow = createServerFn({ method: 'GET' }).handler(async (ctx) => {
   const { eventId } = ctx.data as { eventId: string }

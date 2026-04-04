@@ -47,6 +47,9 @@ importers:
       '@iconify/react':
         specifier: ^6.0.2
         version: 6.0.2(react@19.2.0)
+      '@photobooth/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@supabase/supabase-js':
         specifier: ^2.81.1
         version: 2.81.1
@@ -183,6 +186,9 @@ importers:
       '@google/generative-ai':
         specifier: ^0.24.0
         version: 0.24.1
+      '@photobooth/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@react-email/components':
         specifier: ^1.0.1
         version: 1.0.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -301,6 +307,8 @@ importers:
       wrangler:
         specifier: ^4.49.1
         version: 4.49.1
+
+  packages/types: {}
 
 packages:
 

@@ -1,6 +1,3 @@
-// CANONICAL — this file is the source of truth for ModuleConfig types.
-// Mirror lives at apps/frontend/src/types/module-config.ts — keep in sync.
-
 import type { AiThemeConfig } from './event-config'
 
 export type ModulePosition =

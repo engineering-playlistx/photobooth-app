@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import type { MiniQuizModuleConfig } from "../types/module-config";
+import type { MiniQuizModuleConfig } from "@photobooth/types";
 import type { ModuleProps } from "./types";
 
 export function MiniQuizModule({ config, onComplete, onBack }: ModuleProps) {

@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
 import { SUPABASE_BUCKET } from '../utils/constants'
-import type { BrandingConfig } from '../types/event-config'
+import type { BrandingConfig } from '@photobooth/types'
 
 type SessionPageData = {
   photoUrl: string

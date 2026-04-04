@@ -6,8 +6,7 @@ import {
 } from '../services/ai-generation.service'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
 import { SUPABASE_BUCKET } from '../utils/constants'
-import type { EventConfig } from '../types/event-config'
-import type { AiGenerationModuleConfig } from '../types/module-config'
+import type { AiGenerationModuleConfig, EventConfig } from '@photobooth/types'
 
 interface RequestBody {
   userPhotoBase64: string

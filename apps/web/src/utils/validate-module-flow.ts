@@ -2,7 +2,7 @@ import type {
   AiGenerationModuleConfig,
   ModuleConfig,
   ThemeSelectionModuleConfig,
-} from '../types/module-config'
+} from '@photobooth/types'
 
 export function validateModuleFlow(
   moduleFlow: Array<ModuleConfig>,

@@ -1,6 +1,6 @@
 import React from "react";
 import { getAssetPath } from "../utils/assets";
-import type { ThemeSelectionModuleConfig } from "../types/module-config";
+import type { ThemeSelectionModuleConfig } from "@photobooth/types";
 import type { ModuleProps } from "./types";
 
 function resolveImageUrl(url: string): string {

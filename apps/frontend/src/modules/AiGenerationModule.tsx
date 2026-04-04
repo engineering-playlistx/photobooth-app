@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import type { AiThemeConfig } from "../types/event-config";
-import type { AiGenerationModuleConfig } from "../types/module-config";
+import type {
+  AiGenerationModuleConfig,
+  AiThemeConfig,
+} from "@photobooth/types";
 import { getAssetPath } from "../utils/assets";
 import { useEventConfig } from "../contexts/EventConfigContext";
 import { usePipeline } from "../contexts/PipelineContext";

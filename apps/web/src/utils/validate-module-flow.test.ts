@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { validateModuleFlow } from './validate-module-flow'
-import type { ModuleConfig } from '../types/module-config'
-import type { AiThemeConfig } from '../types/event-config'
+import type { AiThemeConfig, ModuleConfig } from '@photobooth/types'
 
 const VALID_AI_THEME: AiThemeConfig = {
   id: 'pitcrew',

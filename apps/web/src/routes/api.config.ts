@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { json } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
-import type { EventConfig } from '../types/event-config'
+import type { EventConfig } from '@photobooth/types'
 
 function validateApiKey(request: Request): boolean {
   const apiKey = request.headers.get('Authorization')

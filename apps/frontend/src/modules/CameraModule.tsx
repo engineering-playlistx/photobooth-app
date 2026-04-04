@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { getAssetPath } from "../utils/assets";
-import type { CameraModuleConfig } from "../types/module-config";
+import type { CameraModuleConfig } from "@photobooth/types";
 import type { ModuleProps } from "./types";
 
 const VIDEO_VERTICAL_OFFSET = 540;

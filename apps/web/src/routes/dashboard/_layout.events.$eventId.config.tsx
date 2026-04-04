@@ -3,7 +3,7 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
 import type { ReactNode } from 'react'
-import type { EventConfig } from '../../types/event-config'
+import type { EventConfig } from '@photobooth/types'
 
 const getEventConfig = createServerFn({ method: 'GET' }).handler(
   async (ctx) => {

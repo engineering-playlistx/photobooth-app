@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import type { ReactNode } from "react";
-import type { EventConfig } from "../types/event-config";
+import type { EventConfig } from "@photobooth/types";
 
 interface EventConfigContextType {
   config: EventConfig;
