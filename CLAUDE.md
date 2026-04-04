@@ -10,13 +10,15 @@ This file gives Claude Code the context needed to work effectively in this repo.
 
 The app is **offline-first**: all photos are saved locally via SQLite and the filesystem. Cloud delivery (Supabase storage) is layered on top. **Supabase is the source of truth** — SQLite is an offline backup only. If they ever differ, Supabase wins.
 
-**Current state:** No kiosk is deployed in the field and no backend is running. The app is in pre-migration state — safe to modify without breaking live events.
+**Current state:** No kiosk is deployed in the field and no backend is running. Safe to modify without breaking live events.
 
 ---
 
 ## Migration Status
 
-**V1 is complete ✅ (2026-04-01).** The app is now config-driven and multi-client ready. V2 (Modular Pipeline) is the next project.
+**V1 complete ✅ (2026-04-01).** Config-driven, multi-client ready.
+**V2 complete ✅ (2026-04-02).** Modular pipeline, flow builder, session model, Mini Quiz.
+**V3 in progress 🔄.** Remote asset management + carryover fixes — see `docs/workflow/projects/scale-up-v3/`.
 
 ### Workflow Documents
 
@@ -25,20 +27,18 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 | `docs/workflow/MASTER-PLAN.md` | North-star: product vision, milestones, project registry, scope rules |
 | `docs/workflow/HOW-WE-WORK.md` | Execution methodology: sessions, verification, git, prompting |
 | `docs/workflow/projects/scale-up-v1/` | V1 migration — COMPLETE ✅ |
-| `docs/workflow/projects/scale-up-v2/` | V2 modular pipeline — planning 🔜 |
+| `docs/workflow/projects/scale-up-v2/` | V2 modular pipeline — COMPLETE ✅ |
+| `docs/workflow/projects/scale-up-v3/` | V3 remote asset management — IN PROGRESS 🔄 |
 
-### V1 Project Docs (`docs/workflow/projects/scale-up-v1/`)
+### V3 Project Docs (`docs/workflow/projects/scale-up-v3/`)
 
 | File | Contents |
 |------|----------|
-| `01-reality-check.md` | Pre-migration risk analysis |
-| `02-constraints-interview.md` | Settled constraints and invariants |
-| `03-migration-strategy.md` | Phase-by-phase V1 migration plan (Phases 0–5) ✅ |
-| `04-task-decomposition.md` | Atomic executable tasks — all done ✅ |
-| `05-execution-strategy.md` | Project-specific execution notes |
-| `06-backlogs.md` | Bugs/risks found during V1; items deferred to V2 |
+| `01-backlog.md` | Carryover items from V2 + known gaps |
+| `01-scope.md` | V3 scope statement, definition of done, architecture decisions |
+| `02-task-decomposition.md` | Atomic executable tasks — Phases 1–4 |
 
-**Current status:** V1 complete. Starting V2 planning — see `docs/workflow/projects/scale-up-v2/`.
+**Current status:** V3 Phase 1 (carryover fixes) ready to start. Begin with V3-1.1 (CARRY-03 — shared `packages/types` workspace).
 
 ---
 
