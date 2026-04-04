@@ -1,6 +1,6 @@
 # Task Decomposition — V3 All Phases
 
-**Status:** 🔜 Not started
+**Status:** 🔄 In progress
 **Scope:** Phase 1 (Carryover Fixes), Phase 2 (Asset Type System + Wiring), Phase 3 (Dashboard Upload UI), Phase 4 (Kiosk Background Rendering)
 
 **Format per task:** What · Files · Input · Output · Verification · Risk
@@ -10,7 +10,7 @@
 
 ## Phase 1 — Carryover Fixes
 
-### V3-1.1 — CARRY-03: Create `packages/types` pnpm workspace package
+### ~~V3-1.1 — CARRY-03: Create `packages/types` pnpm workspace package~~ ✅
 
 **What:** Eliminate the mirrored type files between `apps/web` and `apps/frontend`. Create a shared `packages/types` package that both apps import from. This is a prerequisite for Phase 2 type additions.
 
@@ -62,7 +62,7 @@ Steps:
 
 ---
 
-### V3-1.2 — GAP-04: Remove `evt_shell_001` hardcoded fallback
+### ~~V3-1.2 — GAP-04: Remove `evt_shell_001` hardcoded fallback~~ ✅
 
 **What:** The `else` branch in `submit-photo.usecase.ts:63-73` creates a new session when no `sessionId` is provided, and falls back to `'evt_shell_001'` when `eventId` is missing. In the V2 flow, `sessionId` is always provided (set at session start by `POST /api/session/start`), so this branch is rarely hit. But the fallback is still a risk if called without context. Make `eventId` required throughout the call chain.
 
@@ -98,7 +98,7 @@ Steps:
 
 ---
 
-### V3-1.3 — SEC-01: Add max-length guards for email and phone inputs
+### ~~V3-1.3 — SEC-01: Add max-length guards for email and phone inputs~~ ✅
 
 **What:** `validateEmail` and `validatePhone` in `api.photo.ts` have no explicit length cap. An attacker can send a 10,000-char string that passes the regex (if it matches a valid prefix up to the first mismatch). Add explicit length guards before the regex validators.
 
@@ -124,7 +124,7 @@ if (body.email.length > 254 || body.phone.length > 20) {
 
 ---
 
-### V3-1.4 — CODE-03: Guard CSV export against formula injection
+### ~~V3-1.4 — CODE-03: Guard CSV export against formula injection~~ ✅
 
 **What:** The `downloadCSV` function in the guests page wraps cells in double-quotes but does not strip leading `=`, `+`, `-`, `@` characters that spreadsheet apps interpret as formula prefixes. A guest named `=HYPERLINK(...)` would execute as a formula when the CSV is opened in Excel or Google Sheets.
 
@@ -154,7 +154,7 @@ row.map((cell) => `"${sanitizeCsvCell(cell).replace(/"/g, '""')}"`)
 
 ---
 
-### V3-1.5 — DATA-01: Fix CSV export to include all guests, not just current page
+### ~~V3-1.5 — DATA-01: Fix CSV export to include all guests, not just current page~~ ✅
 
 **What:** After V2-6.8 added pagination, the Export CSV button passes `guests` (current page only, max 50 records) to `downloadCSV`. A separate server fetch of all guests is needed.
 
@@ -192,7 +192,7 @@ row.map((cell) => `"${sanitizeCsvCell(cell).replace(/"/g, '""')}"`)
 
 ---
 
-### V3-1.6 — DATA-02: Track repeat visits with `visit_count` column
+### ~~V3-1.6 — DATA-02: Track repeat visits with `visit_count` column~~ ✅
 
 **What:** The current upsert on `(email, event_id)` silently discards repeat-visit data. Add a `visit_count` integer column to the `users` table that increments on each subsequent visit from the same guest.
 
@@ -279,7 +279,7 @@ In `apps/web/src/routes/dashboard/_layout.events.$eventId.guests.tsx`:
 
 ## Phase 2 — Asset Type System + Wiring
 
-### V3-2.1 — Add `screenBackgrounds` to `BrandingConfig` in `@photobooth/types`
+### ~~V3-2.1 — Add `screenBackgrounds` to `BrandingConfig` in `@photobooth/types`~~ ✅
 
 **What:** `BrandingConfig.screenBackgrounds` is referenced in the V3 scope (per-module background images) but is not yet in the type. Add it to the canonical package.
 
@@ -305,7 +305,7 @@ TypeScript compiles in both apps with no new errors. Existing `BrandingConfig` u
 
 ---
 
-### V3-2.2 — Add asset upload API route
+### ~~V3-2.2 — Add asset upload API route~~ ✅
 
 **What:** Create `POST /api/assets/upload` — a server-side route that accepts a file (multipart/form-data) plus `eventId`, `assetType`, and `filename`, uploads it to `photobooth-bucket/events/<eventId>/<assetType>/<filename>`, and returns the public URL. This is the backend for the dashboard upload UI (Phase 3).
 
@@ -336,7 +336,7 @@ TypeScript compiles in both apps with no new errors. Existing `BrandingConfig` u
 
 ---
 
-### V3-2.3 — Wire upload URL into `EventConfig` via PATCH and remove env-var fallback
+### ~~V3-2.3 — Wire upload URL into `EventConfig` via PATCH and remove env-var fallback~~ ✅
 
 **What:** After uploading an asset, the dashboard UI must write the returned public URL into the relevant `EventConfig` field (e.g. `moduleFlow[i].themes[j].frameImageUrl`). The PATCH config endpoint already exists — the dashboard will call it with a targeted update.
 
@@ -378,7 +378,7 @@ Steps:
 
 ## Phase 3 — Dashboard Asset Upload UI
 
-### V3-3.1 — Add "Assets" navigation card to event detail page
+### ~~V3-3.1 — Add "Assets" navigation card to event detail page~~ ✅
 
 **What:** The event detail page (`_layout.events.$eventId.index.tsx`) currently shows 4 cards: Guests, Photos, Config, Flow Builder. Add a 5th card: Assets.
 
