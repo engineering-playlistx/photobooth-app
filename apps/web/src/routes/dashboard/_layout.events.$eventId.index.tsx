@@ -79,7 +79,7 @@ function EventDetailPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Link
           to="/dashboard/events/$eventId/guests"
           params={{ eventId: event.id }}
@@ -134,6 +134,21 @@ function EventDetailPage() {
             <p className="font-medium text-white">Flow Builder</p>
             <p className="text-sm text-slate-400 mt-0.5">
               View and configure the kiosk module pipeline
+            </p>
+          </div>
+          <span className="text-slate-500 group-hover:text-slate-300 transition-colors">
+            →
+          </span>
+        </Link>
+        <Link
+          to="/dashboard/events/$eventId/assets"
+          params={{ eventId: event.id }}
+          className="flex items-center justify-between p-4 bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-lg transition-colors group"
+        >
+          <div>
+            <p className="font-medium text-white">Assets</p>
+            <p className="text-sm text-slate-400 mt-0.5">
+              Upload frames, templates, and backgrounds
             </p>
           </div>
           <span className="text-slate-500 group-hover:text-slate-300 transition-colors">
