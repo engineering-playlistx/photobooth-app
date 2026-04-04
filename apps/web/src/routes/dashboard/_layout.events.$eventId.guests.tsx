@@ -58,6 +58,11 @@ function photoFilename(path: string | null): string {
   return path.split('/').pop() ?? path
 }
 
+function sanitizeCsvCell(val: string | null): string {
+  const s = String(val ?? '')
+  return /^[=+\-@|]/.test(s) ? `'${s}` : s
+}
+
 function downloadCSV(guests: Array<Guest>, eventId: string) {
   const headers = ['Name', 'Email', 'Phone', 'Theme', 'Timestamp', 'Photo File']
   const rows = guests.map((g) => [
@@ -70,7 +75,9 @@ function downloadCSV(guests: Array<Guest>, eventId: string) {
   ])
   const csv = [headers, ...rows]
     .map((row) =>
-      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','),
+      row
+        .map((cell) => `"${sanitizeCsvCell(cell).replace(/"/g, '""')}"`)
+        .join(','),
     )
     .join('\n')
   const blob = new Blob([csv], { type: 'text/csv' })
