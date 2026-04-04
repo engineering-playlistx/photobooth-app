@@ -10,6 +10,7 @@ import { savePhotoFile, savePhotoResult } from "../utils/database";
 import QRCodeModal from "../components/QRCodeModal";
 import { useEventConfig } from "../contexts/EventConfigContext";
 import { usePipeline } from "../contexts/PipelineContext";
+import { useModuleBackground } from "../hooks/useModuleBackground";
 import type { ModuleProps } from "./types";
 import { SUPABASE_BUCKET } from "../utils/constants";
 
@@ -32,6 +33,7 @@ function base64ToBlob(base64: string, contentType = "", sliceSize = 512) {
 export function ResultModule({ outputs }: ModuleProps) {
   const { config: eventConfig, apiBaseUrl, apiClientKey } = useEventConfig();
   const { reset } = usePipeline();
+  const bg = useModuleBackground("result");
 
   // DATA-02: double-save via remount is structurally prevented by the pipeline
   // (modules stay mounted while active), but this guard costs nothing and
@@ -250,7 +252,7 @@ export function ResultModule({ outputs }: ModuleProps) {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('${getAssetPath("/images/bg_result.png")}')`,
+          backgroundImage: `url('${bg ?? getAssetPath("/images/bg_result.png")}')`,
         }}
       />
       <div className="relative z-10 w-full px-36 mx-auto mb-40">

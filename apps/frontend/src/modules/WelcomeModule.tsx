@@ -1,10 +1,12 @@
 import React from "react";
 import { getAssetPath } from "../utils/assets";
 import { useEventConfig } from "../contexts/EventConfigContext";
+import { useModuleBackground } from "../hooks/useModuleBackground";
 import type { ModuleProps } from "./types";
 
 export function WelcomeModule({ onComplete }: ModuleProps) {
   const { refresh } = useEventConfig();
+  const bg = useModuleBackground("welcome");
 
   function handleStart() {
     refresh(); // re-fetch config in background for next session
@@ -16,7 +18,7 @@ export function WelcomeModule({ onComplete }: ModuleProps) {
       <div
         className="absolute inset-0 w-full h-full px-26 pb-20 pt-76"
         style={{
-          background: `url('${getAssetPath("/images/bg_index.png")}')`,
+          background: `url('${bg ?? getAssetPath("/images/bg_index.png")}')`,
           backgroundSize: "cover",
         }}
       />

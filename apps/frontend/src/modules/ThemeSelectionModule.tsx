@@ -1,5 +1,6 @@
 import React from "react";
 import { getAssetPath } from "../utils/assets";
+import { useModuleBackground } from "../hooks/useModuleBackground";
 import type { ThemeSelectionModuleConfig } from "@photobooth/types";
 import type { ModuleProps } from "./types";
 
@@ -13,6 +14,7 @@ export function ThemeSelectionModule({
   onBack,
 }: ModuleProps) {
   const { themes } = config as ThemeSelectionModuleConfig;
+  const bg = useModuleBackground("theme-selection");
 
   function handleSelectTheme(themeId: string) {
     const theme = themes.find((t) => t.id === themeId);
@@ -37,7 +39,7 @@ export function ThemeSelectionModule({
       <div
         className="absolute inset-0 w-full h-full"
         style={{
-          background: `url('${getAssetPath("/images/bg_select.png")}')`,
+          background: `url('${bg ?? getAssetPath("/images/bg_select.png")}')`,
           backgroundSize: "cover",
         }}
       />

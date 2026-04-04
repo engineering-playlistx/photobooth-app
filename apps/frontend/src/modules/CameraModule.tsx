@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { getAssetPath } from "../utils/assets";
+import { useModuleBackground } from "../hooks/useModuleBackground";
 import type { CameraModuleConfig } from "@photobooth/types";
 import type { ModuleProps } from "./types";
 
@@ -7,6 +8,7 @@ const VIDEO_VERTICAL_OFFSET = 540;
 
 export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
   const { maxRetakes } = config as CameraModuleConfig;
+  const bg = useModuleBackground("camera");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -359,7 +361,7 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
     <div
       className="h-svh aspect-9/16 mx-auto bg-cover bg-center bg-no-repeat text-secondary relative overflow-hidden"
       style={{
-        backgroundImage: `url('${getAssetPath("/images/bg_camera.png")}')`,
+        backgroundImage: `url('${bg ?? getAssetPath("/images/bg_camera.png")}')`,
       }}
     >
       <button

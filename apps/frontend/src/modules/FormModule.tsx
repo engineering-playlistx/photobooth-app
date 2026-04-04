@@ -2,10 +2,12 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import { getAssetPath } from "../utils/assets";
+import { useModuleBackground } from "../hooks/useModuleBackground";
 import SimpleKeyboard from "../components/SimpleKeyboard";
 import type { ModuleProps } from "./types";
 
 export function FormModule({ onComplete, onBack }: ModuleProps) {
+  const bg = useModuleBackground("form");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -129,7 +131,7 @@ export function FormModule({ onComplete, onBack }: ModuleProps) {
     <div
       className="h-svh aspect-9/16 mx-auto bg-cover bg-center bg-no-repeat flex items-start justify-center p-4 bg-primary text-secondary"
       style={{
-        backgroundImage: `url('${getAssetPath("/images/bg_form.png")}')`,
+        backgroundImage: `url('${bg ?? getAssetPath("/images/bg_form.png")}')`,
       }}
     >
       <button

@@ -6,6 +6,7 @@ import type {
 import { getAssetPath } from "../utils/assets";
 import { useEventConfig } from "../contexts/EventConfigContext";
 import { usePipeline } from "../contexts/PipelineContext";
+import { useModuleBackground } from "../hooks/useModuleBackground";
 import type { ModuleProps } from "./types";
 
 function resolveImageUrl(url: string): string {
@@ -85,6 +86,7 @@ export function AiGenerationModule({
 }: ModuleProps) {
   const { apiBaseUrl, apiClientKey, config: eventConfig } = useEventConfig();
   const { setSuppressInactivity } = usePipeline();
+  const bg = useModuleBackground("ai-generation");
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Preparing your photo...");
   const [error, setError] = useState<string | null>(null);
@@ -275,7 +277,18 @@ export function AiGenerationModule({
   };
 
   return (
-    <div className="relative h-svh aspect-9/16 mx-auto flex items-start justify-center p-4 bg-primary text-secondary overflow-hidden">
+    <div
+      className="relative h-svh aspect-9/16 mx-auto flex items-start justify-center p-4 bg-primary text-secondary overflow-hidden"
+      style={
+        bg
+          ? {
+              backgroundImage: `url('${bg}')`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }
+          : undefined
+      }
+    >
       {SLIDESHOW_IMAGES.map((src, index) => (
         <div
           key={src}
