@@ -1,0 +1,20 @@
+V3 is done beautifully, thanks to claude sonnet! cheers, you're cool man!
+
+now I have this feedback list after testing and running the kiosk and the dashboard.
+
+the kiosk
+- there should be a proper loading screen when the app is opened and try to configure itself using remote config. ideally, this is the time when the app is downloading the assets, like background images etc. a loading bar would be very helpful here.
+- the loading screen also need to cover negative cases, such as db or backend errors, internet disconnected, etc.
+- when arriving at the modules (the first one is welcome screen), the background image should be already downloaded and ready to display. this should avoid unloaded state, where the user arrived at the module page but the background image is not set, then after 1-2 second, suddenly it changes because the image has finished loaded. as I said before, if we can load these assets during the first time loading, this would be a very smooth experience
+- also we need deeper customization for the front end side of the kiosk. and it should be per module. for example, the welcome screen can be customized in these items: cta copywriting, cta font family, cta font size, cta font color, cta margin, etc. there's a cta button, we need to fully customize the css via remote config. I need your advice and opinion about it here, but if we enable this, the change will be monumental. I am thinking of writing inline css in the dashboard at the first stage. later we might do it with UI in the dashboard
+- to add more details to the previous point, I have this real need: change the slide show content of ai loading screen. this would be very helpful if it's configurable remotely
+- to even add more advance customization and flexibility, we also need to enable "template / layout selection" per module. for example, a select-theme page might have layout A where the options are displayed using list and layout B where the options are displayed using cards. after picking the layout, the admin can then customize the look in the dashboard to that specific layout - yes I know this is so advanced, but I need to tell you the vision
+- the result page should have more customization. some event don't need email sending, some event don't need qr shareable url, some event don't need printing, etc. this should be easily configurable by the admin
+- v4 backglogs are important too. yes we need auto update for this
+
+the dashboard
+- the flow builder and asset management should be just one page. so the mental model here is, when you customize the flow, you also customize the modules - this is what currently happens right in the flow builder page. but strangely, when you want to customize the module's asset, you go to different page. I think we can just place the asset management and configuration inside flow builder. so the flow builder become the one page where we totally customize the kiosk experience.
+- we then can take out "event config". the page where we configure a little bit about the experience. and now it's not so relevant anymore since all the configuration is per module. like printer name should go to result module, form fields obviously should go to form module config - all in the flow builder.
+- I still need an easy way to look at the total visit. currently there is no way to do that, and the workaround is to calculate manually the visits column in the guests table or look at the number of photo generated. in the later version, there should be an analytics dashboard where we can look at the total visit with more flexibility and ease.
+
+haven't thought the details of multi tenancy a lot. but I think we need to define it. my initial idea is enable the admin to create new event. and in the kiosk, the kiosk admin can input the event id. it is saved persistently. so whenever the kiosk app re-open, it remembers the event id. this is just my idea, please advise or critique this in the technical perspective.

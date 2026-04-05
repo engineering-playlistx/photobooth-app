@@ -40,27 +40,37 @@ The kiosk reads all config from a remote `EventConfig`. No hardcoded branding, t
 
 Delivered by: [`scale-up-v1`](projects/scale-up-v1/)
 
-### V2 — Modular Pipeline ← Current Target
+### ✅ V2 — Modular Pipeline
+**Done:** 2026-04-02
+
 The guest flow is assembled from interchangeable modules, configurable per event in the dashboard. New modules can be added without touching the flow infrastructure.
 
-Definition of done:
-- `moduleFlow: ModuleConfig[]` is live (not a stub)
-- The kiosk renders its flow from config, not from hardcoded React Router routes
-- Flow builder in dashboard
-- At least one non-core module built on the system (e.g. Mini Quiz)
-- Session model tracks full module output chain
+Delivered by: [`scale-up-v2`](projects/scale-up-v2/)
 
-Being planned by: [`scale-up-v2`](projects/scale-up-v2/)
+### ✅ V3 — Remote Asset Management + Carryover
+**Done:** 2026-04-05
 
-### V3 — Remote Asset Management + Carryover (Next)
 Per-event, per-module asset uploads via dashboard (frames, templates, backgrounds). Multi-event support gap closure. Known carryover fixes from V2.
 
-Multi-tenancy (organizations layer, client dashboard access) is deferred to a future project — out of V3 scope.
+Delivered by: [`scale-up-v3`](projects/scale-up-v3/)
 
-Being planned by: [`scale-up-v3`](projects/scale-up-v3/)
+### V4 — Platform Polish + Deep Customization ← Current Target
+Polished kiosk startup with asset pre-loading and error handling; deep per-module customization (copy, inline CSS) from the dashboard; unified flow builder as the single configuration hub; basic analytics; kiosk event ID persistence (no manual JSON editing); Electron auto-update.
 
-### V4 — Multi-Tenant SaaS (Future)
-Organizations layer, client dashboard access, automated reporting, email delivery pipeline.
+Definition of done:
+- Kiosk startup loading screen with progress bar; assets pre-loaded before first module renders
+- Kiosk handles all negative startup cases (network error, backend error) with operator-facing messages
+- Kiosk has persistent event ID selection — no manual `kiosk.config.json` edits
+- Per-module copy and inline CSS customizable from dashboard flow builder
+- Result module has configurable feature toggles (email, QR, printing) per event
+- Dashboard flow builder is the single config hub — assets and module-specific config inline in panels
+- Basic analytics: total visits, unique guests, daily trend per event
+- Electron auto-update implemented
+
+Being planned by: [`scale-up-v4`](projects/scale-up-v4/)
+
+### V5 — Multi-Tenant SaaS (Future)
+Organizations layer, client account management, client dashboard access, automated reporting and email delivery, AI provider fallback chain, config version history.
 
 ---
 
@@ -70,7 +80,8 @@ Organizations layer, client dashboard access, automated reporting, email deliver
 |---------|-----------|--------|------|
 | `scale-up-v1` | V1 | ✅ Done | [projects/scale-up-v1/](projects/scale-up-v1/) |
 | `scale-up-v2` | V2 | ✅ Done | [projects/scale-up-v2/](projects/scale-up-v2/) |
-| `scale-up-v3` | V3 | 🔜 Planning | [projects/scale-up-v3/](projects/scale-up-v3/) |
+| `scale-up-v3` | V3 | ✅ Done | [projects/scale-up-v3/](projects/scale-up-v3/) |
+| `scale-up-v4` | V4 | 🔜 Planning | [projects/scale-up-v4/](projects/scale-up-v4/) |
 
 ---
 

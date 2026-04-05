@@ -1,8 +1,8 @@
 # Shell Photobooth — Product Design Document
 
-**Version:** 3.0
+**Version:** 4.0
 **Status:** Active
-**Last updated:** 2026-04-04
+**Last updated:** 2026-04-05
 
 ---
 
@@ -20,8 +20,9 @@
 7. [Technical Architecture](#7-technical-architecture)
 8. [V1 Roadmap — Complete ✅](#8-v1-roadmap--complete-)
 9. [V2 Roadmap — Complete ✅](#9-v2-roadmap--complete-)
-10. [V3 Roadmap — In Planning](#10-v3-roadmap--in-planning)
-11. [Resolved Decisions](#11-resolved-decisions)
+10. [V3 Roadmap — Complete ✅](#10-v3-roadmap--complete-)
+11. [V4 Roadmap — In Planning](#11-v4-roadmap--in-planning)
+12. [Resolved Decisions](#12-resolved-decisions)
 
 ---
 
@@ -116,15 +117,19 @@ Dashboard
 │   ├── Event List  (active · upcoming · past)
 │   └── Event Detail
 │       ├── Overview        — status, guest count, photo count
-│       ├── Flow Builder    — configure module pipeline
-│       ├── Branding        — logo, colors, backgrounds, fonts
-│       ├── Form Fields     — what data to collect from guests
-│       ├── AI Config       — provider, themes, templates, prompts
-│       ├── Tech Config     — printer, inactivity timeout, etc.
+│       ├── Flow Builder    — THE single config hub for the entire kiosk experience:
+│       │                     add/remove/reorder modules; per-module config, assets,
+│       │                     copy customization, and inline CSS — all inline in
+│       │                     each module panel (replaces: Assets, Form Fields,
+│       │                     AI Config, Tech Config as separate pages)
+│       ├── Branding        — event-level: logo, color palette, global font
+│       ├── Analytics       — total visits, unique guests, daily trend chart
 │       ├── Guests          — live list, search, CSV export
 │       └── Photos          — gallery, individual + bulk download
 └── Settings              — global defaults
 ```
+
+> **V4 consolidation:** All module-specific configuration (form fields, printer name, AI provider, asset uploads, copy text, inline CSS) lives inside the relevant module's panel in the Flow Builder. Separate standalone pages for Form Fields, AI Config, Tech Config, and Assets are removed in V4. The Branding tab is kept at the event level because logo and color palette apply globally, not per-module.
 
 #### Key Screens
 
@@ -176,7 +181,7 @@ The most critical screen. The operator assembles the guest experience by selecti
 └──────────────────────────────────────────────────────┘
 ```
 
-Each module card expands inline to configure its content (questions, prompts, theme assets, etc.).
+Each module card expands inline to configure everything about that module: its content (questions, prompts, theme assets), its asset upload slots (background image, frame, template), its copy overrides (CTA text, heading text, button labels), and its inline CSS customization. The flow builder is the only place an operator needs to go to configure the kiosk experience.
 
 **Event Detail — Branding**
 - Upload: logo, background images/video per screen (or global fallback)
@@ -224,17 +229,30 @@ The kiosk experience is a sequential pipeline of modules. The sequence is define
 ```
 App launches
     │
-    ├── Read local kiosk.config.json: { eventId, apiBaseUrl, apiClientKey }
+    ├── Show StartupLoader (full-screen splash + progress bar)
     │
-    ├── GET /api/config?eventId=<id>
+    ├── Read kiosk.config.json: { eventId, apiBaseUrl, apiClientKey }
+    │   └── If eventId missing → show "Setup Required" → open KioskSettings screen
+    │
+    ├── GET /api/config?eventId=<id>  (progress: 0% → 30%)
     │   ← EventConfig { branding, moduleFlow, formFields, aiConfig, techConfig }
+    │   ├── Network error → "No internet connection" + Retry button
+    │   ├── 4xx → "Event config not found — check event ID in Settings" + Settings button
+    │   └── 5xx / timeout → "Unable to reach backend — contact your operator" + Retry button
     │
-    ├── Apply branding (CSS custom properties, dynamic asset URLs)
+    ├── Pre-load all module assets (progress: 30% → 100%):
+    │   - branding.screenBackgrounds (all module backgrounds)
+    │   - branding.logoUrl
+    │   - ThemeSelection: previewImageUrls
+    │   - AiGeneration: slideshowItems[].imageUrl
+    │   Asset failures are non-blocking (logged, startup continues)
     │
-    └── Begin guest flow from first module in moduleFlow
+    └── Transition (fade) to first module in moduleFlow
 ```
 
-Config is re-fetched at the start of each new guest session, so dashboard changes take effect within one session cycle — no kiosk restart needed.
+Config is held in memory after the initial fetch. The kiosk uses the cached config for each guest session — no per-session network call. An operator can force a config refresh by restarting the app (or via the admin settings screen).
+
+The **admin settings screen** (accessible via `Ctrl+Shift+S`, PIN-protected) allows the operator to change the event ID and reconnect without editing `kiosk.config.json` manually.
 
 #### Example Flows
 
@@ -517,7 +535,7 @@ events
 users                  (one row per unique email+event_id, upserted on session complete)
 ```
 
-**Note:** An `organizations` table is planned for V4 (Multi-Tenant SaaS). All entities are currently flat under `events`. Multi-tenancy is explicitly out of V3 scope.
+**Note:** An `organizations` table is planned for V5 (Multi-Tenant SaaS). All entities are currently flat under `events`. Full multi-tenancy is out of V4 scope. V4 delivers kiosk event ID persistence (no manual JSON editing) as the multi-tenancy foundation.
 
 ### Config Fetch Flow (V1+)
 
@@ -597,10 +615,10 @@ New guest session starts (tap "Welcome")
 
 ---
 
-## 10. V3 Roadmap — In Planning
+## 10. V3 Roadmap — Complete ✅
 
 > Goal: per-event, per-module remote asset management via the dashboard; multi-event gap closure; V2 carryover fixes.
-> **Milestone:** V3 — Remote Asset Management + Carryover. See [`scale-up-v3`](../workflow/projects/scale-up-v3/).
+> **Delivered:** 2026-04-05. See [`scale-up-v3`](../workflow/projects/scale-up-v3/).
 
 ### What V3 Delivers
 
@@ -651,7 +669,71 @@ photobooth-bucket/
 
 ---
 
-## 11. Resolved Decisions
+## 11. V4 Roadmap — In Planning
+
+> Goal: polished kiosk startup experience, deep per-module customization, unified flow builder, basic analytics, kiosk event ID persistence, Electron auto-update.
+> **Milestone:** V4 — Platform Polish + Deep Customization. See [`scale-up-v4`](../workflow/projects/scale-up-v4/).
+
+### What V4 Delivers
+
+**Kiosk startup experience**
+
+The kiosk now has a proper startup loading screen. Before any guest session begins, the app fetches the `EventConfig` and pre-loads all module background images and assets. Guests see no loading flicker when they arrive at the welcome screen.
+
+| Change | Details |
+|--------|---------|
+| Startup loading screen | Full-screen splash with progress bar; config fetch + asset pre-loading |
+| Negative case handling | Network error, backend 5xx, config not found — each shows a distinct message + Retry |
+| Asset pre-loading | All module backgrounds, logo, theme previews, AI slideshow images cached before first module |
+| In-memory config cache | Config fetched once on startup; not re-fetched per session |
+
+**Admin settings screen**
+
+Operators no longer need to manually edit `kiosk.config.json` to change the event ID. A PIN-protected settings screen (accessible via `Ctrl+Shift+S`) lets them input and persist the event ID from the kiosk UI.
+
+**Deep per-module customization**
+
+Every module supports per-event copy overrides and raw inline CSS from the dashboard — no code changes needed.
+
+| Feature | Details |
+|---------|---------|
+| Per-element copy | Each module exposes named elements (e.g. `ctaButton`, `header`, `retakeButton`); each element's text can be overridden independently per event |
+| Per-element CSS | Each named element has its own CSS textarea in the dashboard; styles are applied to that specific element, not the module root |
+| Result feature toggles | Email sending, QR code, printing — each can be enabled/disabled per event |
+| AI loading slideshow | Slideshow content (images + captions) configurable from the dashboard per event |
+
+**Dashboard consolidation**
+
+The Flow Builder becomes the single place to configure the entire kiosk experience. All module-specific configuration, asset uploads, copy, and CSS are inline in each module panel.
+
+| Change | Details |
+|--------|---------|
+| Assets merged into flow builder | Background, frame, template upload slots live in each module panel |
+| Module-specific config consolidated | Form fields → Form module panel; printer name → Result module panel; AI provider → AI Generation panel |
+| Standalone tabs removed | Assets, Form Fields, AI Config, Tech Config tabs removed from event detail navigation |
+| Branding tab retained | Logo, color palette, font — genuinely event-level, kept as a standalone tab |
+
+**Analytics**
+
+A basic analytics view per event: total visits, unique guests, returning guests (visit_count > 1), and a daily visit trend chart (last 30 days).
+
+**Electron auto-update**
+
+The kiosk silently checks for new versions on startup via GitHub Releases. When an update is ready, an operator-dismissible banner prompts a restart to install.
+
+### What V4 Does NOT Cover
+
+- `organizations` table / full multi-tenancy → V5
+- Client dashboard login / self-serve access → V5
+- Config version history and rollback (CARRY-02) → V5
+- AI provider fallback chain (CARRY-01) → V5
+- Session crash recovery (GAP-01, GAP-05) → V5
+- Per-module layout template selection (CUSTOM-03) → V5
+- Visual CSS builder in dashboard → V5
+
+---
+
+## 12. Resolved Decisions
 
 | Decision | Resolution |
 |----------|------------|
