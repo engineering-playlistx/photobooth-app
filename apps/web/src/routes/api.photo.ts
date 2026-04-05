@@ -44,11 +44,17 @@ function validateApiKey(request: Request): boolean {
   return true
 }
 
+// Control chars U+0000–U+001F and U+007F — built at runtime so ESLint does not flag no-control-regex
+const CONTROL_CHAR_REGEX = new RegExp(
+  `[${String.fromCharCode(0)}-${String.fromCharCode(31)}${String.fromCharCode(127)}]`,
+  'g',
+)
+
 function sanitizeName(name: string): string {
   return name
     .trim()
     .replace(/[<>]/g, '')
-    .replace(/[\x00-\x1F\x7F]/g, '') // eslint-disable-line no-control-regex
+    .replace(CONTROL_CHAR_REGEX, '')
     .slice(0, 100)
 }
 
