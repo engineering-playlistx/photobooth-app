@@ -56,6 +56,7 @@ export function ResultModule({ outputs }: ModuleProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(true);
   const [showSavingHint, setShowSavingHint] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const savingHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
@@ -312,14 +313,14 @@ export function ResultModule({ outputs }: ModuleProps) {
             <button
               type="button"
               className="px-7 py-3 bg-white text-secondary rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
-              onClick={reset}
+              onClick={() => setShowLeaveConfirm(true)}
             >
               Retry Result
             </button>
             <button
               type="button"
               className="px-7 py-3 bg-white text-secondary rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
-              onClick={reset}
+              onClick={() => setShowLeaveConfirm(true)}
             >
               Back to Home
             </button>
@@ -334,6 +335,33 @@ export function ResultModule({ outputs }: ModuleProps) {
           )}
         </div>
       </div>
+
+      {showLeaveConfirm && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-primary rounded-2xl p-16 mx-12 flex flex-col items-center gap-10 shadow-2xl">
+            <p className="text-5xl font-bold text-white text-center leading-tight">
+              You haven&apos;t printed or downloaded yet.
+            </p>
+            <p className="text-4xl text-white/70 text-center">Leave anyway?</p>
+            <div className="grid grid-cols-2 gap-8 w-full mt-4">
+              <button
+                type="button"
+                className="px-8 py-6 bg-white text-secondary text-4xl rounded-xl font-semibold cursor-pointer select-none"
+                onClick={() => setShowLeaveConfirm(false)}
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                className="px-8 py-6 bg-tertiary text-white text-4xl rounded-xl font-semibold cursor-pointer select-none"
+                onClick={reset}
+              >
+                Yes, leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
