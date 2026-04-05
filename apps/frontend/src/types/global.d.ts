@@ -13,6 +13,8 @@ declare global {
 
   interface ElectronAPI {
     getKioskConfig(): Promise<KioskConfig>;
+    saveKioskConfig(updates: Partial<KioskConfig>): Promise<KioskConfig>;
+    getKioskAdminPin(): Promise<string>;
     platform: string;
     isElectron: boolean;
     print: (filePath: string, printerName?: string) => Promise<PrintResult>;
@@ -37,6 +39,7 @@ declare global {
     };
     onNavigateToHome: (callback: () => void) => () => void;
     onNavigateToData: (callback: () => void) => () => void;
+    onOpenKioskSettings: (callback: () => void) => () => void;
   }
 
   interface PrintResult {

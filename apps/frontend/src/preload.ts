@@ -104,6 +104,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   // Kiosk config
   getKioskConfig: () => ipcRenderer.invoke("get-kiosk-config"),
+  saveKioskConfig: (updates: Partial<KioskConfig>) =>
+    ipcRenderer.invoke("save-kiosk-config", updates),
+  getKioskAdminPin: () => ipcRenderer.invoke("get-kiosk-admin-pin"),
 
   // Navigation listener
   onNavigateToHome: (callback: () => void) => {
@@ -116,6 +119,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("navigate-to-data", callback);
     return () => {
       ipcRenderer.removeListener("navigate-to-data", callback);
+    };
+  },
+  onOpenKioskSettings: (callback: () => void) => {
+    ipcRenderer.on("open-kiosk-settings", callback);
+    return () => {
+      ipcRenderer.removeListener("open-kiosk-settings", callback);
     };
   },
 });

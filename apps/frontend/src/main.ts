@@ -7,6 +7,7 @@ import {
   dialog,
   protocol,
   net,
+  globalShortcut,
 } from "electron";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -216,6 +217,14 @@ app.on("ready", () => {
     return net.fetch(pathToFileURL(decodeURIComponent(filePath)).href);
   });
   createWindow();
+
+  // Ctrl+Shift+S opens the KioskSettings overlay in the renderer
+  globalShortcut.register("CommandOrControl+Shift+S", () => {
+    const [win] = BrowserWindow.getAllWindows();
+    if (win) {
+      win.webContents.send("open-kiosk-settings");
+    }
+  });
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -433,6 +442,13 @@ interface KioskConfig {
   apiClientKey: string;
 }
 
+const KIOSK_ADMIN_PIN = process.env.KIOSK_ADMIN_PIN ?? "0000";
+if (KIOSK_ADMIN_PIN === "0000") {
+  console.warn(
+    "[main] KIOSK_ADMIN_PIN is using the default value — set it before deploying to production",
+  );
+}
+
 ipcMain.handle("get-kiosk-config", () => {
   const fs = require("fs");
   const configPath = path.join(app.getPath("userData"), "kiosk.config.json");
@@ -470,6 +486,26 @@ ipcMain.handle("get-kiosk-config", () => {
   app.quit();
   throw new Error("kiosk.config.json not found");
 });
+
+ipcMain.handle("save-kiosk-config", (_event, updates: Partial<KioskConfig>) => {
+  const fs = require("fs");
+  const configPath = path.join(app.getPath("userData"), "kiosk.config.json");
+  let existing: KioskConfig = { eventId: "", apiBaseUrl: "", apiClientKey: "" };
+  if (fs.existsSync(configPath)) {
+    try {
+      existing = JSON.parse(
+        fs.readFileSync(configPath, "utf-8") as string,
+      ) as KioskConfig;
+    } catch {
+      // Ignore parse errors — overwrite with merged config
+    }
+  }
+  const merged = { ...existing, ...updates };
+  fs.writeFileSync(configPath, JSON.stringify(merged, null, 2), "utf-8");
+  return merged;
+});
+
+ipcMain.handle("get-kiosk-admin-pin", () => KIOSK_ADMIN_PIN);
 
 // printing feature pdf
 ipcMain.handle("print-window-pdf", async (_event, imageDataUrl: string) => {
