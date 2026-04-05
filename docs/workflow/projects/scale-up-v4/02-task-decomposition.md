@@ -1,6 +1,6 @@
 # Task Decomposition — V4 All Phases
 
-**Status:** 🔄 In Progress — Phase 1 complete ✅, Phase 2 next
+**Status:** 🔄 In Progress — Phase 1 ✅, Phase 2 ✅, Phase 3 next
 **Scope:** Phase 1 (Carryover Quick Fixes), Phase 2 (Kiosk Startup + Event ID Settings), Phase 3 (Per-Module Customization — Types + Kiosk), Phase 4 (Per-Module Customization — Dashboard), Phase 5 (Dashboard Consolidation), Phase 6 (Analytics), Phase 7 (Electron Auto-Update)
 
 **Format per task:** What · Files · Input · Output · Verification · Risk
@@ -114,7 +114,7 @@
 
 ## Phase 2 — Kiosk Startup Loading + Event ID Settings
 
-### V4-2.1 — Add `StartupLoader` component with loading bar
+### ~~V4-2.1 — Add `StartupLoader` component with loading bar~~ ✅
 
 **What:** Create a full-screen startup loading component that is shown when the kiosk app first launches. It fetches `EventConfig`, reports progress, and only advances to the first module when ready. This is the entry point for all V4 kiosk startup work.
 
@@ -155,7 +155,7 @@
 
 ---
 
-### V4-2.2 — Pre-load all module background assets during startup
+### ~~V4-2.2 — Pre-load all module background assets during startup~~ ✅
 
 **What:** Extend `StartupLoader` to pre-fetch all image assets from `EventConfig` after the config fetch succeeds. Images are fetched and stored as Blob URLs (or browser-cached via `new Image()` preload). Modules that mount afterward will get instant renders.
 
@@ -187,7 +187,7 @@
 
 ---
 
-### V4-2.3 — Add in-memory EventConfig cache to kiosk (GAP-07)
+### ~~V4-2.3 — Add in-memory EventConfig cache to kiosk (GAP-07)~~ ✅
 
 **What:** Currently, the kiosk re-fetches `EventConfig` from the backend on every new guest session start. With `StartupLoader` now owning the initial fetch, extend `EventConfigContext` to hold the config in memory and only re-fetch when explicitly refreshed. This removes the per-session network dependency and makes the kiosk resilient to brief network interruptions mid-event.
 
@@ -212,7 +212,7 @@
 
 ---
 
-### V4-2.4 — Add KioskSettings screen for event ID selection (MULTI-01)
+### ~~V4-2.4 — Add KioskSettings screen for event ID selection (MULTI-01)~~ ✅
 
 **What:** Add an admin-only settings screen accessible via `Ctrl+Shift+S`. The operator can enter the event ID and save it to `kiosk.config.json`. This eliminates manual JSON file editing for event pairing.
 
