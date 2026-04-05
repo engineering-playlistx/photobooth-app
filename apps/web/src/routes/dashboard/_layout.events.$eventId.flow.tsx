@@ -10,7 +10,10 @@ import type {
   FormModuleConfig,
   MiniQuizModuleConfig,
   ModuleConfig,
+  ModuleCustomization,
+  ResultModuleConfig,
   ThemeSelectionModuleConfig,
+  WelcomeModuleConfig,
 } from '@photobooth/types'
 
 const getModuleFlow = createServerFn({ method: 'GET' }).handler(async (ctx) => {
@@ -111,6 +114,137 @@ const BLANK_AI_THEME: AiThemeConfig = {
   photoHeight: 1920,
   photoOffsetX: 0,
   photoOffsetY: 0,
+}
+
+// ─── Per-module element catalogs (keys match pb-<moduleId>-<elementKey> classes) ──
+
+type ElementDef = { key: string; label: string; defaultCopy?: string }
+
+const WELCOME_ELEMENTS: Array<ElementDef> = [
+  { key: 'ctaButton', label: 'CTA Button', defaultCopy: 'Tap to Start' },
+]
+
+const THEME_SELECTION_ELEMENTS: Array<ElementDef> = [
+  {
+    key: 'header',
+    label: 'Header',
+    defaultCopy: 'Who do you want to be today?',
+  },
+  { key: 'themeCard', label: 'Theme Card' },
+]
+
+const CAMERA_ELEMENTS: Array<ElementDef> = [
+  { key: 'retakeButton', label: 'Retake Button', defaultCopy: 'Retake' },
+  { key: 'captureButton', label: 'Capture Button' },
+  { key: 'nextButton', label: 'Next Button', defaultCopy: 'Next' },
+]
+
+const AI_GENERATION_ELEMENTS: Array<ElementDef> = [
+  { key: 'statusText', label: 'Status Text' },
+]
+
+const FORM_ELEMENTS: Array<ElementDef> = [
+  {
+    key: 'header',
+    label: 'Header',
+    defaultCopy: 'Complete your details before printing your photo',
+  },
+  { key: 'submitButton', label: 'Submit Button', defaultCopy: 'Confirm' },
+]
+
+const RESULT_ELEMENTS: Array<ElementDef> = [
+  { key: 'header', label: 'Header', defaultCopy: 'Ready to Race!' },
+  {
+    key: 'printButton',
+    label: 'Print Button',
+    defaultCopy: 'Print & Download',
+  },
+  { key: 'retryButton', label: 'Retry Button', defaultCopy: 'Retry Result' },
+  { key: 'backButton', label: 'Back Button', defaultCopy: 'Back to Home' },
+]
+
+// ─── CustomizationSection ────────────────────────────────────────────────────
+
+function CustomizationSection({
+  elements,
+  customization,
+  onUpdate,
+}: {
+  elements: Array<ElementDef>
+  customization: ModuleCustomization | undefined
+  onUpdate: (patch: Partial<ModuleConfig>) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const inputCls =
+    'flex-1 px-2 py-1 text-xs bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500 placeholder:text-slate-600'
+
+  const updateField = (key: string, field: 'copy' | 'css', value: string) => {
+    const current = customization?.elements ?? {}
+    const currentEl = current[key] ?? {}
+    const merged = { ...currentEl, [field]: value }
+    const pruned: { copy?: string; css?: string } = {}
+    if (merged.copy) pruned.copy = merged.copy
+    if (merged.css) pruned.css = merged.css
+
+    const updatedElements = { ...current }
+    if (!pruned.copy && !pruned.css) {
+      delete updatedElements[key]
+    } else {
+      updatedElements[key] = pruned
+    }
+    onUpdate({
+      customization: { elements: updatedElements },
+    } as Partial<ModuleConfig>)
+  }
+
+  return (
+    <div className="border-t border-slate-700/50 mt-4 pt-4">
+      <button
+        onClick={() => setIsOpen((v) => !v)}
+        className="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors uppercase tracking-wide"
+      >
+        <span>{isOpen ? '▼' : '▶'}</span>
+        Customization
+      </button>
+      {isOpen && (
+        <div className="mt-3 space-y-4">
+          {elements.map(({ key, label, defaultCopy }) => (
+            <div
+              key={key}
+              className="border border-slate-700/50 rounded p-3 space-y-2"
+            >
+              <p className="text-xs font-medium text-slate-300">{label}</p>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-500 w-8 shrink-0">
+                  Copy
+                </label>
+                <input
+                  type="text"
+                  placeholder={defaultCopy ?? ''}
+                  value={customization?.elements?.[key]?.copy ?? ''}
+                  onChange={(e) => updateField(key, 'copy', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+              <div className="flex items-start gap-2">
+                <label className="text-xs text-slate-500 w-8 shrink-0 mt-1">
+                  CSS
+                </label>
+                <textarea
+                  placeholder="color: red; font-size: 20px"
+                  value={customization?.elements?.[key]?.css ?? ''}
+                  onChange={(e) => updateField(key, 'css', e.target.value)}
+                  rows={2}
+                  className={`${inputCls} resize-y font-mono`}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function FlowBuilderPage() {
@@ -516,6 +650,9 @@ function ConfigPanel({
     updater: (f: Array<ModuleConfig>) => Array<ModuleConfig>,
   ) => void
 }) {
+  if (module.moduleId === 'welcome') {
+    return <WelcomePanel module={module} onUpdate={onUpdate} />
+  }
   if (module.moduleId === 'camera') {
     return (
       <div>
@@ -530,6 +667,11 @@ function ConfigPanel({
             if (!isNaN(v)) onUpdate({ maxRetakes: v } as Partial<ModuleConfig>)
           }}
           className="w-24 px-2 py-1 text-sm bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500"
+        />
+        <CustomizationSection
+          elements={CAMERA_ELEMENTS}
+          customization={module.customization}
+          onUpdate={onUpdate}
         />
       </div>
     )
@@ -549,12 +691,13 @@ function ConfigPanel({
       />
     )
   }
-  if (module.moduleId === 'mini-quiz') {
-    return <MiniQuizPanel module={module} onUpdate={onUpdate} />
+  if (module.moduleId === 'form') {
+    return <FormPanel module={module} onUpdate={onUpdate} />
   }
-  return (
-    <p className="text-xs text-slate-500">No configurable options for V2.</p>
-  )
+  if (module.moduleId === 'result') {
+    return <ResultPanel module={module} onUpdate={onUpdate} />
+  }
+  return <MiniQuizPanel module={module} onUpdate={onUpdate} />
 }
 
 function ThemeSelectionPanel({
@@ -644,6 +787,11 @@ function ThemeSelectionPanel({
             </div>
           )
         })}
+        <CustomizationSection
+          elements={THEME_SELECTION_ELEMENTS}
+          customization={module.customization}
+          onUpdate={onUpdate}
+        />
       </div>
     )
   }
@@ -728,6 +876,11 @@ function ThemeSelectionPanel({
       >
         + Add Theme
       </button>
+      <CustomizationSection
+        elements={THEME_SELECTION_ELEMENTS}
+        customization={module.customization}
+        onUpdate={onUpdate}
+      />
     </div>
   )
 }
@@ -950,6 +1103,11 @@ function AiGenerationPanel({
           + Add Theme{hasTs ? ' (syncs to Theme Selection)' : ''}
         </button>
       </div>
+      <CustomizationSection
+        elements={AI_GENERATION_ELEMENTS}
+        customization={module.customization}
+        onUpdate={onUpdate}
+      />
     </div>
   )
 }
@@ -1071,6 +1229,99 @@ function MiniQuizPanel({
       >
         + Add Question
       </button>
+    </div>
+  )
+}
+
+function WelcomePanel({
+  module,
+  onUpdate,
+}: {
+  module: WelcomeModuleConfig
+  onUpdate: (patch: Partial<ModuleConfig>) => void
+}) {
+  return (
+    <CustomizationSection
+      elements={WELCOME_ELEMENTS}
+      customization={module.customization}
+      onUpdate={onUpdate}
+    />
+  )
+}
+
+function FormPanel({
+  module,
+  onUpdate,
+}: {
+  module: FormModuleConfig
+  onUpdate: (patch: Partial<ModuleConfig>) => void
+}) {
+  return (
+    <CustomizationSection
+      elements={FORM_ELEMENTS}
+      customization={module.customization}
+      onUpdate={onUpdate}
+    />
+  )
+}
+
+function ResultPanel({
+  module,
+  onUpdate,
+}: {
+  module: ResultModuleConfig
+  onUpdate: (patch: Partial<ModuleConfig>) => void
+}) {
+  const toggleCls = 'flex items-center gap-2 cursor-pointer select-none'
+  const checkboxCls = 'w-4 h-4 rounded accent-blue-500'
+
+  const update = (
+    field: 'emailEnabled' | 'qrCodeEnabled' | 'printEnabled',
+    value: boolean,
+  ) => onUpdate({ [field]: value } as Partial<ModuleConfig>)
+
+  return (
+    <div className="space-y-4">
+      {/* Feature flags */}
+      <div>
+        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">
+          Feature Flags
+        </p>
+        <div className="space-y-2">
+          <label className={toggleCls}>
+            <input
+              type="checkbox"
+              className={checkboxCls}
+              checked={module.emailEnabled ?? true}
+              onChange={(e) => update('emailEnabled', e.target.checked)}
+            />
+            <span className="text-sm text-slate-300">Send email to guest</span>
+          </label>
+          <label className={toggleCls}>
+            <input
+              type="checkbox"
+              className={checkboxCls}
+              checked={module.qrCodeEnabled ?? true}
+              onChange={(e) => update('qrCodeEnabled', e.target.checked)}
+            />
+            <span className="text-sm text-slate-300">Show QR code</span>
+          </label>
+          <label className={toggleCls}>
+            <input
+              type="checkbox"
+              className={checkboxCls}
+              checked={module.printEnabled ?? true}
+              onChange={(e) => update('printEnabled', e.target.checked)}
+            />
+            <span className="text-sm text-slate-300">Enable printing</span>
+          </label>
+        </div>
+      </div>
+      <CustomizationSection
+        elements={RESULT_ELEMENTS}
+        customization={module.customization}
+        onUpdate={onUpdate}
+      />
     </div>
   )
 }
