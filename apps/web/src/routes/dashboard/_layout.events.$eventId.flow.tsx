@@ -3,10 +3,17 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
 import { validateModuleFlow } from '../../utils/validate-module-flow'
+import {
+  AssetSlot,
+  readFileAsBase64,
+  uploadAssetFn,
+} from '../../components/AssetSlot'
+import type { ReactNode } from 'react'
 import type {
   AiGenerationModuleConfig,
   AiThemeConfig,
   EventConfig,
+  FormFieldsConfig,
   FormModuleConfig,
   MiniQuizModuleConfig,
   ModuleConfig,
@@ -16,7 +23,7 @@ import type {
   WelcomeModuleConfig,
 } from '@photobooth/types'
 
-const getModuleFlow = createServerFn({ method: 'GET' }).handler(async (ctx) => {
+const getFlowConfig = createServerFn({ method: 'GET' }).handler(async (ctx) => {
   const { eventId } = ctx.data as { eventId: string }
   const admin = getSupabaseAdminClient()
   const { data, error } = await admin
@@ -25,14 +32,16 @@ const getModuleFlow = createServerFn({ method: 'GET' }).handler(async (ctx) => {
     .eq('event_id', eventId)
     .single()
   if (error) throw new Error(error.message)
-  return (data.config_json as EventConfig).moduleFlow
+  return data.config_json as EventConfig
 })
 
-const saveModuleFlow = createServerFn({ method: 'POST' }).handler(
+const saveFlowConfig = createServerFn({ method: 'POST' }).handler(
   async (ctx) => {
-    const { eventId, moduleFlow } = ctx.data as {
+    const { eventId, moduleFlow, formFields, printerName } = ctx.data as {
       eventId: string
       moduleFlow: Array<ModuleConfig>
+      formFields: FormFieldsConfig
+      printerName: string
     }
     const admin = getSupabaseAdminClient()
     const { data, error } = await admin
@@ -41,7 +50,90 @@ const saveModuleFlow = createServerFn({ method: 'POST' }).handler(
       .eq('event_id', eventId)
       .single()
     if (error) throw new Error(error.message)
-    const merged = { ...(data.config_json as EventConfig), moduleFlow }
+    const existing = data.config_json as EventConfig
+    const merged: EventConfig = {
+      ...existing,
+      moduleFlow,
+      formFields,
+      techConfig: { ...existing.techConfig, printerName },
+    }
+    const { error: updateError } = await admin
+      .from('event_configs')
+      .update({ config_json: merged, updated_at: new Date().toISOString() })
+      .eq('event_id', eventId)
+    if (updateError) throw new Error(updateError.message)
+  },
+)
+
+const saveModuleBackground = createServerFn({ method: 'POST' }).handler(
+  async (ctx) => {
+    const { eventId, moduleId, publicUrl } = ctx.data as {
+      eventId: string
+      moduleId: string
+      publicUrl: string
+    }
+    const admin = getSupabaseAdminClient()
+    const { data, error } = await admin
+      .from('event_configs')
+      .select('config_json')
+      .eq('event_id', eventId)
+      .single()
+    if (error) throw new Error(error.message)
+    const existing = data.config_json as EventConfig
+    const merged: EventConfig = {
+      ...existing,
+      branding: {
+        ...existing.branding,
+        screenBackgrounds: {
+          ...(existing.branding.screenBackgrounds ?? {}),
+          [moduleId]: publicUrl,
+        },
+      },
+    }
+    const { error: updateError } = await admin
+      .from('event_configs')
+      .update({ config_json: merged, updated_at: new Date().toISOString() })
+      .eq('event_id', eventId)
+    if (updateError) throw new Error(updateError.message)
+  },
+)
+
+const saveThemeAssetUrl = createServerFn({ method: 'POST' }).handler(
+  async (ctx) => {
+    const { eventId, themeId, field, publicUrl } = ctx.data as {
+      eventId: string
+      themeId: string
+      field: 'frameImageUrl' | 'templateImageUrl' | 'previewImageUrl'
+      publicUrl: string
+    }
+    const admin = getSupabaseAdminClient()
+    const { data, error } = await admin
+      .from('event_configs')
+      .select('config_json')
+      .eq('event_id', eventId)
+      .single()
+    if (error) throw new Error(error.message)
+    const existing = data.config_json as EventConfig
+    const merged: EventConfig = {
+      ...existing,
+      moduleFlow: existing.moduleFlow.map((m) => {
+        if (m.moduleId === 'ai-generation')
+          return {
+            ...m,
+            themes: m.themes.map((t) =>
+              t.id === themeId ? { ...t, [field]: publicUrl } : t,
+            ),
+          }
+        if (m.moduleId === 'theme-selection' && field === 'previewImageUrl')
+          return {
+            ...m,
+            themes: m.themes.map((t) =>
+              t.id === themeId ? { ...t, previewImageUrl: publicUrl } : t,
+            ),
+          }
+        return m
+      }),
+    }
     const { error: updateError } = await admin
       .from('event_configs')
       .update({ config_json: merged, updated_at: new Date().toISOString() })
@@ -53,10 +145,24 @@ const saveModuleFlow = createServerFn({ method: 'POST' }).handler(
 export const Route = createFileRoute('/dashboard/_layout/events/$eventId/flow')(
   {
     loader: async ({ params }) =>
-      await getModuleFlow({ data: { eventId: params.eventId } }),
+      await getFlowConfig({ data: { eventId: params.eventId } }),
     component: FlowBuilderPage,
   },
 )
+
+interface FlowExtras {
+  backgrounds: Record<string, string | null>
+  onBackgroundUpload: (moduleId: string, file: File) => Promise<void>
+  onThemeAssetUpload: (
+    themeId: string,
+    field: 'frameImageUrl' | 'templateImageUrl' | 'previewImageUrl',
+    file: File,
+  ) => Promise<void>
+  formFields: FormFieldsConfig
+  onFormFieldChange: (field: keyof FormFieldsConfig, value: boolean) => void
+  printerName: string
+  onPrinterNameChange: (name: string) => void
+}
 
 const MODULE_LABELS: Record<string, string> = {
   welcome: 'Welcome Screen',
@@ -248,10 +354,29 @@ function CustomizationSection({
 }
 
 function FlowBuilderPage() {
-  const initialFlow = Route.useLoaderData()
+  const initialConfig = Route.useLoaderData()
   const { eventId } = Route.useParams()
-  const [flow, setFlow] = useState<Array<ModuleConfig>>(initialFlow)
-  const [savedFlow, setSavedFlow] = useState<Array<ModuleConfig>>(initialFlow)
+  const [flow, setFlow] = useState<Array<ModuleConfig>>(
+    initialConfig.moduleFlow,
+  )
+  const [savedFlow, setSavedFlow] = useState<Array<ModuleConfig>>(
+    initialConfig.moduleFlow,
+  )
+  const [formFields, setFormFields] = useState<FormFieldsConfig>(
+    initialConfig.formFields,
+  )
+  const [savedFormFields, setSavedFormFields] = useState<FormFieldsConfig>(
+    initialConfig.formFields,
+  )
+  const [printerName, setPrinterName] = useState(
+    initialConfig.techConfig.printerName,
+  )
+  const [savedPrinterName, setSavedPrinterName] = useState(
+    initialConfig.techConfig.printerName,
+  )
+  const [backgrounds, setBackgrounds] = useState<Record<string, string | null>>(
+    initialConfig.branding.screenBackgrounds ?? {},
+  )
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({})
@@ -259,7 +384,80 @@ function FlowBuilderPage() {
     'idle' | 'saving' | 'saved' | 'error'
   >('idle')
 
-  const isDirty = JSON.stringify(flow) !== JSON.stringify(savedFlow)
+  const isDirty =
+    JSON.stringify(flow) !== JSON.stringify(savedFlow) ||
+    JSON.stringify(formFields) !== JSON.stringify(savedFormFields) ||
+    printerName !== savedPrinterName
+
+  const handleBackgroundUpload = async (moduleId: string, file: File) => {
+    const fileBase64 = await readFileAsBase64(file)
+    const { publicUrl } = await uploadAssetFn({
+      data: {
+        eventId,
+        assetType: 'backgrounds',
+        filename: `bg-${moduleId}.png`,
+        fileBase64,
+        mimeType: file.type || 'image/png',
+      },
+    })
+    await saveModuleBackground({ data: { eventId, moduleId, publicUrl } })
+    setBackgrounds((prev) => ({ ...prev, [moduleId]: publicUrl }))
+  }
+
+  const handleThemeAssetUpload = async (
+    themeId: string,
+    field: 'frameImageUrl' | 'templateImageUrl' | 'previewImageUrl',
+    file: File,
+  ) => {
+    const assetType = field === 'frameImageUrl' ? 'frames' : 'templates'
+    const prefix =
+      field === 'frameImageUrl'
+        ? 'frame'
+        : field === 'templateImageUrl'
+          ? 'template'
+          : 'preview'
+    const fileBase64 = await readFileAsBase64(file)
+    const { publicUrl } = await uploadAssetFn({
+      data: {
+        eventId,
+        assetType,
+        filename: `${prefix}-${themeId}.png`,
+        fileBase64,
+        mimeType: file.type || 'image/png',
+      },
+    })
+    await saveThemeAssetUrl({ data: { eventId, themeId, field, publicUrl } })
+    setFlow((f) =>
+      f.map((m) => {
+        if (m.moduleId === 'ai-generation')
+          return {
+            ...m,
+            themes: m.themes.map((t) =>
+              t.id === themeId ? { ...t, [field]: publicUrl } : t,
+            ),
+          }
+        if (m.moduleId === 'theme-selection' && field === 'previewImageUrl')
+          return {
+            ...m,
+            themes: m.themes.map((t) =>
+              t.id === themeId ? { ...t, previewImageUrl: publicUrl } : t,
+            ),
+          }
+        return m
+      }),
+    )
+  }
+
+  const extras: FlowExtras = {
+    backgrounds,
+    onBackgroundUpload: handleBackgroundUpload,
+    onThemeAssetUpload: handleThemeAssetUpload,
+    formFields,
+    onFormFieldChange: (field, value) =>
+      setFormFields((prev) => ({ ...prev, [field]: value })),
+    printerName,
+    onPrinterNameChange: setPrinterName,
+  }
 
   const canMoveUp = (i: number) => {
     if (isFixed(flow[i]) || i <= 0) return false
@@ -367,6 +565,8 @@ function FlowBuilderPage() {
 
   const handleDiscard = () => {
     setFlow(savedFlow)
+    setFormFields(savedFormFields)
+    setPrinterName(savedPrinterName)
     setValidationErrors({})
     setSaveStatus('idle')
   }
@@ -381,8 +581,12 @@ function FlowBuilderPage() {
     setValidationErrors({})
     setSaveStatus('saving')
     try {
-      await saveModuleFlow({ data: { eventId, moduleFlow: flow } })
+      await saveFlowConfig({
+        data: { eventId, moduleFlow: flow, formFields, printerName },
+      })
       setSavedFlow(flow)
+      setSavedFormFields(formFields)
+      setSavedPrinterName(printerName)
       setSaveStatus('saved')
     } catch {
       setSaveStatus('error')
@@ -465,6 +669,7 @@ function FlowBuilderPage() {
               onRemove={() => removeModule(index)}
               onUpdate={(patch) => updateModule(index, patch)}
               onUpdateFlow={setFlow}
+              extras={extras}
             />
           </li>
         ))}
@@ -532,6 +737,7 @@ function ModuleCard({
   onRemove,
   onUpdate,
   onUpdateFlow,
+  extras,
 }: {
   module: ModuleConfig
   flow: Array<ModuleConfig>
@@ -545,6 +751,7 @@ function ModuleCard({
   onUpdateFlow: (
     updater: (f: Array<ModuleConfig>) => Array<ModuleConfig>,
   ) => void
+  extras: FlowExtras
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const fixed = isFixed(module)
@@ -630,6 +837,7 @@ function ModuleCard({
             flow={flow}
             onUpdate={onUpdate}
             onUpdateFlow={onUpdateFlow}
+            extras={extras}
           />
         </div>
       )}
@@ -642,6 +850,7 @@ function ConfigPanel({
   flow,
   onUpdate,
   onUpdateFlow,
+  extras,
 }: {
   module: ModuleConfig
   flow: Array<ModuleConfig>
@@ -649,9 +858,23 @@ function ConfigPanel({
   onUpdateFlow: (
     updater: (f: Array<ModuleConfig>) => Array<ModuleConfig>,
   ) => void
+  extras: FlowExtras
 }) {
+  const bgSlot = (
+    <div className="border-t border-slate-700/50 mt-4 pt-4">
+      <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">
+        Background
+      </p>
+      <AssetSlot
+        label="Screen background image"
+        currentUrl={extras.backgrounds[module.moduleId] ?? null}
+        onUpload={(file) => extras.onBackgroundUpload(module.moduleId, file)}
+      />
+    </div>
+  )
+
   if (module.moduleId === 'welcome') {
-    return <WelcomePanel module={module} onUpdate={onUpdate} />
+    return <WelcomePanel module={module} onUpdate={onUpdate} bgSlot={bgSlot} />
   }
   if (module.moduleId === 'camera') {
     return (
@@ -668,6 +891,7 @@ function ConfigPanel({
           }}
           className="w-24 px-2 py-1 text-sm bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500"
         />
+        {bgSlot}
         <CustomizationSection
           elements={CAMERA_ELEMENTS}
           customization={module.customization}
@@ -678,7 +902,12 @@ function ConfigPanel({
   }
   if (module.moduleId === 'theme-selection') {
     return (
-      <ThemeSelectionPanel module={module} flow={flow} onUpdate={onUpdate} />
+      <ThemeSelectionPanel
+        module={module}
+        flow={flow}
+        onUpdate={onUpdate}
+        bgSlot={bgSlot}
+      />
     )
   }
   if (module.moduleId === 'ai-generation') {
@@ -688,26 +917,46 @@ function ConfigPanel({
         flow={flow}
         onUpdate={onUpdate}
         onUpdateFlow={onUpdateFlow}
+        bgSlot={bgSlot}
+        onThemeAssetUpload={extras.onThemeAssetUpload}
       />
     )
   }
   if (module.moduleId === 'form') {
-    return <FormPanel module={module} onUpdate={onUpdate} />
+    return (
+      <FormPanel
+        module={module}
+        onUpdate={onUpdate}
+        bgSlot={bgSlot}
+        formFields={extras.formFields}
+        onFormFieldChange={extras.onFormFieldChange}
+      />
+    )
   }
   if (module.moduleId === 'result') {
-    return <ResultPanel module={module} onUpdate={onUpdate} />
+    return (
+      <ResultPanel
+        module={module}
+        onUpdate={onUpdate}
+        bgSlot={bgSlot}
+        printerName={extras.printerName}
+        onPrinterNameChange={extras.onPrinterNameChange}
+      />
+    )
   }
-  return <MiniQuizPanel module={module} onUpdate={onUpdate} />
+  return <MiniQuizPanel module={module} onUpdate={onUpdate} bgSlot={bgSlot} />
 }
 
 function ThemeSelectionPanel({
   module,
   flow,
   onUpdate,
+  bgSlot,
 }: {
   module: ThemeSelectionModuleConfig
   flow: Array<ModuleConfig>
   onUpdate: (patch: Partial<ModuleConfig>) => void
+  bgSlot: ReactNode
 }) {
   const aiModule = flow.find(
     (m): m is AiGenerationModuleConfig => m.moduleId === 'ai-generation',
@@ -787,6 +1036,7 @@ function ThemeSelectionPanel({
             </div>
           )
         })}
+        {bgSlot}
         <CustomizationSection
           elements={THEME_SELECTION_ELEMENTS}
           customization={module.customization}
@@ -876,6 +1126,7 @@ function ThemeSelectionPanel({
       >
         + Add Theme
       </button>
+      {bgSlot}
       <CustomizationSection
         elements={THEME_SELECTION_ELEMENTS}
         customization={module.customization}
@@ -890,6 +1141,8 @@ function AiGenerationPanel({
   flow,
   onUpdate,
   onUpdateFlow,
+  bgSlot,
+  onThemeAssetUpload,
 }: {
   module: AiGenerationModuleConfig
   flow: Array<ModuleConfig>
@@ -897,6 +1150,12 @@ function AiGenerationPanel({
   onUpdateFlow: (
     updater: (f: Array<ModuleConfig>) => Array<ModuleConfig>,
   ) => void
+  bgSlot: ReactNode
+  onThemeAssetUpload: (
+    themeId: string,
+    field: 'frameImageUrl' | 'templateImageUrl' | 'previewImageUrl',
+    file: File,
+  ) => Promise<void>
 }) {
   const [openThemes, setOpenThemes] = useState<Set<number>>(new Set())
   const hasTs = flow.some((m) => m.moduleId === 'theme-selection')
@@ -1091,6 +1350,30 @@ function AiGenerationPanel({
                     />
                   </div>
                 ))}
+                {/* Theme asset uploads */}
+                <div className="pt-2 space-y-2">
+                  <AssetSlot
+                    label="Frame Image"
+                    currentUrl={theme.frameImageUrl}
+                    onUpload={(file) =>
+                      onThemeAssetUpload(theme.id, 'frameImageUrl', file)
+                    }
+                  />
+                  <AssetSlot
+                    label="Template Image (AI face-swap source)"
+                    currentUrl={theme.templateImageUrl}
+                    onUpload={(file) =>
+                      onThemeAssetUpload(theme.id, 'templateImageUrl', file)
+                    }
+                  />
+                  <AssetSlot
+                    label="Preview Image (theme card)"
+                    currentUrl={theme.previewImageUrl}
+                    onUpload={(file) =>
+                      onThemeAssetUpload(theme.id, 'previewImageUrl', file)
+                    }
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -1203,6 +1486,7 @@ function AiGenerationPanel({
         </button>
       </div>
 
+      {bgSlot}
       <CustomizationSection
         elements={AI_GENERATION_ELEMENTS}
         customization={module.customization}
@@ -1215,9 +1499,11 @@ function AiGenerationPanel({
 function MiniQuizPanel({
   module,
   onUpdate,
+  bgSlot,
 }: {
   module: MiniQuizModuleConfig
   onUpdate: (patch: Partial<ModuleConfig>) => void
+  bgSlot: ReactNode
 }) {
   const inputCls =
     'flex-1 px-2 py-1 text-xs bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500'
@@ -1329,6 +1615,7 @@ function MiniQuizPanel({
       >
         + Add Question
       </button>
+      {bgSlot}
     </div>
   )
 }
@@ -1336,41 +1623,87 @@ function MiniQuizPanel({
 function WelcomePanel({
   module,
   onUpdate,
+  bgSlot,
 }: {
   module: WelcomeModuleConfig
   onUpdate: (patch: Partial<ModuleConfig>) => void
+  bgSlot: ReactNode
 }) {
   return (
-    <CustomizationSection
-      elements={WELCOME_ELEMENTS}
-      customization={module.customization}
-      onUpdate={onUpdate}
-    />
+    <div>
+      {bgSlot}
+      <CustomizationSection
+        elements={WELCOME_ELEMENTS}
+        customization={module.customization}
+        onUpdate={onUpdate}
+      />
+    </div>
   )
 }
 
 function FormPanel({
   module,
   onUpdate,
+  bgSlot,
+  formFields,
+  onFormFieldChange,
 }: {
   module: FormModuleConfig
   onUpdate: (patch: Partial<ModuleConfig>) => void
+  bgSlot: ReactNode
+  formFields: FormFieldsConfig
+  onFormFieldChange: (field: keyof FormFieldsConfig, value: boolean) => void
 }) {
+  const toggleCls = 'flex items-center gap-2 cursor-pointer select-none'
+  const checkboxCls = 'w-4 h-4 rounded accent-blue-500'
+
   return (
-    <CustomizationSection
-      elements={FORM_ELEMENTS}
-      customization={module.customization}
-      onUpdate={onUpdate}
-    />
+    <div className="space-y-4">
+      {/* Form field toggles */}
+      <div>
+        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">
+          Form Fields
+        </p>
+        <div className="space-y-2">
+          {(Object.keys(formFields) as Array<keyof FormFieldsConfig>).map(
+            (field) => (
+              <label key={field} className={toggleCls}>
+                <input
+                  type="checkbox"
+                  className={checkboxCls}
+                  checked={formFields[field]}
+                  onChange={(e) => onFormFieldChange(field, e.target.checked)}
+                />
+                <span className="text-sm text-slate-300 capitalize">
+                  {field}
+                </span>
+              </label>
+            ),
+          )}
+        </div>
+      </div>
+      {bgSlot}
+      <CustomizationSection
+        elements={FORM_ELEMENTS}
+        customization={module.customization}
+        onUpdate={onUpdate}
+      />
+    </div>
   )
 }
 
 function ResultPanel({
   module,
   onUpdate,
+  bgSlot,
+  printerName,
+  onPrinterNameChange,
 }: {
   module: ResultModuleConfig
   onUpdate: (patch: Partial<ModuleConfig>) => void
+  bgSlot: ReactNode
+  printerName: string
+  onPrinterNameChange: (name: string) => void
 }) {
   const toggleCls = 'flex items-center gap-2 cursor-pointer select-none'
   const checkboxCls = 'w-4 h-4 rounded accent-blue-500'
@@ -1382,6 +1715,19 @@ function ResultPanel({
 
   return (
     <div className="space-y-4">
+      {/* Printer name */}
+      <div>
+        <label className="block text-xs text-slate-400 mb-1">
+          Printer Name
+        </label>
+        <input
+          type="text"
+          value={printerName}
+          onChange={(e) => onPrinterNameChange(e.target.value)}
+          placeholder="DS-RX1"
+          className="w-full px-2 py-1 text-sm bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500"
+        />
+      </div>
       {/* Feature flags */}
       <div>
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">
@@ -1417,6 +1763,7 @@ function ResultPanel({
           </label>
         </div>
       </div>
+      {bgSlot}
       <CustomizationSection
         elements={RESULT_ELEMENTS}
         customization={module.customization}

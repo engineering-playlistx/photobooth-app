@@ -2,6 +2,11 @@ import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
+import {
+  AssetSlot,
+  readFileAsBase64,
+  uploadAssetFn,
+} from '../../components/AssetSlot'
 import type { ReactNode } from 'react'
 import type { EventConfig } from '@photobooth/types'
 
@@ -117,14 +122,24 @@ function ConfigEditorPage() {
       techConfig: { ...c.techConfig, [field]: value },
     }))
 
-  const updateFormField = (
-    field: keyof EventConfig['formFields'],
-    value: boolean,
-  ) =>
-    setConfig((c) => ({
-      ...c,
-      formFields: { ...c.formFields, [field]: value },
-    }))
+  const handleLogoUpload = async (file: File) => {
+    const fileBase64 = await readFileAsBase64(file)
+    const { publicUrl } = await uploadAssetFn({
+      data: {
+        eventId,
+        assetType: 'logos',
+        filename: 'logo.png',
+        fileBase64,
+        mimeType: file.type || 'image/png',
+      },
+    })
+    const updated = {
+      ...config,
+      branding: { ...config.branding, logoUrl: publicUrl },
+    }
+    setConfig(updated)
+    await saveEventConfig({ data: { eventId, config: updated } })
+  }
 
   const SaveStatus = () => (
     <>
@@ -204,15 +219,11 @@ function ConfigEditorPage() {
             onChange={(v) => updateBranding('secondaryColor', v)}
             error={validationErrors['branding.secondaryColor']}
           />
-          <Field label="Logo URL">
-            <input
-              type="text"
-              value={config.branding.logoUrl ?? ''}
-              onChange={(e) =>
-                updateBranding('logoUrl', e.target.value || null)
-              }
-              className={inputClass}
-              placeholder="https://..."
+          <Field label="Logo">
+            <AssetSlot
+              label="Logo image"
+              currentUrl={config.branding.logoUrl}
+              onUpload={handleLogoUpload}
             />
           </Field>
           <Field label="Background URL">
@@ -241,15 +252,6 @@ function ConfigEditorPage() {
 
         {/* Tech Config */}
         <Section title="Tech Config">
-          <Field label="Printer Name">
-            <input
-              type="text"
-              value={config.techConfig.printerName}
-              onChange={(e) => updateTech('printerName', e.target.value)}
-              className={inputClass}
-              placeholder="DS-RX1"
-            />
-          </Field>
           <Field label="Inactivity Timeout (seconds)">
             <input
               type="number"
@@ -281,32 +283,6 @@ function ConfigEditorPage() {
               </span>
             </label>
           </div>
-        </Section>
-
-        {/* Form Fields */}
-        <Section title="Form Fields">
-          <p className="text-xs text-slate-400 mb-3">
-            Which fields to show on the guest form
-          </p>
-          {(
-            Object.keys(config.formFields) as Array<
-              keyof EventConfig['formFields']
-            >
-          ).map((field) => (
-            <div key={field} className="mb-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={config.formFields[field]}
-                  onChange={(e) => updateFormField(field, e.target.checked)}
-                  className="w-4 h-4 rounded accent-blue-500"
-                />
-                <span className="text-sm text-slate-300 capitalize">
-                  {field}
-                </span>
-              </label>
-            </div>
-          ))}
         </Section>
       </div>
 
