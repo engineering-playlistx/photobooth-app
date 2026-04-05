@@ -88,12 +88,17 @@ export function AiGenerationModule({
   const { apiBaseUrl, apiClientKey, config: eventConfig } = useEventConfig();
   const { setSuppressInactivity } = usePipeline();
   const bg = useModuleBackground("ai-generation");
-  const { customization } = config as AiGenerationModuleConfig;
+  const { customization, slideshowItems } = config as AiGenerationModuleConfig;
   const statusTextEl = useElementCustomization(
     customization,
     "ai-generation",
     "statusText",
   );
+  const useConfigSlideshow = (slideshowItems?.length ?? 0) >= 1;
+  const activeSlideshowCount = useConfigSlideshow
+    ? (slideshowItems?.length ?? 0)
+    : SLIDESHOW_IMAGES.length;
+
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Preparing your photo...");
   const [error, setError] = useState<string | null>(null);
@@ -107,10 +112,10 @@ export function AiGenerationModule({
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % SLIDESHOW_IMAGES.length);
+      setCurrentSlide((prev) => (prev + 1) % activeSlideshowCount);
     }, SLIDESHOW_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, []);
+  }, [activeSlideshowCount]);
 
   useEffect(() => {
     if (processedRef.current || !originalPhoto || !selectedTheme) {
@@ -296,16 +301,40 @@ export function AiGenerationModule({
           : undefined
       }
     >
-      {SLIDESHOW_IMAGES.map((src, index) => (
-        <div
-          key={src}
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ease-in-out"
-          style={{
-            backgroundImage: `url('${getAssetPath(src)}')`,
-            opacity: currentSlide === index ? 1 : 0,
-          }}
-        />
-      ))}
+      {useConfigSlideshow
+        ? slideshowItems!.map((item, index) => (
+            <div
+              key={index}
+              className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+              style={{ opacity: currentSlide === index ? 1 : 0 }}
+            >
+              {item.imageUrl && (
+                <div
+                  className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                  style={{
+                    backgroundImage: `url('${resolveImageUrl(item.imageUrl)}')`,
+                  }}
+                />
+              )}
+              {item.caption && (
+                <div className="absolute bottom-48 left-0 right-0 flex items-center justify-center px-12">
+                  <p className="text-white text-4xl font-medium text-center drop-shadow-lg">
+                    {item.caption}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))
+        : SLIDESHOW_IMAGES.map((src, index) => (
+            <div
+              key={src}
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ease-in-out"
+              style={{
+                backgroundImage: `url('${getAssetPath(src)}')`,
+                opacity: currentSlide === index ? 1 : 0,
+              }}
+            />
+          ))}
 
       {error ? (
         <div className="relative z-10 flex flex-col items-center gap-8 px-12">

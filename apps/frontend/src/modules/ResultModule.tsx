@@ -36,7 +36,11 @@ export function ResultModule({ config, outputs }: ModuleProps) {
   const { config: eventConfig, apiBaseUrl, apiClientKey } = useEventConfig();
   const { reset } = usePipeline();
   const bg = useModuleBackground("result");
-  const { customization } = config as ResultModuleConfig;
+  const { customization, emailEnabled, qrCodeEnabled, printEnabled } =
+    config as ResultModuleConfig;
+  const isEmailEnabled = emailEnabled ?? true;
+  const isQrCodeEnabled = qrCodeEnabled ?? true;
+  const isPrintEnabled = printEnabled ?? true;
   const headerEl = useElementCustomization(
     customization,
     "result",
@@ -160,8 +164,12 @@ export function ResultModule({ config, outputs }: ModuleProps) {
 
     setIsProcessing(true);
     try {
-      await uploadToSupabaseAndShowQR();
-      await handlePrint();
+      if (isQrCodeEnabled) {
+        await uploadToSupabaseAndShowQR();
+      }
+      if (isPrintEnabled) {
+        await handlePrint();
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -236,7 +244,7 @@ export function ResultModule({ config, outputs }: ModuleProps) {
 
         if (uploadError) {
           console.error("Supabase upload error:", uploadError);
-        } else {
+        } else if (isEmailEnabled) {
           const response = await fetch(`${apiBaseUrl}/api/photo`, {
             method: "POST",
             headers: {
@@ -357,7 +365,7 @@ export function ResultModule({ config, outputs }: ModuleProps) {
             </button>
           </div>
 
-          {qrUrl && (
+          {isQrCodeEnabled && qrUrl && (
             <QRCodeModal
               url={qrUrl}
               isOpen={showQrModal}
