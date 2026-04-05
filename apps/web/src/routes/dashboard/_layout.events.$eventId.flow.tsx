@@ -1103,6 +1103,106 @@ function AiGenerationPanel({
           + Add Theme{hasTs ? ' (syncs to Theme Selection)' : ''}
         </button>
       </div>
+
+      {/* Loading Screen Slideshow */}
+      <div className="space-y-2">
+        <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">
+          Loading Screen Slideshow
+        </p>
+        <p className="text-xs text-slate-500">
+          Images shown while AI generation runs. Leave empty to use the default
+          loading animation.
+        </p>
+        {(module.slideshowItems ?? []).map((item, i) => {
+          const items = module.slideshowItems ?? []
+          const updateItem = (field: 'imageUrl' | 'caption', value: string) => {
+            onUpdate({
+              slideshowItems: items.map((it, j) =>
+                j === i ? { ...it, [field]: value || undefined } : it,
+              ),
+            } as Partial<ModuleConfig>)
+          }
+          const moveItem = (dir: -1 | 1) => {
+            const next = [...items]
+            const swapIdx = i + dir
+            ;[next[i], next[swapIdx]] = [next[swapIdx], next[i]]
+            onUpdate({ slideshowItems: next } as Partial<ModuleConfig>)
+          }
+          return (
+            <div
+              key={i}
+              className="border border-slate-700 rounded p-3 space-y-1.5"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-slate-400">Item {i + 1}</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => moveItem(-1)}
+                    disabled={i === 0}
+                    className="px-1 py-0.5 text-xs text-slate-400 hover:text-white disabled:text-slate-700 disabled:cursor-not-allowed transition-colors"
+                    title="Move up"
+                  >
+                    ▲
+                  </button>
+                  <button
+                    onClick={() => moveItem(1)}
+                    disabled={i === items.length - 1}
+                    className="px-1 py-0.5 text-xs text-slate-400 hover:text-white disabled:text-slate-700 disabled:cursor-not-allowed transition-colors"
+                    title="Move down"
+                  >
+                    ▼
+                  </button>
+                  <button
+                    onClick={() =>
+                      onUpdate({
+                        slideshowItems: items.filter((_, j) => j !== i),
+                      } as Partial<ModuleConfig>)
+                    }
+                    className="text-slate-500 hover:text-red-400 transition-colors text-sm leading-none ml-1"
+                    title="Remove item"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className={labelCls}>Image URL</label>
+                <input
+                  type="text"
+                  placeholder="https://..."
+                  value={item.imageUrl ?? ''}
+                  onChange={(e) => updateItem('imageUrl', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className={labelCls}>Caption</label>
+                <input
+                  type="text"
+                  placeholder="Optional caption text"
+                  value={item.caption ?? ''}
+                  onChange={(e) => updateItem('caption', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+            </div>
+          )
+        })}
+        <button
+          onClick={() =>
+            onUpdate({
+              slideshowItems: [
+                ...(module.slideshowItems ?? []),
+                { imageUrl: undefined, caption: undefined },
+              ],
+            } as Partial<ModuleConfig>)
+          }
+          className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+        >
+          + Add Slideshow Item
+        </button>
+      </div>
+
       <CustomizationSection
         elements={AI_GENERATION_ELEMENTS}
         customization={module.customization}
