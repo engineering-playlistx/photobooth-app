@@ -1,6 +1,6 @@
 # Task Decomposition — V4 All Phases
 
-**Status:** 🔄 In Progress — Phase 1 ✅, Phase 2 ✅, Phase 3 next
+**Status:** 🔄 In Progress — Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 next
 **Scope:** Phase 1 (Carryover Quick Fixes), Phase 2 (Kiosk Startup + Event ID Settings), Phase 3 (Per-Module Customization — Types + Kiosk), Phase 4 (Per-Module Customization — Dashboard), Phase 5 (Dashboard Consolidation), Phase 6 (Analytics), Phase 7 (Electron Auto-Update)
 
 **Format per task:** What · Files · Input · Output · Verification · Risk
@@ -248,7 +248,7 @@
 
 ## Phase 3 — Per-Module Customization — Types + Kiosk
 
-### V4-3.1 — Add `ModuleCustomization` type and define element catalogs per module
+### ~~V4-3.1 — Add `ModuleCustomization` type and define element catalogs per module~~ ✅
 
 **What:** Add the `ElementCustomization` and `ModuleCustomization` interfaces to `@photobooth/types`. Add an optional `customization` field to every module config type. Also define the canonical element key catalog per module (the named UI elements each module exposes for customization).
 
@@ -303,7 +303,7 @@ TypeScript compiles in both apps with no new errors.
 
 ---
 
-### V4-3.2 — Add `slideshowItems` and result feature flags to module config types
+### ~~V4-3.2 — Add `slideshowItems` and result feature flags to module config types~~ ✅
 
 **What:** Add `slideshowItems` to `AiGenerationModuleConfig` and add `emailEnabled`, `qrCodeEnabled`, `printEnabled` to `ResultModuleConfig`.
 
@@ -342,7 +342,7 @@ New event configs created after V4 should explicitly set all three to `true` in 
 
 ---
 
-### V4-3.3 — Apply per-element `customization` (css + copy) in kiosk module components
+### ~~V4-3.3 — Apply per-element `customization` (css + copy) in kiosk module components~~ ✅
 
 **What:** Each module component reads `moduleConfig.customization.elements` and applies each element's `css` and `copy` to the corresponding rendered element. The element keys were defined in V4-3.1 by reading the actual component files.
 
@@ -399,7 +399,7 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 
 ---
 
-### V4-3.4 — Apply result feature flags and AI loading slideshow in kiosk
+### ~~V4-3.4 — Apply result feature flags and AI loading slideshow in kiosk~~ ✅
 
 **What:** Wire up the V4-3.2 type fields in the kiosk. Result module gates email/QR/print on the config flags. AI Generation module renders `slideshowItems` during loading.
 
