@@ -27,7 +27,7 @@ const ERROR_MESSAGES: Record<ErrorType, string> = {
 };
 
 export function StartupLoader({ children }: Props) {
-  const { status, errorType, refreshConfig } = useEventConfig();
+  const { config, status, errorType, refreshConfig } = useEventConfig();
   const [phase, setPhase] = useState<Phase>("init");
   const [progress, setProgress] = useState(0);
   const hasStarted = useRef(false);
