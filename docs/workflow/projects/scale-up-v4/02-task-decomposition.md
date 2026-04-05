@@ -1,6 +1,6 @@
 # Task Decomposition — V4 All Phases
 
-**Status:** 🔜 Planning
+**Status:** 🔄 In Progress — Phase 1 complete ✅, Phase 2 next
 **Scope:** Phase 1 (Carryover Quick Fixes), Phase 2 (Kiosk Startup + Event ID Settings), Phase 3 (Per-Module Customization — Types + Kiosk), Phase 4 (Per-Module Customization — Dashboard), Phase 5 (Dashboard Consolidation), Phase 6 (Analytics), Phase 7 (Electron Auto-Update)
 
 **Format per task:** What · Files · Input · Output · Verification · Risk
@@ -12,7 +12,7 @@
 
 ## Phase 1 — Carryover Quick Fixes
 
-### V4-1.1 — UX-01: Show tooltip when Print & Download button is disabled
+### ~~V4-1.1 — UX-01: Show tooltip when Print & Download button is disabled~~ ✅
 
 **What:** The result module disables the "Print & Download" button while `isSaving` is true, but shows no explanation. A guest who taps immediately after the result screen loads gets no feedback. Add a tooltip or inline message that appears only when the button is tapped while disabled.
 
@@ -34,7 +34,7 @@
 
 ---
 
-### V4-1.2 — GAP-06: Add confirmation before resetting session on result page
+### ~~V4-1.2 — GAP-06: Add confirmation before resetting session on result page~~ ✅
 
 **What:** The result page has "Retry Result" and/or "Back to Home" buttons that both call `reset()` — a guest can accidentally lose their result before printing or downloading. Add a confirmation dialog ("Are you sure? Your result photo will be lost.") before the reset executes.
 
@@ -57,7 +57,7 @@
 
 ---
 
-### V4-1.3 — SCALE-01: Replace window.alert() with in-page banner for ZIP download limit
+### ~~V4-1.3 — SCALE-01: Replace window.alert() with in-page banner for ZIP download limit~~ ✅
 
 **What:** When an event has more than 25 photos, the "Download ZIP" button triggers a `window.alert()` telling the operator to use the CLI script. Replace this with a proper in-page informational banner.
 
@@ -86,7 +86,7 @@
 
 ---
 
-### V4-1.4 — CODE-01: Extract control-character regex into a named constant
+### ~~V4-1.4 — CODE-01: Extract control-character regex into a named constant~~ ✅
 
 **What:** The `sanitizeName` function in `api.photo.ts` uses an inline regex with control characters (`\x00–\x1F`, `\x7F`), which triggers the `no-control-regex` ESLint rule. The inline `eslint-disable-line` comment placement is fragile when Prettier reformats the file. Extract the regex into a named constant built via `new RegExp(...)` to sidestep the rule entirely.
 
