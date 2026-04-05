@@ -1,6 +1,6 @@
 # Task Decomposition — V4 All Phases
 
-**Status:** 🔄 In Progress — Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 next
+**Status:** 🔄 In Progress — Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 6 next
 **Scope:** Phase 1 (Carryover Quick Fixes), Phase 2 (Kiosk Startup + Event ID Settings), Phase 3 (Per-Module Customization — Types + Kiosk), Phase 4 (Per-Module Customization — Dashboard), Phase 5 (Dashboard Consolidation), Phase 6 (Analytics), Phase 7 (Electron Auto-Update)
 
 **Format per task:** What · Files · Input · Output · Verification · Risk
@@ -517,7 +517,7 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 
 > **Before starting Phase 5:** Read the event detail page and all current tab/section routes (`config.tsx`, `assets.tsx`, flow builder) to understand the full current navigation structure. The tasks below specify the target state — map the delta against what currently exists before touching any files.
 
-### V4-5.1 — Move asset upload slots into flow builder module panels
+### ~~V4-5.1 — Move asset upload slots into flow builder module panels~~ ✅
 
 **What:** Move all asset upload functionality from the standalone Assets page into the relevant module panels in the flow builder. The Assets page is then removed.
 
@@ -548,7 +548,7 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 
 ---
 
-### V4-5.2 — Move module-specific config into flow builder panels; remove standalone tabs
+### ~~V4-5.2 — Move module-specific config into flow builder panels; remove standalone tabs~~ ✅
 
 **What:** Move form fields, printer config, and AI provider config from their standalone tabs into the relevant module panels. Remove the standalone AI Config, Form Fields, and Tech Config tabs from the event detail navigation.
 
