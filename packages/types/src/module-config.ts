@@ -1,5 +1,22 @@
 import type { AiThemeConfig } from './event-config'
 
+export interface ElementCustomization {
+  copy?: string // text override for this element (if it renders text)
+  css?: string // raw CSS string applied to this specific element
+}
+
+export interface ModuleCustomization {
+  elements?: Record<string, ElementCustomization> // keyed by element name
+}
+
+// Element key catalogs per module (keys must match component pb-<moduleId>-<elementKey> class names):
+// WelcomeModule:         ctaButton                                — "Tap to Start" button
+// ThemeSelectionModule:  header, themeCard                       — h1 title; theme selection cards
+// CameraModule:          retakeButton, captureButton, nextButton  — camera control buttons
+// AiGenerationModule:    statusText                              — progress bar status text
+// FormModule:            header, submitButton                    — form title h1; "Confirm" button
+// ResultModule:          header, printButton, retryButton, backButton
+
 export type ModulePosition =
   | 'fixed-first'
   | 'pre-photo'
@@ -12,6 +29,7 @@ export interface BaseModuleConfig {
   moduleId: string
   position: ModulePosition
   outputKey?: string // key this module writes into moduleOutputs
+  customization?: ModuleCustomization
 }
 
 export interface WelcomeModuleConfig extends BaseModuleConfig {
