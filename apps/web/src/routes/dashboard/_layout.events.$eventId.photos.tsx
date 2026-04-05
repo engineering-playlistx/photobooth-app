@@ -1,6 +1,6 @@
+import React, { useState } from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { useState } from 'react'
 import { zipSync } from 'fflate'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
 import { SUPABASE_BUCKET } from '../../utils/constants'
@@ -100,6 +100,9 @@ function PhotoGalleryPage() {
   const { page } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
   const [zipping, setZipping] = useState(false)
+  const [tooLargeInfo, setTooLargeInfo] = useState<{
+    count: number
+  } | null>(null)
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
@@ -107,13 +110,12 @@ function PhotoGalleryPage() {
     navigate({ search: (prev) => ({ ...prev, page: p }) })
 
   const handleDownloadAll = async () => {
+    setTooLargeInfo(null)
     setZipping(true)
     try {
       const result = await downloadPhotosZip({ data: { eventId } })
       if (result.tooLarge) {
-        alert(
-          `This event has ${result.count} photos. ZIP download is limited to ${ZIP_PHOTO_LIMIT} photos to avoid memory issues.\n\nUse the download-photos script to bulk-download all photos.`,
-        )
+        setTooLargeInfo({ count: result.count })
         return
       }
       const binary = atob(result.zipBase64)
@@ -145,7 +147,7 @@ function PhotoGalleryPage() {
         <span className="text-sm text-white">Photos</span>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-3">
         <h1 className="text-2xl font-bold text-white">
           Photos{' '}
           <span className="text-base font-normal text-slate-400">
@@ -162,6 +164,32 @@ function PhotoGalleryPage() {
           </button>
         )}
       </div>
+
+      {tooLargeInfo && (
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <div className="flex-1">
+            <p className="font-medium">
+              This event has {tooLargeInfo.count} photos. Use the bulk download
+              script for large exports:
+            </p>
+            <pre className="mt-1 font-mono text-amber-100">
+              npx download-photos --event {eventId}
+            </pre>
+            <p className="mt-1 text-amber-300/70">
+              See{' '}
+              <code className="font-mono">docs/download-photos-guide.md</code>{' '}
+              for instructions.
+            </p>
+          </div>
+          <button
+            onClick={() => setTooLargeInfo(null)}
+            className="shrink-0 text-amber-400 hover:text-amber-200 transition-colors"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {photos.length === 0 ? (
         <p className="text-slate-400">No photos yet for this event.</p>
