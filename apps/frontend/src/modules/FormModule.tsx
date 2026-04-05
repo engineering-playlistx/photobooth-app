@@ -3,11 +3,26 @@
 import React, { useState, useRef, useCallback } from "react";
 import { getAssetPath } from "../utils/assets";
 import { useModuleBackground } from "../hooks/useModuleBackground";
+import { useElementCustomization } from "../hooks/useElementCustomization";
 import SimpleKeyboard from "../components/SimpleKeyboard";
+import type { FormModuleConfig } from "@photobooth/types";
 import type { ModuleProps } from "./types";
 
-export function FormModule({ onComplete, onBack }: ModuleProps) {
+export function FormModule({ config, onComplete, onBack }: ModuleProps) {
   const bg = useModuleBackground("form");
+  const { customization } = config as FormModuleConfig;
+  const headerEl = useElementCustomization(
+    customization,
+    "form",
+    "header",
+    "Complete your details before printing your photo",
+  );
+  const submitButtonEl = useElementCustomization(
+    customization,
+    "form",
+    "submitButton",
+    "Confirm",
+  );
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -157,10 +172,12 @@ export function FormModule({ onComplete, onBack }: ModuleProps) {
         </div>
         Back
       </button>
+      {headerEl.styleTag}
+      {submitButtonEl.styleTag}
       <div className="w-full px-32 lg:px-40 mx-auto mt-52">
         <div className="mb-20 text-center">
-          <h1 className="text-[56px] leading-tight mb-2 font-black">
-            Complete your details before printing your photo
+          <h1 className="pb-form-header text-[56px] leading-tight mb-2 font-black">
+            {headerEl.copy}
           </h1>
         </div>
 
@@ -261,9 +278,9 @@ export function FormModule({ onComplete, onBack }: ModuleProps) {
           <div className="flex justify-center mt-8">
             <button
               type="submit"
-              className="px-14 py-6 bg-tertiary hover:bg-tertiary text-white rounded-xl font-medium text-3xl lg:text-5xl transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+              className="pb-form-submitButton px-14 py-6 bg-tertiary hover:bg-tertiary text-white rounded-xl font-medium text-3xl lg:text-5xl transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
             >
-              Confirm
+              {submitButtonEl.copy}
             </button>
           </div>
         </form>

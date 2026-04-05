@@ -1,14 +1,32 @@
 import React, { useRef, useState, useEffect } from "react";
 import { getAssetPath } from "../utils/assets";
 import { useModuleBackground } from "../hooks/useModuleBackground";
+import { useElementCustomization } from "../hooks/useElementCustomization";
 import type { CameraModuleConfig } from "@photobooth/types";
 import type { ModuleProps } from "./types";
 
 const VIDEO_VERTICAL_OFFSET = 540;
 
 export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
-  const { maxRetakes } = config as CameraModuleConfig;
+  const { maxRetakes, customization } = config as CameraModuleConfig;
   const bg = useModuleBackground("camera");
+  const retakeButtonEl = useElementCustomization(
+    customization,
+    "camera",
+    "retakeButton",
+    "Retake",
+  );
+  const captureButtonEl = useElementCustomization(
+    customization,
+    "camera",
+    "captureButton",
+  );
+  const nextButtonEl = useElementCustomization(
+    customization,
+    "camera",
+    "nextButton",
+    "Next",
+  );
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -364,6 +382,9 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
         backgroundImage: `url('${bg ?? getAssetPath("/images/bg_camera.png")}')`,
       }}
     >
+      {retakeButtonEl.styleTag}
+      {captureButtonEl.styleTag}
+      {nextButtonEl.styleTag}
       <button
         onClick={onBack}
         className="absolute top-22 left-32 z-20 transition-all duration-200 active:scale-95 flex flex-row align-left items-center  gap-4 text-secondary text-2xl"
@@ -483,7 +504,7 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
           <div className="flex items-center justify-center gap-8 lg:gap-16 w-full">
             <button
               onClick={handleRetake}
-              className="flex flex-col items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+              className="pb-camera-retakeButton flex flex-col items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
               aria-label="Retake photo"
               disabled={capturedPhotos.length <= 0 || retakeCount >= maxRetakes}
               onKeyDown={(e) => {
@@ -499,12 +520,12 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
                 className="size-32 object-contain"
               />
               <span className="text-white text-2xl lg:text-3xl absolute -bottom-4">
-                Retake
+                {retakeButtonEl.copy}
               </span>
             </button>
             <button
               onClick={handleCapturePhoto}
-              className="size-48 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+              className="pb-camera-captureButton size-48 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
               disabled={
                 capturedPhotos.length >= 1 ||
                 !isCameraActive ||
@@ -525,7 +546,7 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
             </button>
             <button
               onClick={handleNext}
-              className="flex flex-col items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+              className="pb-camera-nextButton flex flex-col items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
               aria-label="Next"
               disabled={capturedPhotos.length < 1}
               onKeyDown={(e) => {
@@ -541,7 +562,7 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
                 className="size-32 object-contain"
               />
               <span className="text-white text-2xl lg:text-3xl absolute -bottom-4">
-                Next
+                {nextButtonEl.copy}
               </span>
             </button>
           </div>

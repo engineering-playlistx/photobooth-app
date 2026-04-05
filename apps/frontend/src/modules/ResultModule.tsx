@@ -11,6 +11,8 @@ import QRCodeModal from "../components/QRCodeModal";
 import { useEventConfig } from "../contexts/EventConfigContext";
 import { usePipeline } from "../contexts/PipelineContext";
 import { useModuleBackground } from "../hooks/useModuleBackground";
+import { useElementCustomization } from "../hooks/useElementCustomization";
+import type { ResultModuleConfig } from "@photobooth/types";
 import type { ModuleProps } from "./types";
 import { SUPABASE_BUCKET } from "../utils/constants";
 
@@ -30,10 +32,35 @@ function base64ToBlob(base64: string, contentType = "", sliceSize = 512) {
   return blob;
 }
 
-export function ResultModule({ outputs }: ModuleProps) {
+export function ResultModule({ config, outputs }: ModuleProps) {
   const { config: eventConfig, apiBaseUrl, apiClientKey } = useEventConfig();
   const { reset } = usePipeline();
   const bg = useModuleBackground("result");
+  const { customization } = config as ResultModuleConfig;
+  const headerEl = useElementCustomization(
+    customization,
+    "result",
+    "header",
+    "Ready to Race!",
+  );
+  const printButtonEl = useElementCustomization(
+    customization,
+    "result",
+    "printButton",
+    "Print & Download",
+  );
+  const retryButtonEl = useElementCustomization(
+    customization,
+    "result",
+    "retryButton",
+    "Retry Result",
+  );
+  const backButtonEl = useElementCustomization(
+    customization,
+    "result",
+    "backButton",
+    "Back to Home",
+  );
 
   // DATA-02: double-save via remount is structurally prevented by the pipeline
   // (modules stay mounted while active), but this guard costs nothing and
@@ -271,10 +298,14 @@ export function ResultModule({ outputs }: ModuleProps) {
           backgroundImage: `url('${bg ?? getAssetPath("/images/bg_result.png")}')`,
         }}
       />
+      {headerEl.styleTag}
+      {printButtonEl.styleTag}
+      {retryButtonEl.styleTag}
+      {backButtonEl.styleTag}
       <div className="relative z-10 w-full px-36 mx-auto mb-40">
         <div className="flex flex-col items-center gap-0">
-          <h1 className="text-8xl font-black text-tertiary mt-0 mb-14">
-            Ready to Race!
+          <h1 className="pb-result-header text-8xl font-black text-tertiary mt-0 mb-14">
+            {headerEl.copy}
           </h1>
           <div className="w-175">
             {!!finalPhoto && !!selectedTheme && (
@@ -288,12 +319,12 @@ export function ResultModule({ outputs }: ModuleProps) {
 
           <button
             type="button"
-            className="mt-12 mb-2 w-full text-5xl px-7 py-5 bg-tertiary text-white rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+            className="pb-result-printButton mt-12 mb-2 w-full text-5xl px-7 py-5 bg-tertiary text-white rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
             onClick={() => void handlePrintAndDownload()}
             onPointerDown={handleDisabledPrintTap}
             disabled={isProcessing || isSaving}
           >
-            {isProcessing ? "Processing..." : "Print & Download"}
+            {isProcessing ? "Processing..." : printButtonEl.copy}
           </button>
           <div className="mb-4 h-8 flex items-center justify-center">
             {showSavingHint && (
@@ -312,17 +343,17 @@ export function ResultModule({ outputs }: ModuleProps) {
           <div className="text-center text-4xl grid grid-cols-2 gap-6 w-full">
             <button
               type="button"
-              className="px-7 py-3 bg-white text-secondary rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+              className="pb-result-retryButton px-7 py-3 bg-white text-secondary rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
               onClick={() => setShowLeaveConfirm(true)}
             >
-              Retry Result
+              {retryButtonEl.copy}
             </button>
             <button
               type="button"
-              className="px-7 py-3 bg-white text-secondary rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+              className="pb-result-backButton px-7 py-3 bg-white text-secondary rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
               onClick={() => setShowLeaveConfirm(true)}
             >
-              Back to Home
+              {backButtonEl.copy}
             </button>
           </div>
 

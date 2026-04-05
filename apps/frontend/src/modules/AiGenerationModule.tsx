@@ -7,6 +7,7 @@ import { getAssetPath } from "../utils/assets";
 import { useEventConfig } from "../contexts/EventConfigContext";
 import { usePipeline } from "../contexts/PipelineContext";
 import { useModuleBackground } from "../hooks/useModuleBackground";
+import { useElementCustomization } from "../hooks/useElementCustomization";
 import type { ModuleProps } from "./types";
 
 function resolveImageUrl(url: string): string {
@@ -87,6 +88,12 @@ export function AiGenerationModule({
   const { apiBaseUrl, apiClientKey, config: eventConfig } = useEventConfig();
   const { setSuppressInactivity } = usePipeline();
   const bg = useModuleBackground("ai-generation");
+  const { customization } = config as AiGenerationModuleConfig;
+  const statusTextEl = useElementCustomization(
+    customization,
+    "ai-generation",
+    "statusText",
+  );
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("Preparing your photo...");
   const [error, setError] = useState<string | null>(null);
@@ -322,13 +329,16 @@ export function AiGenerationModule({
         </div>
       ) : (
         <div className="absolute bottom-80 left-1/2 transform -translate-x-1/2 w-5/6 px-8 z-10">
+          {statusTextEl.styleTag}
           <div className="relative w-full h-20 rounded-xl bg-[#6F0000] overflow-hidden shadow-lg border border-white border-2">
             <div
               className="absolute top-0 left-0 h-full bg-tertiary transition-all duration-300 ease-linear rounded-lg"
               style={{ width: `${progress}%` }}
             />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-white text-3xl">{statusText}</span>
+              <span className="pb-ai-generation-statusText text-white text-3xl">
+                {statusText}
+              </span>
             </div>
           </div>
         </div>

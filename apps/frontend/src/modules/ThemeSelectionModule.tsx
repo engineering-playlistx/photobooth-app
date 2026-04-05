@@ -1,6 +1,7 @@
 import React from "react";
 import { getAssetPath } from "../utils/assets";
 import { useModuleBackground } from "../hooks/useModuleBackground";
+import { useElementCustomization } from "../hooks/useElementCustomization";
 import type { ThemeSelectionModuleConfig } from "@photobooth/types";
 import type { ModuleProps } from "./types";
 
@@ -13,8 +14,19 @@ export function ThemeSelectionModule({
   onComplete,
   onBack,
 }: ModuleProps) {
-  const { themes } = config as ThemeSelectionModuleConfig;
+  const { themes, customization } = config as ThemeSelectionModuleConfig;
   const bg = useModuleBackground("theme-selection");
+  const headerEl = useElementCustomization(
+    customization,
+    "theme-selection",
+    "header",
+    "Who do you want to be today?",
+  );
+  const themeCardEl = useElementCustomization(
+    customization,
+    "theme-selection",
+    "themeCard",
+  );
 
   function handleSelectTheme(themeId: string) {
     const theme = themes.find((t) => t.id === themeId);
@@ -36,6 +48,8 @@ export function ThemeSelectionModule({
 
   return (
     <div className="h-svh aspect-9/16 mx-auto relative flex flex-col items-center justify-center bg-primary text-secondary overflow-hidden">
+      {headerEl.styleTag}
+      {themeCardEl.styleTag}
       <div
         className="absolute inset-0 w-full h-full"
         style={{
@@ -67,8 +81,8 @@ export function ThemeSelectionModule({
         Back
       </button>
       <div className="relative z-10 w-full px-24 flex flex-col items-center gap-12 mb-40">
-        <h1 className="text-7xl font-shell font-black font-bold font-sans text-center w-180">
-          Who do you want to be today?
+        <h1 className="pb-theme-selection-header text-7xl font-shell font-black font-bold font-sans text-center w-180">
+          {headerEl.copy}
         </h1>
         <p className="text-5xl font-medium pt-8 py-20">
           Choose your racing role:
@@ -78,7 +92,7 @@ export function ThemeSelectionModule({
             <button
               key={theme.id}
               onClick={() => handleSelectTheme(theme.id)}
-              className="relative w-full rounded-4xl overflow-hidden cursor-pointer transition-all duration-200 active:scale-[0.98] hover:shadow-2xl select-none font-shell font-medium"
+              className="pb-theme-selection-themeCard relative w-full rounded-4xl overflow-hidden cursor-pointer transition-all duration-200 active:scale-[0.98] hover:shadow-2xl select-none font-shell font-medium"
             >
               <div className="relative flex flex-row items-center gap-14 w-full bg-tertiary">
                 <div className="bg-white p-4">
