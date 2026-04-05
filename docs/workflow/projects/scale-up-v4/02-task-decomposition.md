@@ -1,6 +1,6 @@
 # Task Decomposition — V4 All Phases
 
-**Status:** 🔄 In Progress — Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 next
+**Status:** 🔄 In Progress — Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 next
 **Scope:** Phase 1 (Carryover Quick Fixes), Phase 2 (Kiosk Startup + Event ID Settings), Phase 3 (Per-Module Customization — Types + Kiosk), Phase 4 (Per-Module Customization — Dashboard), Phase 5 (Dashboard Consolidation), Phase 6 (Analytics), Phase 7 (Electron Auto-Update)
 
 **Format per task:** What · Files · Input · Output · Verification · Risk
@@ -436,7 +436,7 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 
 > **Before starting Phase 4:** Read the flow builder route file and each module's config panel component to understand the current dashboard implementation. The tasks below assume a panel-based architecture (each module card expands inline). Adjust file list if the actual implementation differs.
 
-### V4-4.1 — Add per-element customization panels to each module in the flow builder
+### ~~V4-4.1 — Add per-element customization panels to each module in the flow builder~~ ✅
 
 **What:** Add a collapsible "Customization" section to each module's config panel in the flow builder. It lists each of that module's named elements (from the catalog defined in V4-3.1) with a copy text input and a CSS textarea per element.
 
@@ -463,7 +463,7 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 
 ---
 
-### V4-4.2 — Add result feature flag toggles to the result module panel
+### ~~V4-4.2 — Add result feature flag toggles to the result module panel~~ ✅
 
 **What:** Add email/QR/print toggles to the Result module's config panel in the flow builder.
 
@@ -488,7 +488,7 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 
 ---
 
-### V4-4.3 — Add AI loading slideshow editor to the AI generation module panel
+### ~~V4-4.3 — Add AI loading slideshow editor to the AI generation module panel~~ ✅
 
 **What:** Add a slideshow items editor to the AI Generation module's config panel. Supports adding, removing, and reordering items (image URL and caption per item).
 
