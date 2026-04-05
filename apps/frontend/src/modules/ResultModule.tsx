@@ -55,6 +55,8 @@ export function ResultModule({ outputs }: ModuleProps) {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(true);
+  const [showSavingHint, setShowSavingHint] = useState(false);
+  const savingHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
   const [savedPhotoPath, setSavedPhotoPath] = useState<string | null>(null);
@@ -72,6 +74,13 @@ export function ResultModule({ outputs }: ModuleProps) {
 
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
+
+  const handleDisabledPrintTap = () => {
+    if (!isSaving) return;
+    setShowSavingHint(true);
+    if (savingHintTimer.current) clearTimeout(savingHintTimer.current);
+    savingHintTimer.current = setTimeout(() => setShowSavingHint(false), 2000);
   };
 
   const uploadToSupabaseAndShowQR = async () => {
@@ -156,6 +165,12 @@ export function ResultModule({ outputs }: ModuleProps) {
       addToast(`Print error`, "error");
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (savingHintTimer.current) clearTimeout(savingHintTimer.current);
+    };
+  }, []);
 
   // Auto-save photo result to local database and Supabase when page loads
   useEffect(() => {
@@ -274,15 +289,21 @@ export function ResultModule({ outputs }: ModuleProps) {
             type="button"
             className="mt-12 mb-2 w-full text-5xl px-7 py-5 bg-tertiary text-white rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
             onClick={() => void handlePrintAndDownload()}
+            onPointerDown={handleDisabledPrintTap}
             disabled={isProcessing || isSaving}
           >
             {isProcessing ? "Processing..." : "Print & Download"}
           </button>
           <div className="mb-4 h-8 flex items-center justify-center">
-            {isSaving && (
+            {showSavingHint && (
+              <p className="text-3xl text-white font-semibold">
+                Still saving — please wait a moment.
+              </p>
+            )}
+            {!showSavingHint && isSaving && (
               <p className="text-3xl text-white/50">Saving your photo…</p>
             )}
-            {!isSaving && hasSaved.current && (
+            {!showSavingHint && !isSaving && hasSaved.current && (
               <p className="text-3xl text-white/50">✓ Saved</p>
             )}
           </div>
