@@ -44,7 +44,8 @@
 **Input:** V4-1.1 complete.
 
 **Output:**
-- When a guest taps "Back to Home" or "Retry Result", render a confirmation overlay/modal: "Leave this screen? Your result will not be saved locally." with "Go Back" (cancel) and "Yes, leave" (confirm → calls `reset()`) buttons.
+- When a guest taps "Back to Home" or "Retry Result", render a confirmation overlay/modal: "You haven't printed or downloaded yet. Leave anyway?" with "Go Back" (cancel) and "Yes, leave" (confirm → calls `reset()`) buttons.
+- Note: the photo is already saved to Supabase and SQLite by the time the result screen is visible — the warning is about printing/downloading, not data loss.
 - The modal should be styled consistently with the kiosk UI (full-screen overlay, large touch targets).
 
 **Verification:**
@@ -173,7 +174,8 @@
     - Each `slideshowItems[].imageUrl` in AiGeneration (when V4-3.2 is done — skip gracefully if field doesn't exist yet)
   - For each URL: `new Image()` with `src = url` → `onload` resolves, `onerror` logs a warning (non-blocking)
   - Returns a `Promise.allSettled(...)` so all images are attempted regardless of individual failures
-- In `StartupLoader`, call `preloadAssets(config)` after the config fetch succeeds, advancing the progress bar from 30% to 100% as images load.
+- `preloadAssets` accepts an `onProgress(percent: number) => void` callback. As each image settles (load or error), call `onProgress(30 + (++loaded / total) * 70)` to advance the bar incrementally from 30% to 100%. If there are no images to load, jump straight to 100%.
+- In `StartupLoader`, pass a progress setter to `preloadAssets` and update the bar as each image resolves.
 - Asset loading failures are non-blocking: log a console warning, do not halt the startup.
 
 **Verification:**
@@ -232,6 +234,7 @@
   - "Save & Reconnect" button → calls `electronAPI.saveKioskConfig({ eventId: newId })` → triggers `StartupLoader` to re-run (re-fetch config with new event ID)
   - "Close" button (or press Escape) to dismiss without saving
 - PIN gate: on opening, prompt for a 4-digit PIN. The PIN is set via `KIOSK_ADMIN_PIN` env var at build time (default: `0000`). Three failed attempts lock the screen for 30 seconds.
+- If `KIOSK_ADMIN_PIN` is not set at build time (i.e. the value is `0000`), log a `console.warn('KIOSK_ADMIN_PIN is using the default value — set it before deploying to production')` in `main.ts` on startup. This makes it obvious in dev logs if the env var was forgotten.
 - `electronAPI.saveKioskConfig(updates)` in `main.ts` reads `kiosk.config.json`, merges `updates`, and writes back.
 
 **Verification:**
@@ -321,19 +324,21 @@ slideshowItems?: {
 
 In `ResultModuleConfig`, add:
 ```typescript
-emailEnabled: boolean;    // default: true in any new event config seed
-qrCodeEnabled: boolean;   // default: true
-printEnabled: boolean;    // default: true
+emailEnabled?: boolean;    // undefined treated as true (backward compatible)
+qrCodeEnabled?: boolean;   // undefined treated as true
+printEnabled?: boolean;    // undefined treated as true
 ```
 
-For `ResultModuleConfig`: since existing event configs in the DB will not have these fields, the kiosk must treat `undefined` as `true` (backward compatible). Add a note to this effect in the type file.
+Type them as `boolean | undefined` (`?:`) so TypeScript is honest about the fact that existing DB configs will not have these fields. The kiosk coerces: `config.emailEnabled ?? true`. Do NOT type them as `boolean` — that would lie to TypeScript and cause errors at the coercion site.
+
+New event configs created after V4 should explicitly set all three to `true` in the event creation/seeding flow (tracked in V4-4.2).
 
 **Verification:**
 - Layer 1: Lint — no errors
 - Layer 2: `pnpm wb test` — all existing tests pass
 - Layer 3: n/a (runtime effect comes in V4-3.3 and V4-3.4)
 
-**Risk:** Low. Additive. The `boolean` (not `boolean | undefined`) typing for result flags is intentional — coerce `undefined → true` in the kiosk, not in the type.
+**Risk:** Low. Additive optional fields. `?:` is the correct typing — no TypeScript coercion issues.
 
 ---
 
@@ -414,6 +419,7 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 **AiGenerationModule.tsx:**
 - Read `slideshowItems` from the module config.
 - If `slideshowItems` has ≥ 1 item: render an animated slideshow (cycling through items at a fixed interval, e.g. 4s per item). Show `imageUrl` as a full-bleed image (if present) and `caption` as overlay text.
+- When AI generation completes, navigate to the result immediately — do not wait for the current slideshow item to finish. The slideshow is decorative; the result is the priority.
 - If `slideshowItems` is empty/undefined: render the existing static loading UI (no regression).
 
 **Verification:**
@@ -470,13 +476,15 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 - Result module panel shows three toggles: "Send email to guest", "Show QR code", "Enable printing".
 - Each toggle maps to `resultModuleConfig.emailEnabled`, `qrCodeEnabled`, `printEnabled`.
 - Defaults to `true` for any new event.
+- Also update the new-event creation/seeding flow (read the event creation code to find where default `moduleFlow` is built) to explicitly set all three flags to `true` on the Result module. This ensures new events are consistent rather than relying on `undefined → true` coercion.
 
 **Verification:**
 - Layer 1: Lint — no errors
 - Layer 2: n/a
-- Layer 3: Toggle printing off in the dashboard; run a kiosk session — confirm no print
+- Layer 3a: Toggle printing off in the dashboard; run a kiosk session — confirm no print
+- Layer 3b: Create a new event from scratch; confirm its result module config in Supabase has `emailEnabled: true`, `qrCodeEnabled: true`, `printEnabled: true` explicitly set
 
-**Risk:** Low. Additive UI for an already-implemented kiosk behavior.
+**Risk:** Low. Additive UI for an already-implemented kiosk behavior. The new-event seeding change is the only non-obvious file to find — read the code first.
 
 ---
 
@@ -492,7 +500,8 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 **Output:**
 - AI Generation module panel has a "Loading Screen Slideshow" section (below the themes config).
 - Each item shows: an image URL input field + optional upload button (using the existing `POST /api/assets/upload` endpoint), and a caption text input.
-- "Add item" button appends a new empty item. "Remove" button removes a row. Items are reorderable (drag or up/down arrows).
+- "Add item" button appends a new empty item. "Remove" button removes a row.
+- For reordering: check `apps/web/package.json` first. If a drag library (e.g. `@dnd-kit/core`, `react-beautiful-dnd`) is already used by the flow builder's module reordering — use the same one. If none exists, use simple up/down arrow buttons instead — do not add a new dependency for this one feature.
 - Saved to `moduleConfig.slideshowItems` via the existing PATCH config mechanism.
 
 **Verification:**
@@ -515,6 +524,8 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 **Files:**
 - Read first: `apps/web/src/routes/dashboard/_layout.events.$eventId.assets.tsx`
 - Read first: flow builder route
+- **Before writing any code:** check if `AssetSlot` is already a standalone reusable component or if it is inlined into the assets route. If it is inlined, extract it into `apps/web/src/components/AssetSlot.tsx` as a first step — then move it into the flow builder panels. Do not try to move and extract in a single pass.
+- `apps/web/src/components/AssetSlot.tsx` (new, if extraction is needed)
 - Flow builder route (modify)
 - `apps/web/src/routes/dashboard/_layout.events.$eventId.assets.tsx` (delete or redirect)
 - Event detail index page (remove Assets card/link)
@@ -554,7 +565,7 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 - Form module panel: field toggles (name/email/phone on/off) and field order (if reorder is implemented)
 - Result module panel: printer device name input (moved from Tech Config)
 - AI Generation module panel: AI provider toggle (Google / Replicate) — already present in some form, verify
-- Inactivity timeout: move to the Welcome or overall event config section (or keep as a single remaining "Tech" item under Branding)
+- Inactivity timeout: move to the Branding tab as a standalone field (it is event-level, not tied to any single module — Branding is the remaining event-level tab after consolidation)
 - The standalone AI Config, Form Fields, and Tech Config routes either redirect to flow builder or are removed
 
 **Verification:**
@@ -582,27 +593,58 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 **Output:**
 
 Server function `getEventAnalytics({ eventId })`:
-```typescript
-// Queries the users table for this event:
-// total_visits: SUM(visit_count)
-// unique_guests: COUNT(DISTINCT email)
-// returning_guests: COUNT(*) WHERE visit_count > 1
-// daily_trend: GROUP BY DATE(created_at) → [{ date, visits }] last 30 days
+
+The Supabase JS client does not support `GROUP BY` or aggregate functions natively. Use an `.rpc()` call to a Postgres function:
+
+```sql
+-- Run in Supabase SQL editor and commit as a migration file:
+CREATE OR REPLACE FUNCTION get_event_analytics(p_event_id TEXT)
+RETURNS JSON
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  result JSON;
+BEGIN
+  SELECT json_build_object(
+    'total_visits',     COALESCE(SUM(visit_count), 0),
+    'unique_guests',    COUNT(*),
+    'returning_guests', COUNT(*) FILTER (WHERE visit_count > 1),
+    'daily_trend',      (
+      SELECT json_agg(row_to_json(d) ORDER BY d.date)
+      FROM (
+        SELECT
+          DATE(created_at AT TIME ZONE 'UTC')::text AS date,
+          SUM(visit_count)::int AS visits
+        FROM users
+        WHERE event_id = p_event_id
+          AND created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY DATE(created_at AT TIME ZONE 'UTC')
+      ) d
+    )
+  ) INTO result
+  FROM users
+  WHERE event_id = p_event_id;
+
+  RETURN result;
+END;
+$$;
 ```
+
+The TypeScript server function calls `.rpc('get_event_analytics', { p_event_id: eventId })` and returns the result. Zero-fill missing days in the server function or in the server-side handler before sending to the client (iterate over last 30 dates, merge with DB result, default missing days to 0).
 
 Analytics page (`/dashboard/events/$eventId/analytics`):
 - Stat cards: Total Visits, Unique Guests, Returning Guests
-- A bar chart for the daily visit trend (use a lightweight chart library, or render a CSS-only bar chart if no library is currently used in the dashboard — read `apps/web/package.json` first)
-- The chart shows the last 30 days, with zero-filled gaps for days with no visits
+- A bar chart for the daily visit trend. **Use CSS-only bars unless a chart library already exists in `apps/web/package.json` — check before adding any new dependency.** A CSS bar chart: a `<div>` per day, height proportional to max daily visits, with a date label below.
+- The chart shows the last 30 days, zero-filled for days with no visits.
 
 Event detail overview index: add an "Analytics" card alongside the existing cards.
 
 **Verification:**
 - Layer 1: Lint new and changed files — no errors
 - Layer 2: n/a
-- Layer 3: For a test event with known visit data, navigate to the Analytics page — confirm stat cards match the known values; confirm the chart renders
+- Layer 3: For a test event with known visit data (e.g. 3 guests, 1 returning → total_visits: 4, unique: 3, returning: 1), navigate to the Analytics page — confirm stat cards match; confirm the trend chart renders with the correct day highlighted
 
-**Risk:** Low. Read-only data display. No writes. The most likely issue is the daily trend query grouping by date in the correct timezone — use `DATE(created_at AT TIME ZONE 'UTC')` to avoid timezone drift.
+**Risk:** Low-medium. Read-only data display. No writes. The RPC function must be deployed to Supabase before the code — run in SQL editor first, verify with `SELECT get_event_analytics('evt_test')`, then commit the migration file.
 
 ---
 
@@ -622,7 +664,7 @@ Event detail overview index: add an "Analytics" card alongside the existing card
 - `apps/frontend/src/preload.ts` (expose `electronAPI.onUpdateDownloaded(callback)`)
 - `apps/frontend/src/components/StartupLoader.tsx` or App root (render update banner when IPC fires)
 
-**Input:** V4-6.1 complete. GitHub repository configured with Releases.
+**Input:** V4 Phase 6 complete (kiosk and dashboard are stable; no dependency on analytics specifically). GitHub repository configured with Releases and code signing is confirmed working (`pnpm fe make` produces a signed installer).
 
 **Output:**
 - `updateElectronApp({ updateInterval: '1 hour' })` is called in `main.ts` after startup completes.

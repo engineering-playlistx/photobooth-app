@@ -118,6 +118,51 @@ Separate formatting-only changes (after `pnpm lint:fix`) into their own `chore: 
 
 ---
 
+## Planning Sessions (Before Execution)
+
+Planning sessions are separate from execution sessions. They produce or sharpen project documents — they do not touch code.
+
+### When to run a planning session
+
+- At the start of a new version (e.g. V4 planning before V4-1.1 starts)
+- When a phase is complex enough that ambiguities would stall execution
+- When the creator has new feedback that changes scope or architecture
+
+### The planning session pattern
+
+**Step 1 — Input gathering (Claude reads, you provide)**
+Claude reads: the previous version's task decomposition, backlog, and any creator feedback. You provide: context that isn't in the docs (feedback from testing, changed priorities, new constraints).
+
+**Step 2 — Draft docs (Claude writes)**
+Claude produces the backlog, scope, and task decomposition in one pass. These are drafts — expect them to need sharpening.
+
+**Step 3 — Design review (Claude self-reviews)**
+After drafting, Claude re-reads the decomposition and looks for:
+- **Design holes** — missing logic, wrong assumptions, undefined behavior
+- **Risks** — things that could silently break, wrong dependencies, external requirements not mentioned
+- **Inefficiencies** — added dependencies that aren't needed, ambiguous steps that would stall Claude mid-task
+
+Claude produces a numbered list of issues found, grouped by type. Each issue names the task ID and states what needs to change.
+
+**Step 4 — You decide**
+Claude presents the issue list with a clear recommendation. You say yes, no, or adjust. The goal is a single decision from you — not a back-and-forth on each issue.
+
+**Step 5 — Fix and commit**
+Claude applies all approved fixes in one pass and commits the planning docs. After the commit, the decomposition is the single source of truth.
+
+### What good planning output looks like
+
+- Every task has a defined input (which prior tasks must be complete) and a defined output (what you can observe/check)
+- No mid-task ambiguities — Claude should never need to stop and ask a design question during execution
+- Tasks that touch external systems (Supabase, Electron build, GitHub Releases) name the manual steps required before the code step
+- Risk ratings are honest — a task marked Low risk should be safely executable without extra caution
+
+### Keeping planning docs sharp
+
+After any significant creator feedback mid-version, re-run steps 3–5 for the affected phases before starting them. Don't wait until you're in the middle of a task to discover a design hole.
+
+---
+
 ## Anti-Patterns
 
 **Giving too large a task**
