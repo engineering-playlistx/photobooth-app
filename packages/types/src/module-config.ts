@@ -61,6 +61,10 @@ export interface AiGenerationModuleConfig extends BaseModuleConfig {
   outputKey: 'finalPhoto'
   provider: 'replicate' | 'google'
   themes: Array<AiThemeConfig> // moved here from top-level aiConfig
+  slideshowItems?: {
+    imageUrl?: string
+    caption?: string
+  }[]
 }
 
 export interface FormModuleConfig extends BaseModuleConfig {
@@ -72,6 +76,9 @@ export interface FormModuleConfig extends BaseModuleConfig {
 export interface ResultModuleConfig extends BaseModuleConfig {
   moduleId: 'result'
   position: 'fixed-last'
+  emailEnabled?: boolean // undefined treated as true (backward compatible)
+  qrCodeEnabled?: boolean // undefined treated as true
+  printEnabled?: boolean // undefined treated as true
 }
 
 export interface MiniQuizModuleConfig extends BaseModuleConfig {
