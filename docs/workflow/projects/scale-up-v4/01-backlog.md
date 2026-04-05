@@ -189,3 +189,5 @@ These items were explicitly marked out-of-scope in `scale-up-v3/01-scope.md`.
 | PERF-01 | `getSession()` JWT has 1-hour revocation window (background `getUser()` fix) | 🔜 V5 (low priority) |
 | SCALE-02 | Photos page fetches all Storage metadata on every page navigation | 🔜 V5 (acceptable at current scale) |
 | CODE-02 | Supabase Storage discriminated union note (lint behavior is correct) | 🔜 V5 (doc-only update) |
+| OFFLINE-01 | `POST /api/session/start` fires on every session start and fails hard when offline — needs fail-silently / offline-skip behaviour | 🔜 V5 |
+| PRELOAD-01 | Local static assets bundled with Electron (`/images/theme-*.png` etc.) are not pre-loaded by `preloadAssets` — they're served over Vite dev HTTP so they fail in simulated-offline dev; harmless in prod Electron but worth unifying | 🔜 V5 (low priority — non-issue in prod) |

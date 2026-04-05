@@ -40,7 +40,7 @@ function PinPad({
         const isDelete = key === "⌫";
         return (
           <button
-            key={key}
+            key={idx}
             type="button"
             onClick={() => (isDelete ? onDelete() : onDigit(key))}
             className="h-16 rounded-xl bg-white/10 text-white text-2xl font-shell font-bold cursor-pointer active:bg-white/25 select-none"
