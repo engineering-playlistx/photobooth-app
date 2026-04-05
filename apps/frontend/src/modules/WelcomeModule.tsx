@@ -1,15 +1,12 @@
 import React from "react";
 import { getAssetPath } from "../utils/assets";
-import { useEventConfig } from "../contexts/EventConfigContext";
 import { useModuleBackground } from "../hooks/useModuleBackground";
 import type { ModuleProps } from "./types";
 
 export function WelcomeModule({ onComplete }: ModuleProps) {
-  const { refresh } = useEventConfig();
   const bg = useModuleBackground("welcome");
 
   function handleStart() {
-    refresh(); // re-fetch config in background for next session
     onComplete();
   }
 
