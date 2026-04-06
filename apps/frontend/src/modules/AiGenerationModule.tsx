@@ -126,6 +126,8 @@ export function AiGenerationModule({
 
     async function generateAIPhoto() {
       setSuppressInactivity(true);
+      let controller: AbortController | undefined;
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
       try {
         const themeId = selectedTheme!.id;
         const moduleConfig = config as AiGenerationModuleConfig;
@@ -144,6 +146,9 @@ export function AiGenerationModule({
 
         const startTime = Date.now();
 
+        controller = new AbortController();
+        timeoutId = setTimeout(() => controller!.abort(), 60_000);
+
         // Phase 1: Create prediction
         const createResponse = await fetch(`${apiBaseUrl}/api/ai-generate`, {
           method: "POST",
@@ -151,6 +156,7 @@ export function AiGenerationModule({
             "Content-Type": "application/json",
             Authorization: `Bearer ${apiClientKey}`,
           },
+          signal: controller.signal,
           body: JSON.stringify({
             userPhotoBase64: originalPhoto,
             theme: themeId,
@@ -176,6 +182,8 @@ export function AiGenerationModule({
           tempPath?: string;
           generatedImageBase64?: string; // Google AI sync: result returned immediately
         };
+        clearTimeout(timeoutId);
+        timeoutId = undefined;
         if (!createData.predictionId) {
           throw new Error("Server response missing prediction data");
         }
@@ -271,10 +279,15 @@ export function AiGenerationModule({
       } catch (err) {
         console.error("[AI Generate] Failed:", err);
         const message =
-          err instanceof Error ? err.message : "Something went wrong";
+          err instanceof Error && err.name === "AbortError"
+            ? "Generation timed out. Please try again."
+            : err instanceof Error
+              ? err.message
+              : "Something went wrong";
         setError(message);
         processedRef.current = false;
       } finally {
+        if (timeoutId !== undefined) clearTimeout(timeoutId);
         setSuppressInactivity(false);
       }
     }
