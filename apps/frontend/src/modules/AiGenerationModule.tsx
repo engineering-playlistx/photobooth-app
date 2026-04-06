@@ -103,6 +103,8 @@ export function AiGenerationModule({
   const [statusText, setStatusText] = useState("Preparing your photo...");
   const [error, setError] = useState<string | null>(null);
   const processedRef = useRef(false);
+  const controllerRef = useRef<AbortController | null>(null);
+  const [showCancelButton, setShowCancelButton] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const originalPhoto = outputs["originalPhoto"] as string | undefined;
@@ -126,7 +128,7 @@ export function AiGenerationModule({
 
     async function generateAIPhoto() {
       setSuppressInactivity(true);
-      let controller: AbortController | undefined;
+      const cancelTimerId = setTimeout(() => setShowCancelButton(true), 30_000);
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
       try {
         const themeId = selectedTheme!.id;
@@ -146,8 +148,9 @@ export function AiGenerationModule({
 
         const startTime = Date.now();
 
-        controller = new AbortController();
-        timeoutId = setTimeout(() => controller!.abort(), 60_000);
+        const controller = new AbortController();
+        controllerRef.current = controller;
+        timeoutId = setTimeout(() => controller.abort(), 60_000);
 
         // Phase 1: Create prediction
         const createResponse = await fetch(`${apiBaseUrl}/api/ai-generate`, {
@@ -287,6 +290,9 @@ export function AiGenerationModule({
         setError(message);
         processedRef.current = false;
       } finally {
+        clearTimeout(cancelTimerId);
+        setShowCancelButton(false);
+        controllerRef.current = null;
         if (timeoutId !== undefined) clearTimeout(timeoutId);
         setSuppressInactivity(false);
       }
@@ -298,7 +304,13 @@ export function AiGenerationModule({
   const handleRetry = () => {
     setError(null);
     setProgress(0);
+    setShowCancelButton(false);
     processedRef.current = false;
+  };
+
+  const handleCancel = () => {
+    controllerRef.current?.abort();
+    onBack();
   };
 
   return (
@@ -370,7 +382,16 @@ export function AiGenerationModule({
           </div>
         </div>
       ) : (
-        <div className="absolute bottom-80 left-1/2 transform -translate-x-1/2 w-5/6 px-8 z-10">
+        <div className="absolute bottom-80 left-1/2 transform -translate-x-1/2 w-5/6 px-8 z-10 flex flex-col items-center gap-6">
+          {showCancelButton && (
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="px-10 py-5 bg-white/20 hover:bg-white/30 text-white border border-white rounded-lg font-medium text-3xl transition-all duration-200 cursor-pointer font-sans"
+            >
+              Cancel / Start Over
+            </button>
+          )}
           {statusTextEl.styleTag}
           <div className="relative w-full h-20 rounded-xl bg-[#6F0000] overflow-hidden shadow-lg border border-white border-2">
             <div
