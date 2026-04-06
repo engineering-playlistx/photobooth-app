@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import type { MiniQuizModuleConfig } from "@photobooth/types";
 import type { ModuleProps } from "./types";
+import { useModuleBackground } from "../hooks/useModuleBackground";
 
 export function MiniQuizModule({ config, onComplete, onBack }: ModuleProps) {
   const { questions } = config as MiniQuizModuleConfig;
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
+  const bg = useModuleBackground("mini-quiz");
 
   useEffect(() => {
     if (questions.length === 0) {
@@ -40,7 +42,10 @@ export function MiniQuizModule({ config, onComplete, onBack }: ModuleProps) {
   }
 
   return (
-    <div className="h-svh aspect-9/16 mx-auto flex flex-col bg-black text-white">
+    <div
+      className="h-svh aspect-9/16 mx-auto flex flex-col bg-black text-white bg-cover bg-center bg-no-repeat"
+      style={bg ? { backgroundImage: `url('${bg}')` } : undefined}
+    >
       {/* Back button + progress */}
       <div className="flex items-center gap-6 px-12 pt-16 pb-8">
         <button

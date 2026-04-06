@@ -179,8 +179,12 @@ export function ResultModule({ config, outputs }: ModuleProps) {
   const { print } = usePrint();
 
   const handlePrint = async () => {
+    console.log(
+      `[Print] handlePrint called — savedPhotoPath=${savedPhotoPath ?? "null"}, isPrintEnabled=${isPrintEnabled}`,
+    );
     try {
       if (!savedPhotoPath) {
+        console.warn("[Print] savedPhotoPath is null — aborting");
         addToast("Photo not saved yet. Please wait.", "error");
         return;
       }

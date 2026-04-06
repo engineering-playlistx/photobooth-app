@@ -59,11 +59,18 @@ interface AssetSlotProps {
   label: string
   currentUrl: string | null | undefined
   onUpload: (file: File) => Promise<void>
+  onRemove?: () => Promise<void>
 }
 
-export function AssetSlot({ label, currentUrl, onUpload }: AssetSlotProps) {
+export function AssetSlot({
+  label,
+  currentUrl,
+  onUpload,
+  onRemove,
+}: AssetSlotProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [removing, setRemoving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,6 +87,21 @@ export function AssetSlot({ label, currentUrl, onUpload }: AssetSlotProps) {
       if (inputRef.current) inputRef.current.value = ''
     }
   }
+
+  const handleRemove = async () => {
+    if (!onRemove) return
+    setRemoving(true)
+    setError(null)
+    try {
+      await onRemove()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Remove failed')
+    } finally {
+      setRemoving(false)
+    }
+  }
+
+  const busy = uploading || removing
 
   return (
     <div className="flex items-center gap-4 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
@@ -103,7 +125,7 @@ export function AssetSlot({ label, currentUrl, onUpload }: AssetSlotProps) {
         )}
         {error && <p className="text-xs text-red-400 mb-1">{error}</p>}
       </div>
-      <div className="shrink-0">
+      <div className="shrink-0 flex flex-col gap-1.5">
         <input
           ref={inputRef}
           type="file"
@@ -114,12 +136,21 @@ export function AssetSlot({ label, currentUrl, onUpload }: AssetSlotProps) {
           }}
         />
         <button
-          disabled={uploading}
+          disabled={busy}
           onClick={() => inputRef.current?.click()}
           className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded transition-colors"
         >
           {uploading ? 'Uploading…' : 'Upload'}
         </button>
+        {onRemove && currentUrl && (
+          <button
+            disabled={busy}
+            onClick={() => void handleRemove()}
+            className="px-3 py-1.5 text-xs bg-transparent hover:bg-red-900/40 disabled:opacity-40 disabled:cursor-not-allowed text-red-400 hover:text-red-300 rounded transition-colors border border-red-800/50"
+          >
+            {removing ? 'Removing…' : 'Remove'}
+          </button>
+        )}
       </div>
     </div>
   )

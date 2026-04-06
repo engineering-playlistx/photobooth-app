@@ -404,6 +404,9 @@ ipcMain.handle(
       };
 
       // Print the window; cleanup runs in the completion callback
+      console.log(
+        `[print-window] filePath=${filePath}, printerName=${JSON.stringify(printerName)}`,
+      );
       if (!printerName) {
         throw new Error("printerName is required but was not configured");
       }

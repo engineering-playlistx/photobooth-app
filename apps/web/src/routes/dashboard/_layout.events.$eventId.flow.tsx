@@ -70,7 +70,7 @@ const saveModuleBackground = createServerFn({ method: 'POST' }).handler(
     const { eventId, moduleId, publicUrl } = ctx.data as {
       eventId: string
       moduleId: string
-      publicUrl: string
+      publicUrl: string | null
     }
     const admin = getSupabaseAdminClient()
     const { data, error } = await admin
@@ -80,14 +80,19 @@ const saveModuleBackground = createServerFn({ method: 'POST' }).handler(
       .single()
     if (error) throw new Error(error.message)
     const existing = data.config_json as EventConfig
+    const updatedBackgrounds = {
+      ...(existing.branding.screenBackgrounds ?? {}),
+    }
+    if (publicUrl === null) {
+      delete updatedBackgrounds[moduleId]
+    } else {
+      updatedBackgrounds[moduleId] = publicUrl
+    }
     const merged: EventConfig = {
       ...existing,
       branding: {
         ...existing.branding,
-        screenBackgrounds: {
-          ...(existing.branding.screenBackgrounds ?? {}),
-          [moduleId]: publicUrl,
-        },
+        screenBackgrounds: updatedBackgrounds,
       },
     }
     const { error: updateError } = await admin
@@ -153,6 +158,7 @@ export const Route = createFileRoute('/dashboard/_layout/events/$eventId/flow')(
 interface FlowExtras {
   backgrounds: Record<string, string | null>
   onBackgroundUpload: (moduleId: string, file: File) => Promise<void>
+  onBackgroundRemove: (moduleId: string) => Promise<void>
   onThemeAssetUpload: (
     themeId: string,
     field: 'frameImageUrl' | 'templateImageUrl' | 'previewImageUrl',
@@ -404,6 +410,15 @@ function FlowBuilderPage() {
     setBackgrounds((prev) => ({ ...prev, [moduleId]: publicUrl }))
   }
 
+  const handleBackgroundRemove = async (moduleId: string) => {
+    await saveModuleBackground({ data: { eventId, moduleId, publicUrl: null } })
+    setBackgrounds((prev) => {
+      const next = { ...prev }
+      delete next[moduleId]
+      return next
+    })
+  }
+
   const handleThemeAssetUpload = async (
     themeId: string,
     field: 'frameImageUrl' | 'templateImageUrl' | 'previewImageUrl',
@@ -451,6 +466,7 @@ function FlowBuilderPage() {
   const extras: FlowExtras = {
     backgrounds,
     onBackgroundUpload: handleBackgroundUpload,
+    onBackgroundRemove: handleBackgroundRemove,
     onThemeAssetUpload: handleThemeAssetUpload,
     formFields,
     onFormFieldChange: (field, value) =>
@@ -869,6 +885,11 @@ function ConfigPanel({
         label="Screen background image"
         currentUrl={extras.backgrounds[module.moduleId] ?? null}
         onUpload={(file) => extras.onBackgroundUpload(module.moduleId, file)}
+        onRemove={
+          extras.backgrounds[module.moduleId]
+            ? () => extras.onBackgroundRemove(module.moduleId)
+            : undefined
+        }
       />
     </div>
   )
