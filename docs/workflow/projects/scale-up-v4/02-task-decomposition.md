@@ -687,7 +687,7 @@ Event detail overview index: add an "Analytics" card alongside the existing card
 
 > **Priority note:** These tasks address a production-impacting bug observed during live testing (session 2 of 2 stuck indefinitely). Recommend doing Phase 8 before or alongside Phase 6. See backlog entries `AIGen-FIX-01` and `AIGen-UX-01` for full context.
 
-### V4-8.1 — AIGen-FIX-01: Add AbortController timeout to AI generation fetch
+### ~~V4-8.1 — AIGen-FIX-01: Add AbortController timeout to AI generation fetch~~ ✅
 
 **What:** The `fetch` call in `AiGenerationModule` has no timeout. On slow networks the HTTP 200 status arrives quickly (headers received) but `createResponse.json()` then waits indefinitely for the large response body to stream. Add an `AbortController` with a 60-second timeout so the entire operation (connection + body read) is cancelled and a user-visible error is thrown if it takes too long.
 
@@ -715,7 +715,7 @@ Event detail overview index: add an "Analytics" card alongside the existing card
 
 ---
 
-### V4-8.2 — AIGen-UX-01: Show "Cancel / Start Over" button after 30s on loading screen
+### ~~V4-8.2 — AIGen-UX-01: Show "Cancel / Start Over" button after 30s on loading screen~~ ✅
 
 **What:** The AI generation loading screen has no escape hatch. If generation stalls, guests are stuck until the 60s AbortController fires (V4-8.1) — a 60-second wait with a frozen UI and no feedback that something is wrong. Add a "Cancel / Start Over" button that fades in after 30 seconds, allowing the guest to abort and return home immediately.
 
