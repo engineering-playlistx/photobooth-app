@@ -1,6 +1,6 @@
 # Task Decomposition — V4 All Phases
 
-**Status:** 🔄 In Progress — Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 6 next
+**Status:** 🔄 In Progress — Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 6 ✅, Phase 7 next
 **Scope:** Phase 1 (Carryover Quick Fixes), Phase 2 (Kiosk Startup + Event ID Settings), Phase 3 (Per-Module Customization — Types + Kiosk), Phase 4 (Per-Module Customization — Dashboard), Phase 5 (Dashboard Consolidation), Phase 6 (Analytics), Phase 7 (Electron Auto-Update), Phase 8 (AI Generation Resilience — field issues 2026-04-06)
 
 **Format per task:** What · Files · Input · Output · Verification · Risk
@@ -579,7 +579,7 @@ If `customization` is absent or a key has no entry, behavior is fully unchanged 
 
 ## Phase 6 — Analytics
 
-### V4-6.1 — Add analytics server function and dashboard page
+### ~~V4-6.1 — Add analytics server function and dashboard page~~ ✅
 
 **What:** Create an analytics section in the event detail page showing: total visits, unique guests, returning guests, and a daily visit trend (last 30 days).
 
