@@ -177,6 +177,36 @@ These items were explicitly marked out-of-scope in `scale-up-v3/01-scope.md`.
 
 ---
 
+## Part D — Post-V5 Field Issues (Found During Testing 2026-04-06)
+
+### AIGen-FIX-01 — AI generation hangs silently on slow network (no fetch timeout)
+
+**Category:** Resilience / UX
+**Issue:** When the AI generation response body is slow to stream (large base64 image on a degraded network), `AiGenerationModule` freezes on the loading screen indefinitely with no error, no timeout, and no escape. Root cause: `createResponse.json()` at line 174 of `AiGenerationModule.tsx` blocks until the full response body arrives — but there is no `AbortController` or timeout guarding the `fetch` call. The response headers arrive quickly (HTTP 200 is logged), giving the false impression of success, while the multi-MB body streams infinitely slowly. Since no exception is thrown (a stalled stream ≠ a dropped connection), the catch block never fires.
+
+**Observed log pattern:**
+```
+[AI Generate] Create response — status: 200 (15.1s)
+<nothing further — UI frozen>
+```
+
+**Context:** Reproduced live: second session in a two-session test run. Network was already flagged slow by the browser ("Slow network detected"). First session completed fine (10.4s); second session stalled. The 60-second AI-generation SLA in CLAUDE.md (`Core Constraints`) cannot be enforced without an explicit timeout.
+
+**Suggested fix:** Wrap the entire `fetch` call in an `AbortController` with a `setTimeout` of 60 seconds. Pass the `signal` to `fetch(url, { signal })` — this aborts both the request and any in-progress body read if the timeout fires. Throw a user-friendly error on abort: `"Generation timed out. Please try again."` (matches the existing timeout message already in the catch path).
+
+---
+
+### AIGen-UX-01 — No escape hatch while AI generation is loading
+
+**Category:** UX / Resilience
+**Issue:** During AI generation the UI is a full-screen slideshow with a progress bar and no interactive controls. If generation stalls (slow network, backend issue, or any hang), the guest is completely stuck — there is no way to cancel, retry, or go back to the home screen without an operator physically restarting the kiosk. Even after AIGen-FIX-01 is applied (60s abort), a guest must wait the full 60 seconds before the error state and Retry/Back buttons appear.
+
+**Context:** Companion to AIGen-FIX-01. Found during the same 2026-04-06 test session. The kiosk was stuck with no escape for the duration of the session.
+
+**Suggested fix:** Show a "Cancel / Start Over" button on the loading screen after a configurable delay (e.g., 30 seconds — half the 60s timeout). The button is hidden initially and fades in after the delay. Tapping it aborts the fetch (via the same `AbortController` from AIGen-FIX-01) and calls `onBack()` to return the guest to the home screen. This gives guests agency without cluttering the loading UI during normal fast completions.
+
+---
+
 ## Part C — V3 Backlog Items Triaged for V4
 
 | ID | Issue | V4? |

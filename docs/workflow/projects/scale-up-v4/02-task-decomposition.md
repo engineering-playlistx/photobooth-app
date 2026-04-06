@@ -1,7 +1,7 @@
 # Task Decomposition — V4 All Phases
 
 **Status:** 🔄 In Progress — Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 6 next
-**Scope:** Phase 1 (Carryover Quick Fixes), Phase 2 (Kiosk Startup + Event ID Settings), Phase 3 (Per-Module Customization — Types + Kiosk), Phase 4 (Per-Module Customization — Dashboard), Phase 5 (Dashboard Consolidation), Phase 6 (Analytics), Phase 7 (Electron Auto-Update)
+**Scope:** Phase 1 (Carryover Quick Fixes), Phase 2 (Kiosk Startup + Event ID Settings), Phase 3 (Per-Module Customization — Types + Kiosk), Phase 4 (Per-Module Customization — Dashboard), Phase 5 (Dashboard Consolidation), Phase 6 (Analytics), Phase 7 (Electron Auto-Update), Phase 8 (AI Generation Resilience — field issues 2026-04-06)
 
 **Format per task:** What · Files · Input · Output · Verification · Risk
 **Per-task workflow:** read → change → lint → test → commit → mark done (see CLAUDE.md)
@@ -680,3 +680,62 @@ Event detail overview index: add an "Analytics" card alongside the existing card
 - Layer 3: Publish a test release on GitHub tagged with a higher version than the current build; launch the kiosk (production build, not dev) — confirm the update banner appears within ~1 minute
 
 **Risk:** High. Auto-update requires code signing, a GitHub release, and a production build — none of which can be tested in the dev server environment. Run `pnpm fe make` to produce a signed installer before testing. If code signing is not yet configured, complete that setup first and document it before marking this task done.
+
+---
+
+## Phase 8 — AI Generation Resilience (Field Issues 2026-04-06)
+
+> **Priority note:** These tasks address a production-impacting bug observed during live testing (session 2 of 2 stuck indefinitely). Recommend doing Phase 8 before or alongside Phase 6. See backlog entries `AIGen-FIX-01` and `AIGen-UX-01` for full context.
+
+### V4-8.1 — AIGen-FIX-01: Add AbortController timeout to AI generation fetch
+
+**What:** The `fetch` call in `AiGenerationModule` has no timeout. On slow networks the HTTP 200 status arrives quickly (headers received) but `createResponse.json()` then waits indefinitely for the large response body to stream. Add an `AbortController` with a 60-second timeout so the entire operation (connection + body read) is cancelled and a user-visible error is thrown if it takes too long.
+
+**Root cause:** `createResponse.json()` at line 174 of `AiGenerationModule.tsx` blocks until the full ~2679KB base64 body streams in. There is no `AbortController`, no signal, and no timeout anywhere in the fetch path. A stalled TCP stream does not throw an error on its own — it silently hangs. The 60-second SLA defined in `CLAUDE.md` (`Core Constraints`) has no enforcement mechanism.
+
+**Files:**
+- `apps/frontend/src/modules/AiGenerationModule.tsx`
+
+**Input:** V4-5.2 complete.
+
+**Output:**
+- Before the `fetch` call, create: `const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 60_000);`
+- Pass `signal: controller.signal` to the `fetch(url, { ... })` options.
+- After `await createResponse.json()` resolves (success path), call `clearTimeout(timeoutId)`.
+- In the `catch` block, detect abort: `if (err instanceof Error && err.name === 'AbortError')` → re-throw with message `"Generation timed out. Please try again."`.
+- The `finally` block should also call `clearTimeout(timeoutId)` to prevent the timer leaking on error paths.
+- No change to the error UI — the existing "Try Again" / "Back to Home" buttons already render on error.
+
+**Verification:**
+- Layer 1: Lint changed file — no errors
+- Layer 2: n/a
+- Layer 3: Normal fast session — confirm it still completes successfully (timeout does not fire). Slow-network simulation is optional (can throttle in DevTools); at minimum verify the AbortController is wired up by code review.
+
+**Risk:** Low. Additive guard only. Does not change happy-path behavior. The only risk is accidentally aborting the wrong operation — verify `clearTimeout` is called before `onComplete`.
+
+---
+
+### V4-8.2 — AIGen-UX-01: Show "Cancel / Start Over" button after 30s on loading screen
+
+**What:** The AI generation loading screen has no escape hatch. If generation stalls, guests are stuck until the 60s AbortController fires (V4-8.1) — a 60-second wait with a frozen UI and no feedback that something is wrong. Add a "Cancel / Start Over" button that fades in after 30 seconds, allowing the guest to abort and return home immediately.
+
+**Files:**
+- `apps/frontend/src/modules/AiGenerationModule.tsx`
+
+**Input:** V4-8.1 complete (the `AbortController` ref must be accessible to the cancel button handler).
+
+**Output:**
+- Add a `showCancelButton` state (boolean, default `false`).
+- After the AI generation effect starts, start a separate `setTimeout` of 30 seconds that sets `showCancelButton = true`. Clear this timer if generation completes or errors before 30s.
+- Store the `AbortController` in a `useRef` so the cancel handler can call `.abort()` on it.
+- Render: when `showCancelButton && !error`, show a "Cancel / Start Over" button overlaid on the loading UI (above the progress bar, centered). Style: semi-transparent white or secondary color, large touch target (same sizing as existing error buttons), with a brief label: "Cancel / Start Over".
+- On click: call `controller.abort()` (which triggers the AbortError catch path in the effect) then call `onBack()` to return to home. Do not show the error state before navigating — just go home.
+- The button must not appear once the error state is shown (error has its own "Back to Home" button).
+
+**Verification:**
+- Layer 1: Lint changed file — no errors
+- Layer 2: n/a
+- Layer 3a: Run a normal fast session — confirm the cancel button does NOT appear (generation completes in < 30s).
+- Layer 3b: To test the button UI without waiting: temporarily reduce the 30s delay to 3s in a dev build, confirm the button appears and clicking it returns to home.
+
+**Risk:** Low. Additive UI element. The `AbortController` ref threading is the only non-trivial part — verify the ref is populated before the button can be tapped (generation effect always starts before 30s elapses, so the ref will be set).
