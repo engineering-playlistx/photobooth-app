@@ -1,7 +1,7 @@
 # Task Decomposition — V4 All Phases
 
 **Status:** 🔄 In Progress — Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 6 ✅, Phase 7 next
-**Scope:** Phase 1 (Carryover Quick Fixes), Phase 2 (Kiosk Startup + Event ID Settings), Phase 3 (Per-Module Customization — Types + Kiosk), Phase 4 (Per-Module Customization — Dashboard), Phase 5 (Dashboard Consolidation), Phase 6 (Analytics), Phase 7 (Electron Auto-Update), Phase 8 (AI Generation Resilience — field issues 2026-04-06)
+**Scope:** Phase 1 (Carryover Quick Fixes), Phase 2 (Kiosk Startup + Event ID Settings), Phase 3 (Per-Module Customization — Types + Kiosk), Phase 4 (Per-Module Customization — Dashboard), Phase 5 (Dashboard Consolidation), Phase 6 (Analytics), Phase 7 (Electron Auto-Update — Supabase S3 via electron-updater), Phase 8 (AI Generation Resilience — field issues 2026-04-06)
 
 **Format per task:** What · Files · Input · Output · Verification · Risk
 **Per-task workflow:** read → change → lint → test → commit → mark done (see CLAUDE.md)
@@ -650,36 +650,197 @@ Event detail overview index: add an "Analytics" card alongside the existing card
 
 ## Phase 7 — Electron Auto-Update
 
-> **Before starting Phase 7:** Verify that the Electron build is already code-signed (required for auto-update on macOS/Windows). Check `apps/frontend/forge.config.ts` (or `package.json` forge config). If code signing is not configured, this phase requires additional setup outside of this codebase (Apple Developer account, Windows code signing certificate).
+> **Before starting Phase 7:** Code signing is a hard prerequisite. `apps/frontend/forge.config.ts` currently has no `osxSign`, `osxNotarize`, or Windows codesign config. Both macOS (`electron-updater` via Squirrel.Mac) and Windows refuse to install unsigned updates. You must configure code signing in `forge.config.ts` and confirm `pnpm fe make` produces a signed installer before any of these tasks can be verified end-to-end.
 
-### V4-7.1 — Implement Electron auto-update with GitHub Releases
+> **Architecture note:** Updates are served from Supabase S3-compatible storage. Do NOT use `update-electron-app` — it uses Electron's built-in `autoUpdater` which on macOS requires a Squirrel-protocol dynamic endpoint (version-aware), incompatible with static S3 hosting. Use `electron-updater` (from `electron-builder`) instead. `electron-updater` supports S3 static hosting via YAML manifests (`latest.yml`, `latest-mac.yml`) and can be used as a standalone runtime package without switching from Electron Forge.
 
-**What:** Add `update-electron-app` to the frontend app. On startup (after the loading screen completes), silently check for updates. If a new version is available, show an operator-dismissible banner.
+---
+
+### V4-7.1 — Implement auto-update in the app (electron-updater + IPC + banner)
+
+**What:** Add `electron-updater` to the frontend app. On startup, silently check for updates against the Supabase S3 bucket. If a new version is available, download it in the background and show a non-intrusive operator-facing banner when ready. Expose `checkForUpdatesManually()` via IPC for the admin page.
 
 **Files:**
 - Read first: `apps/frontend/src/main.ts`
-- Read first: `apps/frontend/forge.config.ts` (or `package.json` forge config) — verify build setup
-- `apps/frontend/package.json` (add `update-electron-app` dependency)
-- `apps/frontend/src/main.ts` (call `updateElectronApp()`, listen for `update-downloaded`, send IPC to renderer)
-- `apps/frontend/src/preload.ts` (expose `electronAPI.onUpdateDownloaded(callback)`)
-- `apps/frontend/src/components/StartupLoader.tsx` or App root (render update banner when IPC fires)
+- Read first: `apps/frontend/src/preload.ts`
+- Read first: `apps/frontend/forge.config.ts`
+- New: `apps/frontend/src/utils/auto-update.ts`
+- `apps/frontend/package.json` (add `electron-updater` to `dependencies`)
+- `apps/frontend/src/main.ts` (import and call `setupAutoUpdater()`, add `check-for-updates` IPC handler)
+- `apps/frontend/src/preload.ts` (expose `onUpdateDownloaded`, `checkForUpdates`)
+- `apps/frontend/src/App.tsx` or app root (render update banner when `onUpdateDownloaded` fires)
 
-**Input:** V4 Phase 6 complete (kiosk and dashboard are stable; no dependency on analytics specifically). GitHub repository configured with Releases and code signing is confirmed working (`pnpm fe make` produces a signed installer).
+**Input:** V4 Phase 6 complete. Code signing confirmed working (`pnpm fe make` produces a signed installer). Supabase S3 bucket exists with the paths defined in V4-7.2.
 
-**Output:**
-- `updateElectronApp({ updateInterval: '1 hour' })` is called in `main.ts` after startup completes.
-- When `autoUpdater` emits `update-downloaded`:
-  - Main process sends IPC: `'update-downloaded'` with `{ version: string }`
-  - Renderer shows a non-blocking banner at the bottom of the screen: "Version X.Y.Z is ready to install. Restart the kiosk to apply the update." + "Restart Now" (calls `autoUpdater.quitAndInstall()`) + "Later" (dismisses banner)
-- The banner is operator-facing (styled differently from guest-facing UI — use a distinct color, small text).
-- If the kiosk is in the middle of a guest session when the update banner appears, the banner is non-intrusive and the guest flow continues unaffected.
+**Output — `apps/frontend/src/utils/auto-update.ts`:**
+```typescript
+import { autoUpdater } from "electron-updater";
+import log from "electron-log";
+
+export function setupAutoUpdater(
+  onUpdateDownloaded: (version: string) => void
+): void {
+  // Build update feed URL from env vars baked at build time
+  const endpoint = process.env.SUPABASE_S3_ENDPOINT;
+  const bucket = process.env.SUPABASE_S3_BUCKET;
+
+  if (!endpoint || !bucket) {
+    log.info("[auto-update] SUPABASE_S3_ENDPOINT or SUPABASE_S3_BUCKET not set — skipping auto-update setup");
+    return;
+  }
+
+  const updateUrl = `${endpoint}/${bucket}/app-updates/${process.platform}/${process.arch}`;
+
+  if (!updateUrl.startsWith("https://")) {
+    log.warn("[auto-update] Update URL is not HTTPS — skipping auto-update setup");
+    return;
+  }
+
+  autoUpdater.setFeedURL({ provider: "generic", url: updateUrl });
+  autoUpdater.logger = log;
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on("update-downloaded", (info) => {
+    log.info(`[auto-update] Update downloaded: ${info.version}`);
+    onUpdateDownloaded(info.version);
+  });
+
+  autoUpdater.on("error", (err) => {
+    log.error("[auto-update] Error:", err.message);
+  });
+
+  void autoUpdater.checkForUpdates();
+}
+
+export function checkForUpdatesManually(): void {
+  void autoUpdater.checkForUpdates();
+}
+
+export function quitAndInstall(): void {
+  autoUpdater.quitAndInstall();
+}
+```
+
+**Output — `apps/frontend/src/main.ts`:**
+- After `createWindow()`, call:
+  ```typescript
+  setupAutoUpdater((version) => {
+    const [win] = BrowserWindow.getAllWindows();
+    if (win) win.webContents.send("update-downloaded", { version });
+  });
+  ```
+- Add IPC handler:
+  ```typescript
+  ipcMain.handle("check-for-updates", () => {
+    checkForUpdatesManually();
+  });
+  ipcMain.handle("quit-and-install", () => {
+    quitAndInstall();
+  });
+  ```
+
+**Output — `apps/frontend/src/preload.ts`:**
+- Add to `contextBridge.exposeInMainWorld("electronAPI", { ... })`:
+  ```typescript
+  onUpdateDownloaded: (callback: (info: { version: string }) => void) => {
+    ipcRenderer.on("update-downloaded", (_event, info) => callback(info));
+    return () => ipcRenderer.removeAllListeners("update-downloaded");
+  },
+  checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
+  quitAndInstall: () => ipcRenderer.invoke("quit-and-install"),
+  ```
+
+**Output — update banner (app root or layout component):**
+- Add `updateInfo: { version: string } | null` state (default `null`).
+- On mount, call `electronAPI.onUpdateDownloaded((info) => setUpdateInfo(info))`.
+- When `updateInfo` is set, render a banner **fixed to the bottom of the screen**:
+  - Text: `"Version {version} is ready. Restart the kiosk to apply."` (small text)
+  - "Restart Now" button → calls `electronAPI.quitAndInstall()`
+  - "Later" button → sets `updateInfo(null)` (dismisses banner)
+  - Style: operator-facing (dark background, small font, distinct from guest UI)
+  - The banner must not overlap or interfere with the guest flow — use `z-index` and `pointer-events` carefully; the guest can still tap through the screen behind it.
+
+**Env vars (build-time, baked into the binary via `.env` in `extraResource`):**
+```
+SUPABASE_S3_ENDPOINT=https://<project>.supabase.co/storage/v1/object/public
+SUPABASE_S3_BUCKET=photobooth-bucket
+```
+These are infrastructure constants — same across all kiosks — so they belong in the app build, not in `kiosk.config.json`.
 
 **Verification:**
 - Layer 1: Lint all changed files — no errors
 - Layer 2: n/a
-- Layer 3: Publish a test release on GitHub tagged with a higher version than the current build; launch the kiosk (production build, not dev) — confirm the update banner appears within ~1 minute
+- Layer 3: Cannot fully test without a signed build and a published release (see V4-7.2). Verify wiring by code review: confirm `setupAutoUpdater()` is called after `createWindow()`, IPC channels are registered, and the banner renders in Storybook or a dev build with `updateInfo` manually set.
 
-**Risk:** High. Auto-update requires code signing, a GitHub release, and a production build — none of which can be tested in the dev server environment. Run `pnpm fe make` to produce a signed installer before testing. If code signing is not yet configured, complete that setup first and document it before marking this task done.
+**Risk:** High. Cannot be tested end-to-end without code signing and a production build. `electron-updater` also requires `electron-log` as a peer dependency — add it alongside `electron-updater`. The `generic` provider requires the update URL to host `latest.yml` (Windows) or `latest-mac.yml` (macOS) — these are generated in V4-7.2.
+
+---
+
+### V4-7.2 — Release pipeline: S3 bucket structure + `pnpm fe release`
+
+**What:** Define the S3 update folder structure in Supabase, add `@electron-forge/publisher-s3` to the forge config, write a `release` script, and document the full release flow. After this task, running `pnpm fe release` builds signed installers and publishes them to Supabase S3 in the format `electron-updater` expects.
+
+**Files:**
+- Read first: `apps/frontend/forge.config.ts`
+- Read first: `apps/frontend/package.json`
+- `apps/frontend/forge.config.ts` (add S3 publisher)
+- `apps/frontend/package.json` (add `release` script)
+- New: `scripts/release-notes.md` (template for release notes, referenced by manifest)
+
+**S3 bucket folder structure:**
+```
+photobooth-bucket/
+└── app-updates/
+    ├── darwin/
+    │   └── arm64/
+    │       ├── latest-mac.yml          ← manifest (electron-updater reads this)
+    │       └── photobooth-app-X.Y.Z-arm64-mac.zip
+    └── win32/
+        └── x64/
+            ├── latest.yml              ← manifest (electron-updater reads this)
+            ├── RELEASES                ← Squirrel.Windows manifest
+            └── photobooth-app-X.Y.Z Setup.exe
+```
+
+**Output — `apps/frontend/forge.config.ts`:**
+- Add `publishers` array:
+  ```typescript
+  import { PublisherS3 } from "@electron-forge/publisher-s3";
+
+  publishers: [
+    new PublisherS3({
+      bucket: process.env.SUPABASE_S3_BUCKET!,
+      endpoint: process.env.SUPABASE_S3_ENDPOINT!,
+      accessKeyId: process.env.SUPABASE_S3_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.SUPABASE_S3_SECRET_ACCESS_KEY!,
+      folder: `app-updates/${process.platform}/${process.arch}`,
+      public: true,
+    }),
+  ],
+  ```
+- Note: Supabase S3 uses the S3-compatible API endpoint — not the public storage URL. Set `endpoint` to the Supabase S3 API endpoint (format: `https://<project>.supabase.co/storage/v1/s3`).
+
+**Output — `apps/frontend/package.json` scripts:**
+- Add: `"release": "electron-forge publish"`
+
+**`latest-mac.yml` / `latest.yml` generation:**
+- `electron-updater` manifest files are generated automatically by `electron-forge publish` when using `electron-updater` version compatibility — but you may need a post-publish step to generate them. Investigate whether `@electron-forge/publisher-s3` generates these or whether a custom `afterPublish` hook is needed to run `electron-updater`'s `generateUpdatesFilesForArtifacts()` helper.
+- Document the exact publish command and any manual steps before marking this task done.
+
+**New env vars (for the person running the release — not baked into app):**
+```
+SUPABASE_S3_ACCESS_KEY_ID=...      ← Supabase S3 access key
+SUPABASE_S3_SECRET_ACCESS_KEY=...  ← Supabase S3 secret key
+```
+Add these to `apps/frontend/.env.release` (gitignored). Never commit these.
+
+**Verification:**
+- Layer 1: Lint changed files — no errors
+- Layer 2: n/a
+- Layer 3: Run `pnpm fe release` on macOS/Linux (not Windows — Wrangler path issue noted in CLAUDE.md applies here too). Confirm artifacts + `latest-mac.yml` appear in the Supabase bucket at the correct path. Launch a production build with a lower version number — confirm the update banner appears within the `autoUpdater.checkForUpdates()` call.
+
+**Risk:** High. First end-to-end test of the release pipeline. Code signing must be working. Run on a machine with all env vars set. The manifest generation step (`latest.yml` / `latest-mac.yml`) is the most likely friction point — verify it explicitly before marking done.
 
 ---
 
