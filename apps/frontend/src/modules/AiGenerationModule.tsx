@@ -86,7 +86,7 @@ export function AiGenerationModule({
   onBack,
 }: ModuleProps) {
   const { apiBaseUrl, apiClientKey, config: eventConfig } = useEventConfig();
-  const { setSuppressInactivity } = usePipeline();
+  const { setSuppressInactivity, reset } = usePipeline();
   const bg = useModuleBackground("ai-generation");
   const { customization, slideshowItems } = config as AiGenerationModuleConfig;
   const statusTextEl = useElementCustomization(
@@ -310,7 +310,7 @@ export function AiGenerationModule({
 
   const handleCancel = () => {
     controllerRef.current?.abort();
-    onBack();
+    reset();
   };
 
   return (
