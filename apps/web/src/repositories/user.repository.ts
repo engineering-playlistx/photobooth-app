@@ -2,8 +2,8 @@ import { getSupabaseAdminClient } from '../utils/supabase-admin'
 
 export interface CreateUserData {
   name: string
-  email: string
-  phone: string
+  email?: string
+  phone?: string
   photoPath: string
   selectedTheme?: string
   eventId?: string
@@ -27,8 +27,8 @@ export class UserRepository {
     const { data: user, error } = await supabase
       .rpc('upsert_user_with_visit_count', {
         p_name: data.name,
-        p_email: data.email,
-        p_phone: data.phone,
+        p_email: data.email ?? '',
+        p_phone: data.phone ?? '',
         p_photo_path: data.photoPath,
         p_selected_theme: data.selectedTheme ?? null,
         p_event_id: data.eventId ?? null,

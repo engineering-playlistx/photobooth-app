@@ -72,14 +72,16 @@ export class SubmitPhotoUseCase {
       })
     }
 
-    try {
-      await this.emailService.sendPhotoEmail({
-        recipientEmail: request.email,
-        recipientName: request.name,
-        photoUrl,
-      })
-    } catch (emailError) {
-      console.error('Failed to send email:', emailError)
+    if (request.email) {
+      try {
+        await this.emailService.sendPhotoEmail({
+          recipientEmail: request.email,
+          recipientName: request.name,
+          photoUrl,
+        })
+      } catch (emailError) {
+        console.error('Failed to send email:', emailError)
+      }
     }
 
     return {

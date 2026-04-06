@@ -5,8 +5,8 @@ import { SubmitPhotoUseCase } from '../usecases/submit-photo.usecase'
 interface RequestBody {
   photoPath: string
   name: string
-  email: string
-  phone: string
+  email?: string
+  phone?: string
   selectedTheme?: string
   eventId: string
   sessionId?: string
@@ -89,13 +89,7 @@ export const Route = createFileRoute('/api/photo')({
 
           const body = (await request.json()) as RequestBody
 
-          if (
-            !body.photoPath ||
-            !body.name ||
-            !body.email ||
-            !body.phone ||
-            !body.eventId
-          ) {
+          if (!body.photoPath || !body.name || !body.eventId) {
             return json({ error: 'Missing required fields' }, { status: 400 })
           }
 
@@ -104,15 +98,21 @@ export const Route = createFileRoute('/api/photo')({
             return json({ error: 'Invalid name' }, { status: 400 })
           }
 
-          if (body.email.length > 254 || body.phone.length > 20) {
+          const email = body.email ?? ''
+          const phone = body.phone ?? ''
+
+          if (email && email.length > 254) {
+            return json({ error: 'Invalid input' }, { status: 400 })
+          }
+          if (phone && phone.length > 20) {
             return json({ error: 'Invalid input' }, { status: 400 })
           }
 
-          if (!validateEmail(body.email)) {
+          if (email && !validateEmail(email)) {
             return json({ error: 'Invalid email format' }, { status: 400 })
           }
 
-          if (!validatePhone(body.phone)) {
+          if (phone && !validatePhone(phone)) {
             return json(
               {
                 error:
@@ -122,20 +122,13 @@ export const Route = createFileRoute('/api/photo')({
             )
           }
 
-          const standardizedPhone = standardizePhone(body.phone)
-
-          if (!standardizedPhone) {
-            return json(
-              { error: 'Invalid phone number format' },
-              { status: 400 },
-            )
-          }
+          const standardizedPhone = phone ? standardizePhone(phone) : ''
 
           const submitPhotoUseCase = new SubmitPhotoUseCase()
           const result = await submitPhotoUseCase.execute({
             photoPath: body.photoPath,
             name: sanitizedName,
-            email: body.email,
+            email,
             phone: standardizedPhone,
             selectedTheme: body.selectedTheme,
             eventId: body.eventId,
