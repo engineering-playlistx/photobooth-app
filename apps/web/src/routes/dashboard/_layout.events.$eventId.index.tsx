@@ -140,6 +140,21 @@ function EventDetailPage() {
             →
           </span>
         </Link>
+        <Link
+          to="/dashboard/events/$eventId/analytics"
+          params={{ eventId: event.id }}
+          className="flex items-center justify-between p-4 bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-lg transition-colors group"
+        >
+          <div>
+            <p className="font-medium text-white">Analytics</p>
+            <p className="text-sm text-slate-400 mt-0.5">
+              Visits, unique guests, and daily trend
+            </p>
+          </div>
+          <span className="text-slate-500 group-hover:text-slate-300 transition-colors">
+            →
+          </span>
+        </Link>
       </div>
     </div>
   )
