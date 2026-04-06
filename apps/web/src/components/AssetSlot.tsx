@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
 import { SUPABASE_BUCKET } from '../utils/constants'
@@ -72,14 +72,30 @@ export function AssetSlot({
   const [uploading, setUploading] = useState(false)
   const [removing, setRemoving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    }
+  }, [])
+
+  const showSaved = () => {
+    setSaved(true)
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    savedTimerRef.current = setTimeout(() => setSaved(false), 2000)
+  }
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
     setError(null)
+    setSaved(false)
     try {
       await onUpload(file)
+      showSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
@@ -92,8 +108,10 @@ export function AssetSlot({
     if (!onRemove) return
     setRemoving(true)
     setError(null)
+    setSaved(false)
     try {
       await onRemove()
+      showSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Remove failed')
     } finally {
@@ -124,6 +142,9 @@ export function AssetSlot({
           <p className="text-xs text-slate-500 truncate mb-1">{currentUrl}</p>
         )}
         {error && <p className="text-xs text-red-400 mb-1">{error}</p>}
+        {saved && !error && (
+          <p className="text-xs text-green-400 mb-1">Saved</p>
+        )}
       </div>
       <div className="shrink-0 flex flex-col gap-1.5">
         <input

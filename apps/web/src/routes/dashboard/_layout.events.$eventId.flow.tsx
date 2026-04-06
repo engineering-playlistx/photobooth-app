@@ -407,7 +407,12 @@ function FlowBuilderPage() {
       },
     })
     await saveModuleBackground({ data: { eventId, moduleId, publicUrl } })
-    setBackgrounds((prev) => ({ ...prev, [moduleId]: publicUrl }))
+    // Append a cache-bust param so the dashboard always shows the freshly uploaded
+    // image even when the Supabase path (and thus URL) is the same as before.
+    setBackgrounds((prev) => ({
+      ...prev,
+      [moduleId]: `${publicUrl}?t=${Date.now()}`,
+    }))
   }
 
   const handleBackgroundRemove = async (moduleId: string) => {

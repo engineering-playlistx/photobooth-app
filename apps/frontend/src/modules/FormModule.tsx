@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback } from "react";
 import { getAssetPath } from "../utils/assets";
 import { useModuleBackground } from "../hooks/useModuleBackground";
 import { useElementCustomization } from "../hooks/useElementCustomization";
+import { useEventConfig } from "../contexts/EventConfigContext";
 import SimpleKeyboard from "../components/SimpleKeyboard";
 import type { FormModuleConfig } from "@photobooth/types";
 import type { ModuleProps } from "./types";
@@ -11,6 +12,9 @@ import type { ModuleProps } from "./types";
 export function FormModule({ config, onComplete, onBack }: ModuleProps) {
   const bg = useModuleBackground("form");
   const { customization } = config as FormModuleConfig;
+  const { config: eventConfig } = useEventConfig();
+  const formFields = eventConfig.formFields;
+
   const headerEl = useElementCustomization(
     customization,
     "form",
@@ -36,9 +40,17 @@ export function FormModule({ config, onComplete, onBack }: ModuleProps) {
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const activeInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Build an ordered list of the visible text inputs so {enter} can advance
+  // through them regardless of which fields are enabled.
+  const visibleInputRefs = [
+    formFields.name ? nameInputRef : null,
+    formFields.email ? emailInputRef : null,
+    formFields.phone ? phoneInputRef : null,
+  ].filter(Boolean) as React.RefObject<HTMLInputElement>[];
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!isConsentChecked) {
+    if (formFields.consent && !isConsentChecked) {
       setConsentError(true);
       return;
     }
@@ -89,11 +101,13 @@ export function FormModule({ config, onComplete, onBack }: ModuleProps) {
           " " +
           currentValue.slice(selectionEnd);
       } else if (button === "{enter}") {
-        // Move to next input
-        if (input === nameInputRef.current && emailInputRef.current) {
-          emailInputRef.current.focus();
-        } else if (input === emailInputRef.current && phoneInputRef.current) {
-          phoneInputRef.current.focus();
+        // Advance to the next visible input, or close keyboard if at the last
+        const currentIdx = visibleInputRefs.findIndex(
+          (ref) => ref.current === input,
+        );
+        const nextRef = visibleInputRefs[currentIdx + 1];
+        if (nextRef?.current) {
+          nextRef.current.focus();
         } else {
           setShowKeyboard(false);
           input.blur();
@@ -139,7 +153,7 @@ export function FormModule({ config, onComplete, onBack }: ModuleProps) {
         }
       });
     },
-    [nameInputRef, emailInputRef, phoneInputRef],
+    [nameInputRef, emailInputRef, phoneInputRef, formFields],
   );
 
   return (
@@ -186,94 +200,108 @@ export function FormModule({ config, onComplete, onBack }: ModuleProps) {
           onSubmit={handleSubmit}
         >
           <div className="flex flex-col gap-5">
-            <label className="font-medium mb-0 mt-2" htmlFor="name">
-              Name
-            </label>
-            <input
-              ref={nameInputRef}
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-              placeholder="e.g. Alonso"
-              className="w-full px-6 py-6 text-3xl lg:text-4xl font-medium bg-white rounded-xl border border-secondary/40 focus:outline-none focus:border-tertiary transition-all"
-              autoComplete="off"
-              required
-              autoFocus
-            />
-          </div>
-
-          <div className="flex flex-col gap-5">
-            <label className="font-medium mb-0 mt-2" htmlFor="email">
-              E-mail Address
-            </label>
-            <input
-              ref={emailInputRef}
-              id="email"
-              type="text"
-              inputMode="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-              placeholder="e.g. yourname@shell.com"
-              className="w-full px-6 py-6 text-3xl lg:text-4xl font-medium bg-white rounded-xl border border-secondary/40 focus:outline-none focus:border-tertiary transition-all"
-              autoComplete="off"
-              pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col gap-5">
-            <label className="font-medium mb-0 mt-2" htmlFor="phone">
-              Phone Number
-            </label>
-            <input
-              ref={phoneInputRef}
-              id="phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-              placeholder="e.g. 0812-6738-1902"
-              className="w-full px-6 py-6 text-3xl lg:text-4xl font-medium bg-white rounded-xl border border-secondary/40 focus:outline-none focus:border-tertiary transition-all"
-              autoComplete="off"
-              pattern="(\+62|62|0)[0-9\-]{9,15}"
-              title="Please enter a valid phone number, example: 0812-3456-7890 or +6281234567890"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col gap-2 mt-8">
-            <div className="flex items-start gap-3">
-              <input
-                id="consent"
-                type="checkbox"
-                checked={isConsentChecked}
-                onChange={(e) => {
-                  setIsConsentChecked(e.target.checked);
-                  if (e.target.checked) setConsentError(false);
-                }}
-                className="mt-1 w-6 h-6 accent-tertiary border-secondary/50 rounded"
-                style={{ minWidth: "1.5rem", minHeight: "1.5rem" }}
-              />
-              <label
-                htmlFor="consent"
-                className="text-lg lg:text-2xl font-sans select-none"
-              >
-                I consent to the collection and use of my personal data so I can
-                receive and download my photo.
-              </label>
-            </div>
-            {consentError && (
-              <p className="text-red-500 text-xl font-medium ml-9">
-                Please tick the consent checkbox to continue.
-              </p>
+            {formFields.name && (
+              <>
+                <label className="font-medium mb-0 mt-2" htmlFor="name">
+                  Name
+                </label>
+                <input
+                  ref={nameInputRef}
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
+                  placeholder="e.g. Alonso"
+                  className="w-full px-6 py-6 text-3xl lg:text-4xl font-medium bg-white rounded-xl border border-secondary/40 focus:outline-none focus:border-tertiary transition-all"
+                  autoComplete="off"
+                  required
+                  autoFocus
+                />
+              </>
             )}
           </div>
+
+          <div className="flex flex-col gap-5">
+            {formFields.email && (
+              <>
+                <label className="font-medium mb-0 mt-2" htmlFor="email">
+                  E-mail Address
+                </label>
+                <input
+                  ref={emailInputRef}
+                  id="email"
+                  type="text"
+                  inputMode="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
+                  placeholder="e.g. yourname@shell.com"
+                  className="w-full px-6 py-6 text-3xl lg:text-4xl font-medium bg-white rounded-xl border border-secondary/40 focus:outline-none focus:border-tertiary transition-all"
+                  autoComplete="off"
+                  pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
+                  required
+                />
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-5">
+            {formFields.phone && (
+              <>
+                <label className="font-medium mb-0 mt-2" htmlFor="phone">
+                  Phone Number
+                </label>
+                <input
+                  ref={phoneInputRef}
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
+                  placeholder="e.g. 0812-6738-1902"
+                  className="w-full px-6 py-6 text-3xl lg:text-4xl font-medium bg-white rounded-xl border border-secondary/40 focus:outline-none focus:border-tertiary transition-all"
+                  autoComplete="off"
+                  pattern="(\+62|62|0)[0-9\-]{9,15}"
+                  title="Please enter a valid phone number, example: 0812-3456-7890 or +6281234567890"
+                  required
+                />
+              </>
+            )}
+          </div>
+
+          {formFields.consent && (
+            <div className="flex flex-col gap-2 mt-8">
+              <div className="flex items-start gap-3">
+                <input
+                  id="consent"
+                  type="checkbox"
+                  checked={isConsentChecked}
+                  onChange={(e) => {
+                    setIsConsentChecked(e.target.checked);
+                    if (e.target.checked) setConsentError(false);
+                  }}
+                  className="mt-1 w-6 h-6 accent-tertiary border-secondary/50 rounded"
+                  style={{ minWidth: "1.5rem", minHeight: "1.5rem" }}
+                />
+                <label
+                  htmlFor="consent"
+                  className="text-lg lg:text-2xl font-sans select-none"
+                >
+                  I consent to the collection and use of my personal data so I
+                  can receive and download my photo.
+                </label>
+              </div>
+              {consentError && (
+                <p className="text-red-500 text-xl font-medium ml-9">
+                  Please tick the consent checkbox to continue.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-center mt-8">
             <button
