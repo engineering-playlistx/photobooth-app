@@ -704,6 +704,7 @@ WIN_CERT_PASSWORD=your-pfx-password
 **Packages to add:**
 - `update-electron-app@^3.1.2` → `dependencies`
 - `electron-log` → `dependencies` (logger for `update-electron-app`)
+- `dotenv` → `dependencies` (loads bundled `.env` into `process.env` in the main process at runtime)
 
 **Files:**
 - Read first: `apps/frontend/src/main.ts`
@@ -918,7 +919,9 @@ photobooth-bucket/
 Add a `getUpdateBaseUrl()` helper at the top of the file (mirrors the one in `auto-update.ts` — both must produce the same URL):
 ```typescript
 import dotenv from "dotenv";
-dotenv.config({ path: ".env.prod" });
+// .env contains the public build-time vars (VITE_SUPABASE_URL, SUPABASE_S3_BUCKET).
+// .env.secret contains S3 credentials — gitignored, only needed at publish time.
+dotenv.config({ path: ".env" });
 dotenv.config({ path: ".env.secret", override: false });
 
 function getUpdateBaseUrl(): string | undefined {
@@ -942,9 +945,14 @@ const isPublishing = process.env.PUBLISHING === "true";
 ```
 
 Update makers to embed the URL into the installer at build time:
+
+> **Merge note:** V4-7.0 adds `certificateFile` and `certificatePassword` to `MakerSquirrel`. When implementing this task, merge both sets of options into a single function-form constructor — do not overwrite the signing config:
+
 ```typescript
-// Windows: tells Squirrel where the RELEASES manifest lives
+// Windows: merge signing config (from V4-7.0) + update URL (from V4-7.2)
 new MakerSquirrel((arch) => ({
+  certificateFile: process.env.WIN_CERT_PATH,
+  certificatePassword: process.env.WIN_CERT_PASSWORD,
   remoteReleases:
     isPublishing && updateBaseUrl
       ? `${updateBaseUrl}/win32/${arch}`
@@ -1059,18 +1067,21 @@ void main();
 
 **Env file separation:**
 
-`.env.prod` — bundled into the packaged app via `extraResource` (already done via `.env`). Contains only public vars:
+`.env` — already exists; already bundled via `packagerConfig.extraResource` in `forge.config.ts`. No rename needed. Add the two update-related vars:
 ```
 VITE_SUPABASE_URL=https://<project>.supabase.co
 SUPABASE_S3_BUCKET=photobooth-bucket
 ```
+These are public constants — same across all kiosks. The `forge.config.ts` dotenv call (`dotenv.config({ path: ".env" })`) and the runtime `main.ts` dotenv call (`dotenv.config({ path: path.join(process.resourcesPath, ".env") })`) both read from this same file — at build time and at runtime respectively.
 
-`.env.secret` — gitignored, only needed by the person running `pnpm fe release`. Never bundled into the app:
+`.env.secret` — new file, gitignored. Only needed by the person running `pnpm fe release`. **Never** add to `extraResource`. Contains S3 credentials for uploading:
 ```
 SUPABASE_S3_ENDPOINT=https://<project>.supabase.co/storage/v1/s3
 SUPABASE_S3_REGION=ap-southeast-1
 SUPABASE_S3_ACCESS_KEY_ID=...
 SUPABASE_S3_SECRET_ACCESS_KEY=...
+WIN_CERT_PATH=/path/to/certificate.pfx     ← from V4-7.0
+WIN_CERT_PASSWORD=your-pfx-password        ← from V4-7.0
 ```
 
 Add `.env.secret` to `apps/frontend/.gitignore`. The S3 secret key must never appear in `extraResource` — the packaged app only needs the public Supabase URL to check for updates, not credentials to upload them.
