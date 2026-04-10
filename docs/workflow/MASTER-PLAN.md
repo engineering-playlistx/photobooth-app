@@ -54,21 +54,14 @@ Per-event, per-module asset uploads via dashboard (frames, templates, background
 
 Delivered by: [`scale-up-v3`](projects/scale-up-v3/)
 
-### V4 — Platform Polish + Deep Customization ← Current Target
-Polished kiosk startup with asset pre-loading and error handling; deep per-module customization (copy, inline CSS) from the dashboard; unified flow builder as the single configuration hub; basic analytics; kiosk event ID persistence (no manual JSON editing).
+### ✅ V4 — Platform Polish + Deep Customization
+**Done:** 2026-04-10
 
-Definition of done:
-- Kiosk startup loading screen with progress bar; assets pre-loaded before first module renders
-- Kiosk handles all negative startup cases (network error, backend error) with operator-facing messages
-- Kiosk has persistent event ID selection — no manual `kiosk.config.json` edits
-- Per-module copy and inline CSS customizable from dashboard flow builder
-- Result module has configurable feature toggles (email, QR, printing) per event
-- Dashboard flow builder is the single config hub — assets and module-specific config inline in panels
-- Basic analytics: total visits, unique guests, daily trend per event
+Polished kiosk startup with asset pre-loading and error handling; deep per-module customization (copy, inline CSS) from the dashboard; unified flow builder as the single configuration hub; basic analytics; kiosk event ID persistence (no manual JSON editing).
 
 > Electron auto-update was scoped out of V4 — blocked on Windows code signing. Parked at [`docs/workflow/projects/[parked]-auto-update/`](projects/[parked]-auto-update/).
 
-Being planned by: [`scale-up-v4`](projects/scale-up-v4/)
+Delivered by: [`scale-up-v4`](projects/scale-up-v4/)
 
 ### V5 — Multi-Tenant SaaS (Future)
 Organizations layer, client account management, client dashboard access, automated reporting and email delivery, AI provider fallback chain, config version history.

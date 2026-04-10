@@ -1,6 +1,6 @@
 # Task Decomposition — V4 All Phases
 
-**Status:** 🔄 In Progress — Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 6 ✅, Phase 8 next
+**Status:** ✅ Complete — Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Phase 6 ✅, Phase 8 ✅ (Phase 7 parked — see [parked]-auto-update project)
 **Scope:** Phase 1 (Carryover Quick Fixes), Phase 2 (Kiosk Startup + Event ID Settings), Phase 3 (Per-Module Customization — Types + Kiosk), Phase 4 (Per-Module Customization — Dashboard), Phase 5 (Dashboard Consolidation), Phase 6 (Analytics), Phase 8 (AI Generation Resilience — field issues 2026-04-06)
 
 > **Phase 7 (Electron Auto-Update) has been parked.** It is blocked on Windows code signing (certificate not yet obtained) and was too heavy to carry alongside V4. The full plan lives at [`docs/workflow/projects/[parked]-auto-update/01-plan.md`](../[parked]-auto-update/01-plan.md).
