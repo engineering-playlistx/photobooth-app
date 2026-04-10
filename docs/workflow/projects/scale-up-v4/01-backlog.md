@@ -129,7 +129,7 @@ All default to `true` for backward compatibility. Dashboard: result module panel
 **Category:** Ops
 **Issue:** Kiosk updates require manual USB install — the operator physically brings a USB drive to each kiosk, installs a new build. This is operationally expensive and creates version drift risk (some kiosks miss updates).
 **Context:** Tracked as GAP-02 since V2. Re-flagged by creator in V4 feedback.
-**Suggested fix:** Implement Electron auto-update using `update-electron-app` (wraps `autoUpdater`) with GitHub Releases as the update source. On startup, the kiosk silently checks for updates. If a new version is available, show a banner: "A new version is available. Restart to update." with an Update Now button. Requires code signing of the build for macOS/Windows.
+**Status: ⏸️ Parked.** Full plan (architecture, code, release pipeline) lives at [`docs/workflow/projects/[parked]-auto-update/01-plan.md`](../../[parked]-auto-update/01-plan.md). Blocked on Windows code signing certificate. Uses `update-electron-app@^3.x` with `UpdateSourceType.StaticStorage` against Supabase S3 — not GitHub Releases.
 
 ---
 
@@ -179,7 +179,7 @@ These items were explicitly marked out-of-scope in `scale-up-v3/01-scope.md`.
 
 ## Part D — Post-V5 Field Issues (Found During Testing 2026-04-06)
 
-### AIGen-FIX-01 — AI generation hangs silently on slow network (no fetch timeout)
+### ~~AIGen-FIX-01 — AI generation hangs silently on slow network (no fetch timeout)~~ ✅ Done (V4-8.1)
 
 **Category:** Resilience / UX
 **Issue:** When the AI generation response body is slow to stream (large base64 image on a degraded network), `AiGenerationModule` freezes on the loading screen indefinitely with no error, no timeout, and no escape. Root cause: `createResponse.json()` at line 174 of `AiGenerationModule.tsx` blocks until the full response body arrives — but there is no `AbortController` or timeout guarding the `fetch` call. The response headers arrive quickly (HTTP 200 is logged), giving the false impression of success, while the multi-MB body streams infinitely slowly. Since no exception is thrown (a stalled stream ≠ a dropped connection), the catch block never fires.
@@ -196,7 +196,7 @@ These items were explicitly marked out-of-scope in `scale-up-v3/01-scope.md`.
 
 ---
 
-### AIGen-UX-01 — No escape hatch while AI generation is loading
+### ~~AIGen-UX-01 — No escape hatch while AI generation is loading~~ ✅ Done (V4-8.2)
 
 **Category:** UX / Resilience
 **Issue:** During AI generation the UI is a full-screen slideshow with a progress bar and no interactive controls. If generation stalls (slow network, backend issue, or any hang), the guest is completely stuck — there is no way to cancel, retry, or go back to the home screen without an operator physically restarting the kiosk. Even after AIGen-FIX-01 is applied (60s abort), a guest must wait the full 60 seconds before the error state and Retry/Back buttons appear.

@@ -182,23 +182,16 @@ Key decisions captured there:
 
 ## Rough Phase Plan
 
-| Phase | Focus | Backlog Items |
-|-------|-------|---------------|
-| V4-Phase 1 | Carryover quick fixes | UX-01, GAP-06, SCALE-01, CODE-01 |
-| V4-Phase 2 | Kiosk startup loading + event ID settings | LOAD-01, LOAD-02, GAP-07, MULTI-01 |
-| V4-Phase 3 | Per-module customization — types + kiosk | CUSTOM-01, CUSTOM-02, CUSTOM-04 |
-| V4-Phase 4 | Per-module customization — dashboard | CUSTOM-01 (dashboard), CUSTOM-02 (dashboard), CUSTOM-04 (dashboard) |
-| V4-Phase 5 | Dashboard consolidation | DASH-01, DASH-02 |
-| V4-Phase 6 | Analytics | ANALYTICS-01 |
-| V4-Phase 7 | Electron auto-update | AUTO-01 |
-
-**Ordering rationale:**
-- Phase 1 first: bounded fixes that unblock smooth development.
-- Phase 2 before Phase 3: the startup loader is the entry point for the kiosk — building it first means Phase 3+ features are always tested in the correct startup context.
-- Phase 3 before Phase 4: type changes (Phase 3) must be in place before the dashboard UI (Phase 4) can read them.
-- Phase 5 (dashboard consolidation) is independent of Phases 3–4 but benefits from Phase 4 being done so that module panels are already expanded with config — the consolidation is additive to what Phase 4 built.
-- Phase 6 (analytics) is fully independent — schedule after Phase 5.
-- Phase 7 (auto-update) is fully independent — schedule last as it requires release infrastructure setup.
+| Phase | Focus | Backlog Items | Status |
+|-------|-------|---------------|--------|
+| V4-Phase 1 | Carryover quick fixes | UX-01, GAP-06, SCALE-01, CODE-01 | ✅ |
+| V4-Phase 2 | Kiosk startup loading + event ID settings | LOAD-01, LOAD-02, GAP-07, MULTI-01 | ✅ |
+| V4-Phase 3 | Per-module customization — types + kiosk | CUSTOM-01, CUSTOM-02, CUSTOM-04 | ✅ |
+| V4-Phase 4 | Per-module customization — dashboard | CUSTOM-01 (dashboard), CUSTOM-02 (dashboard), CUSTOM-04 (dashboard) | ✅ |
+| V4-Phase 5 | Dashboard consolidation | DASH-01, DASH-02 | ✅ |
+| V4-Phase 6 | Analytics | ANALYTICS-01 | ✅ |
+| V4-Phase 7 | Electron auto-update | AUTO-01 | ⏸️ Parked — see [`[parked]-auto-update`](../[parked]-auto-update/01-plan.md) |
+| V4-Phase 8 | AI generation resilience (field issues 2026-04-06) | AIGen-FIX-01, AIGen-UX-01 | ✅ |
 
 ---
 

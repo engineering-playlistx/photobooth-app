@@ -19,7 +19,8 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 **V1 complete ✅ (2026-04-01).** Config-driven, multi-client ready.
 **V2 complete ✅ (2026-04-02).** Modular pipeline, flow builder, session model, Mini Quiz.
 **V3 complete ✅ (2026-04-05).** Remote asset management + carryover fixes.
-**V4 in progress 🔄.** Platform polish + deep customization — see `docs/workflow/projects/scale-up-v4/`.
+**V4 complete ✅ (2026-04-10).** Platform polish + deep customization.
+**V5 not yet started.** Multi-tenant SaaS — next milestone.
 
 ### Workflow Documents
 
@@ -30,7 +31,8 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 | `docs/workflow/projects/scale-up-v1/` | V1 migration — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v2/` | V2 modular pipeline — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v3/` | V3 remote asset management — COMPLETE ✅ |
-| `docs/workflow/projects/scale-up-v4/` | V4 platform polish + deep customization — IN PROGRESS 🔄 |
+| `docs/workflow/projects/scale-up-v4/` | V4 platform polish + deep customization — COMPLETE ✅ |
+| `docs/workflow/projects/[parked]-auto-update/` | Electron auto-update — ⏸️ PARKED (blocked on Windows code signing) |
 
 ### V4 Project Docs (`docs/workflow/projects/scale-up-v4/`)
 
@@ -39,9 +41,9 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 | `00-creator-feedback.md` | Raw creator feedback after V3 testing — input for V4 planning |
 | `01-backlog.md` | Carryover items from V3 + creator feedback items |
 | `01-scope.md` | V4 scope statement, definition of done, architecture decisions |
-| `02-task-decomposition.md` | Atomic executable tasks — Phases 1–7 |
+| `02-task-decomposition.md` | Atomic executable tasks — Phases 1–6 ✅, Phase 7 parked, Phase 8 ✅ |
 
-**Current status:** V4 in planning. All V3 phases complete. Begin with V4-1.1 (UX-01 — print button tooltip).
+**Current status:** V4 complete. Next: plan V5 (Multi-Tenant SaaS) or resume parked auto-update when code signing is ready.
 
 ---
 
