@@ -169,18 +169,14 @@ This is the V4 multi-tenancy foundation. An `organizations` table, client accoun
 
 ### G — Electron auto-update
 
-**Decision: Use `update-electron-app@^3.x` with `UpdateSourceType.StaticStorage` — update files served from Supabase S3, not GitHub Releases.**
+**Status: ⏸️ Parked — moved out of V4 scope.**
 
-> The original decision (GitHub Releases) was revised during Phase 7 planning. `update-electron-app` v3 added `StaticStorage` mode which reads static `RELEASES` manifests directly from a public S3-compatible URL. This avoids GitHub Releases entirely and keeps assets co-located with the rest of the project's cloud infrastructure (Supabase).
+Blocked on Windows code signing (certificate not yet obtained). Full architecture decisions and task specs live at [`docs/workflow/projects/[parked]-auto-update/01-plan.md`](../[parked]-auto-update/01-plan.md).
 
-Implementation:
-1. Add `update-electron-app@^3.x` and `electron-log` to `apps/frontend` dependencies
-2. Add `dotenv` to `apps/frontend` dependencies — needed to load the bundled `.env` (extraResource) into `process.env` in the main process at runtime
-3. Call `setupAutoUpdater()` in `main.ts` after `createWindow()`, production builds only (`!isDev`)
-4. `autoUpdater` emits `update-downloaded` → send IPC to renderer → show an operator-facing banner fixed to the bottom of the screen; do NOT use `notifyUser: true` (native dialogs interrupt guest sessions)
-5. Code signing is a hard prerequisite — Windows and macOS both refuse unsigned installers. See V4-7.0 in `02-task-decomposition.md`.
-
-Update server: Supabase Storage bucket (`photobooth-bucket/app-updates/{platform}/{arch}/`). Installer + `RELEASES` manifest are published there by `pnpm fe release` (see V4-7.2). macOS auto-update is deferred until code signing + notarization are set up; Windows-only for the initial release.
+Key decisions captured there:
+- Use `update-electron-app@^3.x` with `UpdateSourceType.StaticStorage` (Supabase S3, not GitHub Releases)
+- Windows-only initially; macOS deferred until notarization is set up
+- Unblock condition: EV or OV code signing certificate obtained + signed installer verified
 
 ---
 
