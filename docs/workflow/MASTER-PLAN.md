@@ -63,8 +63,13 @@ Polished kiosk startup with asset pre-loading and error handling; deep per-modul
 
 Delivered by: [`scale-up-v4`](projects/scale-up-v4/)
 
-### V5 — Multi-Tenant SaaS (Future)
-Organizations layer, client account management, client dashboard access, automated reporting and email delivery, AI provider fallback chain, config version history.
+### V5 — Multi-Tenant Foundation (Organizations Layer)
+`organizations` table above events; all events scoped to an org; dashboard org management and org-filtered event list; two multi-event resilience fixes (offline session start, photos pagination). No client accounts — internal operator use only.
+
+Delivered by: [`scale-up-v5`](projects/scale-up-v5/)
+
+### V6 — Multi-Tenant SaaS (Future)
+Client account management, client dashboard login and self-serve access, automated reporting and email delivery, AI provider fallback chain, config version history, nested org routing.
 
 ---
 
@@ -76,6 +81,7 @@ Organizations layer, client account management, client dashboard access, automat
 | `scale-up-v2` | V2 | ✅ Done | [projects/scale-up-v2/](projects/scale-up-v2/) |
 | `scale-up-v3` | V3 | ✅ Done | [projects/scale-up-v3/](projects/scale-up-v3/) |
 | `scale-up-v4` | V4 | ✅ Done | [projects/scale-up-v4/](projects/scale-up-v4/) |
+| `scale-up-v5` | V5 | 🔜 Planning | [projects/scale-up-v5/](projects/scale-up-v5/) |
 | `[parked]-auto-update` | — | ⏸️ Parked | [projects/[parked]-auto-update/](projects/[parked]-auto-update/) |
 
 ---
