@@ -56,15 +56,16 @@ CREATE TABLE organizations (
 - `apps/web/supabase/migrations/20260331000000_create_event_configs.sql` (for events table structure)
 
 **Files to read first:**
-- `apps/web/supabase/migrations/20260331000000_create_event_configs.sql` — read to confirm the actual events table name before writing the migration (it may be `event_configs` or `events`)
+- `apps/web/supabase/migrations/20260331000000_create_event_configs.sql` — read to confirm column names and constraints on the `events` table before adding to it
 
 **Files to create:**
 - `apps/web/supabase/migrations/20260413000001_add_organization_id_to_events.sql`
 
-**Migration content (substitute the correct table name confirmed above):**
+**Migration content:**
 ```sql
 -- Step 1: add nullable FK
-ALTER TABLE event_configs  -- replace with actual table name if different
+-- Table name is `events` (confirmed from dashboard query: .from('events'))
+ALTER TABLE events
   ADD COLUMN organization_id UUID REFERENCES organizations(id);
 
 -- Step 2: seed default org and backfill
@@ -74,25 +75,25 @@ WITH inserted AS (
   VALUES ('Shell', 'shell-racing')
   RETURNING id
 )
-UPDATE event_configs
+UPDATE events
 SET organization_id = inserted.id
 FROM inserted
 WHERE organization_id IS NULL;
 
--- Fallback if the CTE UPDATE doesn't work in the Supabase SQL editor:
+-- Fallback if the Supabase SQL editor rejects the CTE UPDATE:
 -- INSERT INTO organizations (name, slug) VALUES ('Shell', 'shell-racing');
--- UPDATE event_configs SET organization_id = (SELECT id FROM organizations WHERE slug = 'shell-racing') WHERE organization_id IS NULL;
+-- UPDATE events SET organization_id = (SELECT id FROM organizations WHERE slug = 'shell-racing') WHERE organization_id IS NULL;
 
 -- Step 3: enforce NOT NULL
-ALTER TABLE event_configs
+ALTER TABLE events
   ALTER COLUMN organization_id SET NOT NULL;
 ```
 
 **Manual step (you do this):** Run the migration in the Supabase SQL editor. Use the CTE approach first; fall back to the two-statement approach if the SQL editor rejects it.
 
 **Verification:**
-1. `SELECT COUNT(*) FROM event_configs WHERE organization_id IS NULL;` → returns 0
-2. `SELECT e.id, o.name FROM event_configs e JOIN organizations o ON e.organization_id = o.id LIMIT 5;` → returns rows with "Shell" (substitute correct table name)
+1. `SELECT COUNT(*) FROM events WHERE organization_id IS NULL;` → returns 0
+2. `SELECT e.id, o.name FROM events e JOIN organizations o ON e.organization_id = o.id LIMIT 5;` → returns rows with "Shell"
 
 ---
 
@@ -290,24 +291,34 @@ PATCH /api/organizations/:orgId  → { organization: Organization }   body: { na
 
 ---
 
-### TASK-3.4 — Event creation: org selector
+### TASK-3.4 — Event creation form (new feature + org selector)
 
-**What:** Add a required organization dropdown to the new event creation form.
+**What:** Build event creation from scratch — there is currently no way to create an event from the dashboard. The form must include org assignment as a required field.
 
 **Input state:** TASK-3.3 complete.
 
 **Files to read first:**
-- `apps/web/src/routes/dashboard/_layout.index.tsx` — the create event form is likely here (inline or as a modal). Read fully to locate it before changing anything.
+- `apps/web/src/routes/dashboard/_layout.index.tsx` — read fully; this is where the "New Event" button and form will live
+- `apps/web/src/routes/dashboard/_layout.events.$eventId.config.tsx` — read for form UI pattern and the shape of an event config
 
 **Files to change:**
-- Event creation form — add `organizationId` dropdown (required, lists all orgs)
-- Event creation API call — pass `organizationId` in POST body
-- Backend event creation handler — accept and save `organizationId`
+- `apps/web/src/routes/dashboard/_layout.index.tsx` — add "New Event" button + creation form (inline or modal)
+
+**Form fields:**
+- Name (text, required)
+- Organization (dropdown, required — lists all orgs)
+- Status (select: `draft` / `active`, default `draft`)
+
+**Backend:**
+- Add a `createEvent` server function (same file or new file) that inserts into the `events` table with `name`, `organization_id`, `status`
+- Minimum viable event row — no module flow required at creation; that's configured in the flow builder after creation
 
 **Verification:**
-1. Open create event form → org dropdown is visible and populated
-2. Submit without selecting org → validation error
-3. Submit with org selected → event is created and appears in the org's event list
+1. Events list shows a "New Event" button
+2. Form opens, org dropdown is populated with existing orgs
+3. Submit without org → validation error
+4. Submit with all fields → event is created, appears in the list with correct org label
+5. Clicking "View →" on the new event opens the event detail page without errors
 
 ---
 

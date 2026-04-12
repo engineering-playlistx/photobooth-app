@@ -19,6 +19,7 @@ One sentence: **This project delivers an `organizations` data layer above events
 - All existing events are assigned to a default "Shell" organization (zero data loss)
 - Dashboard has an organizations list page: view all orgs, create a new org
 - Dashboard events list is scoped and grouped by organization
+- Dashboard has a "New Event" form: name, org (required), status — events can be created without leaving the dashboard
 - New event creation requires selecting an organization
 - Kiosk behavior is completely unchanged — it still uses `eventId` only, org layer is invisible to kiosk
 - `POST /api/session/start` from the kiosk fails silently when offline — guest session proceeds without a `sessionId`
