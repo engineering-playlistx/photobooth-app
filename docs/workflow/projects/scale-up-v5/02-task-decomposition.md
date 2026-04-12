@@ -6,6 +6,21 @@
 
 ---
 
+## Verified Facts
+
+Facts confirmed by reading the codebase during planning — not inferred from filenames or prior docs.
+
+| Fact | Source | Confirmed value |
+|------|--------|-----------------|
+| Events table name | `_layout.index.tsx` loader (`.from('events')`) | `events` |
+| Dashboard data-fetch pattern | `_layout.index.tsx` | TanStack Start `createServerFn` — not bearer-auth API routes |
+| Migration timestamp format | Latest migration file (`20260406000000_...`) | `YYYYMMDDHHMMSS` |
+| Session start fetch location | `PipelineRenderer.tsx` line ~37 | `fetch(\`${apiBaseUrl}/api/session/start\`, ...)` inside `useEffect` |
+| Photos `.list()` location | `_layout.events.$eventId.photos.tsx` lines 23–25, 65–67 | Two unbounded `.list()` calls, no `limit`/`offset` |
+| Event creation UI | `_layout.index.tsx` (read fully) | Does not exist — no form, no server function, no "New Event" button |
+
+---
+
 ## How to use this document
 
 - Each task is executable in a single Claude Code session

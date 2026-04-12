@@ -133,6 +133,16 @@ Planning sessions are separate from execution sessions. They produce or sharpen 
 **Step 1 — Input gathering (Claude reads, you provide)**
 Claude reads: the previous version's task decomposition, backlog, and any creator feedback. You provide: context that isn't in the docs (feedback from testing, changed priorities, new constraints).
 
+**Step 1b — Codebase verification (Claude reads code, not just docs)**
+Before writing any task spec, Claude reads the actual codebase to confirm facts the specs will depend on. Assumptions drawn from filenames or prior docs are not sufficient — verify against the source.
+
+Minimum checks before drafting tasks:
+- **Table names** — grep repository files or route loaders (e.g. `.from('events')`) rather than inferring from migration filenames
+- **Data-fetch pattern** — read one or two dashboard route files to confirm whether the project uses server functions, bearer-auth API routes, or direct Supabase calls
+- **Key file locations** — confirm that files named in task specs actually exist at those paths
+
+Confirmed facts are recorded in a **Verified Facts** table at the top of `02-task-decomposition.md`. Any fact not in that table is an assumption — and assumptions are a planning hole.
+
 **Step 2 — Draft docs (Claude writes)**
 Claude produces the backlog, scope, and task decomposition in one pass. These are drafts — expect them to need sharpening.
 
@@ -156,6 +166,7 @@ Claude applies all approved fixes in one pass and commits the planning docs. Aft
 - No mid-task ambiguities — Claude should never need to stop and ask a design question during execution
 - Tasks that touch external systems (Supabase, Electron build, GitHub Releases) name the manual steps required before the code step
 - Risk ratings are honest — a task marked Low risk should be safely executable without extra caution
+- `02-task-decomposition.md` opens with a Verified Facts table — every table name, file path, and data-fetch pattern referenced in the tasks is listed there with its source
 
 ### Keeping planning docs sharp
 
