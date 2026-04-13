@@ -16,7 +16,6 @@ export function PipelineRenderer() {
     suppressInactivity,
   } = usePipeline();
   const [sessionStarting, setSessionStarting] = useState(false);
-  const [sessionStartError, setSessionStartError] = useState(false);
 
   useInactivityTimeout({
     onTimeout: reset,
@@ -33,7 +32,6 @@ export function PipelineRenderer() {
     (output?: Record<string, unknown>) => {
       if (config.moduleFlow[currentIndex]?.moduleId === "welcome") {
         setSessionStarting(true);
-        setSessionStartError(false);
         fetch(`${apiBaseUrl}/api/session/start`, {
           method: "POST",
           headers: {
@@ -49,8 +47,10 @@ export function PipelineRenderer() {
             }
             advance({ ...output, sessionId: data.sessionId });
           })
-          .catch(() => {
-            setSessionStartError(true);
+          .catch((err) => {
+            console.warn("Session start failed, proceeding offline:", err);
+            setSessionId(null);
+            advance(output);
           })
           .finally(() => setSessionStarting(false));
       } else {
@@ -66,26 +66,6 @@ export function PipelineRenderer() {
         <p className="text-white text-2xl font-shell text-center">
           Starting session...
         </p>
-      </div>
-    );
-  }
-
-  if (sessionStartError) {
-    return (
-      <div className="h-svh aspect-9/16 mx-auto flex flex-col items-center justify-center gap-6 bg-black px-12">
-        <p className="text-white text-2xl font-shell text-center font-bold">
-          Unable to start session
-        </p>
-        <p className="text-white/70 text-xl font-shell text-center">
-          Check your network connection and try again.
-        </p>
-        <button
-          type="button"
-          onClick={() => setSessionStartError(false)}
-          className="px-10 py-5 bg-tertiary text-white rounded-lg text-2xl font-shell cursor-pointer"
-        >
-          Try Again
-        </button>
       </div>
     );
   }
