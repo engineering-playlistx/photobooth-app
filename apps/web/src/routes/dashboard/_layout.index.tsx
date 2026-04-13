@@ -96,6 +96,13 @@ const createEvent = createServerFn({ method: 'POST' }).handler(async (ctx) => {
   return data as Event
 })
 
+const updateEvent = createServerFn({ method: 'POST' }).handler(async (ctx) => {
+  const { id, name } = ctx.data as { id: string; name: string }
+  const admin = getSupabaseAdminClient()
+  const { error } = await admin.from('events').update({ name }).eq('id', id)
+  if (error) throw new Error(error.message)
+})
+
 export const Route = createFileRoute('/dashboard/_layout/')({
   loader: async () => {
     const [events, organizations] = await Promise.all([
@@ -117,6 +124,41 @@ function EventListPage() {
   const [createError, setCreateError] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
   const [newOrgId, setNewOrgId] = useState('')
+
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editError, setEditError] = useState<string | null>(null)
+  const [editSaving, setEditSaving] = useState(false)
+
+  const openRename = (event: Event) => {
+    setEditingEvent(event)
+    setEditName(event.name)
+    setEditError(null)
+  }
+
+  const handleRename = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editName.trim()) {
+      setEditError('Name is required.')
+      return
+    }
+    if (!editingEvent) return
+    setEditSaving(true)
+    setEditError(null)
+    try {
+      await updateEvent({
+        data: { id: editingEvent.id, name: editName.trim() },
+      })
+      setEditingEvent(null)
+      void router.invalidate()
+    } catch (err) {
+      setEditError(
+        err instanceof Error ? err.message : 'Failed to rename event.',
+      )
+    } finally {
+      setEditSaving(false)
+    }
+  }
 
   const filtered =
     orgFilter === 'all'
@@ -232,6 +274,50 @@ function EventListPage() {
         </div>
       )}
 
+      {editingEvent && (
+        <div className="mb-6 rounded-lg border border-slate-700 bg-slate-800 p-5">
+          <h2 className="text-lg font-semibold text-white mb-4">
+            Rename — {editingEvent.name}
+          </h2>
+          <form
+            onSubmit={(e) => {
+              void handleRename(e)
+            }}
+            className="flex flex-col gap-4"
+          >
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">
+                New name <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                autoFocus
+              />
+            </div>
+            {editError && <p className="text-sm text-red-400">{editError}</p>}
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={editSaving}
+                className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              >
+                {editSaving ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingEvent(null)}
+                className="px-4 py-2 text-sm text-slate-300 hover:text-white border border-slate-600 hover:border-slate-500 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 mb-4">
         <label className="text-sm text-slate-400">Organization:</label>
         <select
@@ -285,13 +371,21 @@ function EventListPage() {
                     {event.created_at.slice(0, 10)}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      to="/dashboard/events/$eventId"
-                      params={{ eventId: event.id }}
-                      className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                    >
-                      View →
-                    </Link>
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        onClick={() => openRename(event)}
+                        className="text-sm text-slate-400 hover:text-slate-300 transition-colors"
+                      >
+                        Rename
+                      </button>
+                      <Link
+                        to="/dashboard/events/$eventId"
+                        params={{ eventId: event.id }}
+                        className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                      >
+                        View →
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
