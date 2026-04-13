@@ -20,7 +20,7 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 **V2 complete ✅ (2026-04-02).** Modular pipeline, flow builder, session model, Mini Quiz.
 **V3 complete ✅ (2026-04-05).** Remote asset management + carryover fixes.
 **V4 complete ✅ (2026-04-10).** Platform polish + deep customization.
-**V5 not yet started.** Multi-tenant SaaS — next milestone.
+**V5 complete ✅ (2026-04-13).** Multi-tenant foundation — organizations layer.
 
 ### Workflow Documents
 
@@ -32,18 +32,19 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 | `docs/workflow/projects/scale-up-v2/` | V2 modular pipeline — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v3/` | V3 remote asset management — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v4/` | V4 platform polish + deep customization — COMPLETE ✅ |
+| `docs/workflow/projects/scale-up-v5/` | V5 multi-tenant foundation — COMPLETE ✅ |
 | `docs/workflow/projects/[parked]-auto-update/` | Electron auto-update — ⏸️ PARKED (blocked on Windows code signing) |
 
-### V4 Project Docs (`docs/workflow/projects/scale-up-v4/`)
+### V5 Project Docs (`docs/workflow/projects/scale-up-v5/`)
 
 | File | Contents |
 |------|----------|
-| `00-creator-feedback.md` | Raw creator feedback after V3 testing — input for V4 planning |
-| `01-backlog.md` | Carryover items from V3 + creator feedback items |
-| `01-scope.md` | V4 scope statement, definition of done, architecture decisions |
-| `02-task-decomposition.md` | Atomic executable tasks — Phases 1–6 ✅, Phase 7 parked, Phase 8 ✅ |
+| `00-creator-feedback.md` | Input for V5 planning |
+| `01-backlog.md` | Backlog items scoped into V5 |
+| `01-scope.md` | V5 scope statement, definition of done, architecture decisions |
+| `02-task-decomposition.md` | Atomic executable tasks — all phases ✅ |
 
-**Current status:** V4 complete. Next: plan V5 (Multi-Tenant SaaS) or resume parked auto-update when code signing is ready.
+**Current status:** V5 complete. Next: plan V6 (Multi-Tenant SaaS — client accounts, per-org auth, nested routing) or resume parked auto-update when code signing is ready.
 
 ---
 

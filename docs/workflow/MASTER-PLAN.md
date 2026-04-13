@@ -63,8 +63,10 @@ Polished kiosk startup with asset pre-loading and error handling; deep per-modul
 
 Delivered by: [`scale-up-v4`](projects/scale-up-v4/)
 
-### V5 — Multi-Tenant Foundation (Organizations Layer)
-`organizations` table above events; all events scoped to an org; dashboard org management and org-filtered event list; two multi-event resilience fixes (offline session start, photos pagination). No client accounts — internal operator use only.
+### ✅ V5 — Multi-Tenant Foundation (Organizations Layer)
+**Done:** 2026-04-13
+
+`organizations` table above events; all events scoped to an org; dashboard org management and org-filtered event list; offline session start fails silently (guest unblocked). No client accounts — internal operator use only.
 
 Delivered by: [`scale-up-v5`](projects/scale-up-v5/)
 
@@ -81,7 +83,7 @@ Client account management, client dashboard login and self-serve access, automat
 | `scale-up-v2` | V2 | ✅ Done | [projects/scale-up-v2/](projects/scale-up-v2/) |
 | `scale-up-v3` | V3 | ✅ Done | [projects/scale-up-v3/](projects/scale-up-v3/) |
 | `scale-up-v4` | V4 | ✅ Done | [projects/scale-up-v4/](projects/scale-up-v4/) |
-| `scale-up-v5` | V5 | 🔜 Planning | [projects/scale-up-v5/](projects/scale-up-v5/) |
+| `scale-up-v5` | V5 | ✅ Done | [projects/scale-up-v5/](projects/scale-up-v5/) |
 | `[parked]-auto-update` | — | ⏸️ Parked | [projects/[parked]-auto-update/](projects/[parked]-auto-update/) |
 
 ---

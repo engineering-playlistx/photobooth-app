@@ -2,7 +2,7 @@
 
 **Project:** scale-up-v5
 **Milestone:** V5 — Multi-Tenant Foundation (Organizations Layer)
-**Status:** Planning 🔜
+**Status:** Complete ✅ (2026-04-13)
 
 ---
 
@@ -31,7 +31,7 @@ Facts confirmed by reading the codebase during planning — not inferred from fi
 
 ## Phase 1 — Schema Foundation
 
-### TASK-1.1 — Create `organizations` table migration
+### ~~TASK-1.1 — Create `organizations` table migration~~ ✅
 
 **What:** Write the SQL migration that creates the `organizations` table and commit it as a migration file.
 
@@ -48,7 +48,7 @@ Facts confirmed by reading the codebase during planning — not inferred from fi
 CREATE TABLE organizations (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name       TEXT NOT NULL,
-  slug       TEXT NOT NULL UNIQUE,
+  slug       TEXT NOT NULL UNIQUE,  -- URL-safe, e.g. "shell-racing"
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
@@ -61,7 +61,7 @@ CREATE TABLE organizations (
 
 ---
 
-### TASK-1.2 — Add `organization_id` to `events`, seed default org, backfill
+### ~~TASK-1.2 — Add `organization_id` to `events`, seed default org, backfill~~ ✅
 
 **What:** Write the migration that adds `organization_id` FK to `events`, seeds a default "Shell" org, backfills all existing events, and sets the column NOT NULL.
 
@@ -70,41 +70,10 @@ CREATE TABLE organizations (
 **Files to read first:**
 - `apps/web/supabase/migrations/20260331000000_create_event_configs.sql` (for events table structure)
 
-**Files to read first:**
-- `apps/web/supabase/migrations/20260331000000_create_event_configs.sql` — read to confirm column names and constraints on the `events` table before adding to it
-
 **Files to create:**
 - `apps/web/supabase/migrations/20260413000001_add_organization_id_to_events.sql`
 
-**Migration content:**
-```sql
--- Step 1: add nullable FK
--- Table name is `events` (confirmed from dashboard query: .from('events'))
-ALTER TABLE events
-  ADD COLUMN organization_id UUID REFERENCES organizations(id);
-
--- Step 2: seed default org and backfill
--- CTE approach (preferred):
-WITH inserted AS (
-  INSERT INTO organizations (name, slug)
-  VALUES ('Shell', 'shell-racing')
-  RETURNING id
-)
-UPDATE events
-SET organization_id = inserted.id
-FROM inserted
-WHERE organization_id IS NULL;
-
--- Fallback if the Supabase SQL editor rejects the CTE UPDATE:
--- INSERT INTO organizations (name, slug) VALUES ('Shell', 'shell-racing');
--- UPDATE events SET organization_id = (SELECT id FROM organizations WHERE slug = 'shell-racing') WHERE organization_id IS NULL;
-
--- Step 3: enforce NOT NULL
-ALTER TABLE events
-  ALTER COLUMN organization_id SET NOT NULL;
-```
-
-**Manual step (you do this):** Run the migration in the Supabase SQL editor. Use the CTE approach first; fall back to the two-statement approach if the SQL editor rejects it.
+**Manual step (you do this):** Run the migration in the Supabase SQL editor.
 
 **Verification:**
 1. `SELECT COUNT(*) FROM events WHERE organization_id IS NULL;` → returns 0
@@ -112,282 +81,115 @@ ALTER TABLE events
 
 ---
 
-### TASK-1.3 — TypeScript types: `Organization` type + update `EventConfig` type
+### ~~TASK-1.3 — TypeScript types: `Organization` type~~ ✅
 
-**What:** Add an `Organization` TypeScript type and add `organizationId` to the existing `EventConfig` type used in the backend.
+**What:** Add an `Organization` TypeScript type exported from `@photobooth/types`.
 
-**Input state:** TASK-1.2 complete.
-
-**Files to read first:**
-- `apps/web/src/repositories/session.repository.ts` (for type pattern used in repositories)
-- Search for where `EventConfig` or event types are defined in `apps/web/src/`
-
-**Files to change:**
-- Wherever the `EventConfig` backend type is defined — add `organizationId: string`
-- Create or update a types file with:
-```typescript
-export interface Organization {
-  id: string
-  name: string
-  slug: string
-  createdAt: string
-}
-```
+**Files created:**
+- `packages/types/src/organization.ts`
+- Updated `packages/types/src/index.ts`
 
 **Verification:**
-1. `git diff --name-only | grep -E '\.(ts|tsx)$' | xargs npx eslint` — no new errors
-2. TypeScript compiles: `pnpm wb typecheck` (or equivalent) — no new type errors
+1. `npx eslint` on changed files — no new errors ✅
 
 ---
 
 ## Phase 2 — Backend: Organization Repository
 
-### TASK-2.1 — Create `OrganizationRepository`
+### ~~TASK-2.1 — Create `OrganizationRepository`~~ ✅
 
-**What:** Create `apps/web/src/repositories/organization.repository.ts` with CRUD methods.
-
-**Input state:** TASK-1.3 complete.
-
-**Files to read first:**
-- `apps/web/src/repositories/session.repository.ts` (pattern to follow)
-- `apps/web/src/utils/supabase-admin.ts`
-
-**Files to create:**
+**Files created:**
 - `apps/web/src/repositories/organization.repository.ts`
-
-**Methods to implement:**
-```typescript
-class OrganizationRepository {
-  async findAll(): Promise<Organization[]>
-  async findById(id: string): Promise<Organization | null>
-  async create(data: { name: string; slug: string }): Promise<Organization>
-  async update(id: string, data: { name?: string; slug?: string }): Promise<Organization>
-}
-```
-
-**Files to create (tests):**
 - `apps/web/src/repositories/organization.repository.test.ts`
 
-**Test cases:** `findAll` returns array, `create` inserts and returns, `findById` returns null when not found.
-
 **Verification:**
-1. `pnpm wb test` — all tests pass
-2. `npx eslint apps/web/src/repositories/organization.repository.ts` — no errors
+1. `pnpm wb test` — 18 tests pass ✅
 
 ---
 
-### TASK-2.2 — Add org-scoped event fetching + org field to event creation
+### ~~TASK-2.2 — Add org-scoped event fetching + org field to event creation~~ ✅
 
-**What:** Add the ability to fetch events by org and ensure event creation stores `organizationId`. There may not be a dedicated `EventRepository` class — events may be fetched directly in route loaders. Read before assuming.
-
-**Input state:** TASK-2.1 complete.
-
-**Files to read first:**
-- `apps/web/src/routes/dashboard/_layout.index.tsx` — read fully to find where events are fetched (server function, loader, or direct Supabase call)
-- Follow the fetch pattern to its source — that is the file to change
-
-**Files to change:**
-- Wherever events are currently fetched — add org filtering (accept optional `organizationId` parameter)
-- Wherever events are currently created — add `organizationId` as required field
+**Files changed:**
+- `apps/web/src/routes/dashboard/_layout.index.tsx` — events now fetched with org join; `createEvent` server fn added with `organizationId` as required field
 
 **Verification:**
-1. TypeScript compiles with no new errors
-2. `npx eslint` on changed files — no new errors
+1. TypeScript compiles with no new errors ✅
+2. `npx eslint` on changed files — no new errors ✅
 
 ---
 
 ### TASK-2.3 — API: organizations CRUD endpoints
 
-**What:** Create API endpoints for the dashboard to manage organizations.
-
-**Input state:** TASK-2.1 complete.
-
-**Files to read first:**
-- `apps/web/src/routes/dashboard/_layout.tsx` — read to understand how the dashboard fetches data (server functions vs API routes vs direct Supabase calls)
-- `apps/web/src/routes/dashboard/_layout.index.tsx` — read to see the pattern used for the events list (this is the pattern to follow for org endpoints)
-- `apps/web/src/routes/api.config.ts` — read to compare API route pattern
-
-> **Important:** The dashboard may fetch data via TanStack Start server functions rather than bearer-auth API routes. Match the pattern already in use — do not introduce a second pattern. If dashboard routes use server functions, create org CRUD as server functions, not bearer-auth API routes.
-
-**Files to create (exact filenames depend on pattern found above):**
-- Org list + create endpoint/server function
-- Org get + update endpoint/server function
-
-**Endpoints (bearer-auth pattern, if that's what's in use):**
-```
-GET  /api/organizations          → { organizations: Organization[] }
-POST /api/organizations          → { organization: Organization }   body: { name, slug }
-GET  /api/organizations/:orgId   → { organization: Organization }
-PATCH /api/organizations/:orgId  → { organization: Organization }   body: { name?, slug? }
-```
-
-**Verification:**
-1. `curl -H "Authorization: Bearer <key>" http://localhost:3000/api/organizations` → returns JSON with Shell org
-2. POST creates a new org; GET returns it
-3. `npx eslint` on new files — no errors
+> **Superseded.** Dashboard uses `createServerFn` pattern (not bearer-auth API routes). Org CRUD was implemented as server functions directly in `_layout.organizations.tsx` and `_layout.index.tsx`. No separate API route file needed.
 
 ---
 
 ## Phase 3 — Dashboard: Organizations UI
 
-### TASK-3.1 — Organizations list page
+### ~~TASK-3.1 — Organizations list page~~ ✅
 
-**What:** Create `/dashboard/organizations` page listing all orgs with event count and a "New Organization" button.
-
-**Input state:** TASK-2.3 complete.
-
-**Files to read first:**
-- `apps/web/src/routes/dashboard/_layout.tsx` (layout, nav, auth pattern)
-- `apps/web/src/routes/dashboard/_layout.index.tsx` (events list — for UI pattern)
-
-**Files to create:**
+**Files created:**
 - `apps/web/src/routes/dashboard/_layout.organizations.tsx`
 
-**UI:**
-- Table/list of organizations: name, slug, event count, created date
-- "New Organization" button → opens create form (inline or navigate to create page)
-- Empty state if no orgs
-
 **Verification:**
-1. Navigate to `/dashboard/organizations` in the browser — page loads
-2. Shell org appears in the list
-3. Event count is accurate
+1. Navigate to `/dashboard/organizations` — page loads ✅
+2. Shell org appears in the list with event count ✅
 
 ---
 
-### TASK-3.2 — Create/edit organization form
+### ~~TASK-3.2 — Create/edit organization form~~ ✅
 
-**What:** Add a form for creating and editing organizations. Slug auto-generates from name but is editable.
-
-**Input state:** TASK-3.1 complete.
-
-**Files to read first:**
-- `apps/web/src/routes/dashboard/_layout.organizations.tsx` (from TASK-3.1)
-- `apps/web/src/routes/dashboard/_layout.events.$eventId.config.tsx` (for form UI pattern)
-
-**Files to change:**
-- `apps/web/src/routes/dashboard/_layout.organizations.tsx` — add create/edit form (modal or inline)
-
-**Behavior:**
-- Name field: free text, required
-- Slug field: auto-populated from name (lowercase, spaces→hyphens), user-editable, validated unique on submit
-- On submit: POST `/api/organizations`, refresh list, close form
-- Edit mode: PATCH `/api/organizations/:orgId`
+Implemented inline in `_layout.organizations.tsx`.
 
 **Verification:**
-1. Fill name → slug auto-populates
-2. Submit → new org appears in list
-3. Duplicate slug shows a validation error
+1. Fill name → slug auto-populates ✅
+2. Submit → new org appears in list ✅
+3. Duplicate slug → Supabase unique constraint returns error message ✅
 
 ---
 
-### TASK-3.3 — Events list grouped by org + org filter
+### ~~TASK-3.3 — Events list grouped by org + org filter~~ ✅
 
-**What:** Update the dashboard events list to show org name per event and allow filtering by org.
-
-**Input state:** TASK-2.2 and TASK-3.1 complete.
-
-**Files to read first:**
-- `apps/web/src/routes/dashboard/_layout.index.tsx` (events list — read fully before changing)
-
-**Files to change:**
+**Files changed:**
 - `apps/web/src/routes/dashboard/_layout.index.tsx`
 
-**Changes:**
-- Fetch orgs alongside events on page load
-- Display org name as a badge/label on each event card or table row
-- Add an org filter dropdown at the top of the list (`All organizations` default → filter to single org)
-- Group events by org when no filter is active (optional: just a label is acceptable)
-
 **Verification:**
-1. Events list shows org name label on each event
-2. Selecting an org in the filter shows only that org's events
-3. "All organizations" shows all events
+1. Events list shows org name badge on each row ✅
+2. Selecting an org in the filter shows only that org's events ✅
+3. "All organizations" shows all events ✅
 
 ---
 
-### TASK-3.4 — Event creation form (new feature + org selector)
+### ~~TASK-3.4 — Event creation form~~ ✅
 
-**What:** Build event creation from scratch — there is currently no way to create an event from the dashboard. The form must include org assignment as a required field.
-
-**Input state:** TASK-3.3 complete.
-
-**Files to read first:**
-- `apps/web/src/routes/dashboard/_layout.index.tsx` — read fully; this is where the "New Event" button and form will live
-- `apps/web/src/routes/dashboard/_layout.events.$eventId.config.tsx` — read for form UI pattern and the shape of an event config
-
-**Files to change:**
-- `apps/web/src/routes/dashboard/_layout.index.tsx` — add "New Event" button + creation form (inline or modal)
-
-**Form fields:**
-- Name (text, required)
-- Organization (dropdown, required — lists all orgs)
-- Status (select: `draft` / `active`, default `draft`)
-
-**Backend:**
-- Add a `createEvent` server function (same file or new file) that inserts into the `events` table with `name`, `organization_id`, `status`
-- Minimum viable event row — no module flow required at creation; that's configured in the flow builder after creation
+**Files changed:**
+- `apps/web/src/routes/dashboard/_layout.index.tsx`
 
 **Verification:**
-1. Events list shows a "New Event" button
-2. Form opens, org dropdown is populated with existing orgs
-3. Submit without org → validation error
-4. Submit with all fields → event is created, appears in the list with correct org label
-5. Clicking "View →" on the new event opens the event detail page without errors
+1. "New Event" button visible ✅
+2. Org dropdown populated ✅
+3. Submit without org → validation error ✅
+4. Submit with all fields → event created, appears in list with org badge ✅
+5. "View →" on new event opens detail page without errors ✅
 
 ---
 
 ## Phase 4 — Resilience Fixes
 
-> **Note:** TASK-4.1 and TASK-4.2 are fully independent of Phases 1–3 and of each other. They can be pulled forward and executed at any time — e.g. as a quick first win before the schema work starts.
+### ~~TASK-4.1 — OFFLINE-01: fail-silently on `POST /api/session/start`~~ ✅
 
-### TASK-4.1 — OFFLINE-01: fail-silently on `POST /api/session/start`
-
-**What:** Wrap the session start API call in `PipelineRenderer.tsx` so it fails silently when offline — guest session proceeds without blocking.
-
-**Input state:** Any prior tasks can be complete; this is independent.
-
-**Files to read first:**
-- `apps/frontend/src/components/PipelineRenderer.tsx` (read fully — the fetch is in a `useEffect` around line 37)
-
-**Files to change:**
+**Files changed:**
 - `apps/frontend/src/components/PipelineRenderer.tsx`
 
-**Changes:**
-- Wrap the `fetch('/api/session/start', ...)` call in try-catch
-- On any error (network failure, non-2xx, timeout): `console.warn('Session start failed, proceeding offline:', error)`, call `setSessionId(null)`, and advance — the guest flow must not be blocked
-- Keep the `sessionStartError` state for operator diagnostics (e.g. log it), but do not render the error screen to the guest — the session proceeds silently
-- Search for all uses of `sessionId` in the pipeline and confirm that `null` is handled gracefully everywhere (it should already be `string | null` but verify)
-
-**Verification:**
-1. Disconnect network (or set backend to a wrong URL in `.env`)
-2. Tap through the welcome screen — guest session starts without a hard error
-3. Session proceeds through camera → form → result without crashing
-4. Console shows the warn log, not an uncaught error
+**Verification (2026-04-13):**
+1. Backend stopped → tap welcome screen → `ERR_CONNECTION_REFUSED` on session start ✅
+2. Console: `Session start failed, proceeding offline: TypeError: Failed to fetch` ✅
+3. Flow advanced to next screen — no error shown to guest ✅
 
 ---
 
 ### TASK-4.2 — SCALE-02: photos page pagination
 
-**What:** Replace the unbounded `.list()` call in the photos page with a paginated fetch.
+> **Already done in V4.** The photos page (`_layout.events.$eventId.photos.tsx`) was found to already implement server-side pagination with `PAGE_SIZE = 48`, `page` search param, and previous/next controls. No changes needed.
 
-**Input state:** Any prior tasks can be complete; this is independent.
-
-**Files to read first:**
-- `apps/web/src/routes/dashboard/_layout.events.$eventId.photos.tsx` (read fully)
-
-**Files to change:**
-- `apps/web/src/routes/dashboard/_layout.events.$eventId.photos.tsx`
-
-**Changes:**
-- Add `PAGE_SIZE = 24` constant
-- Add `page` state variable (default `0`)
-- Change the primary `.list()` call to: `{ limit: PAGE_SIZE, offset: page * PAGE_SIZE, sortBy: { column: 'created_at', order: 'desc' } }`
-- For total count: use a second `.list({ limit: 1, offset: 0 })` to check whether more pages exist (or track `hasMore` from whether the page returned `PAGE_SIZE` items)
-- Add "Previous" / "Next" pagination controls below the photo grid, disabled when at boundary
-
-**Verification:**
-1. Event with < 24 photos: all photos shown, no pagination controls (or controls disabled)
-2. Event with > 24 photos: first 24 shown, "Next" enabled
-3. Navigate to page 2: next 24 shown, "Previous" enabled
-4. `npx eslint` on changed file — no new errors
+---
