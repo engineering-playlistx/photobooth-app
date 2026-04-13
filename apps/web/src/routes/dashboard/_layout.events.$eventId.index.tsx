@@ -44,12 +44,6 @@ export const Route = createFileRoute('/dashboard/_layout/events/$eventId/')({
   component: EventDetailPage,
 })
 
-const STATUS_STYLES: Record<string, string> = {
-  active: 'bg-green-500/20 text-green-400 border-green-500/30',
-  draft: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
-  ended: 'bg-slate-700/40 text-slate-500 border-slate-700/40',
-}
-
 function EventDetailPage() {
   const event = Route.useLoaderData()
 
@@ -66,13 +60,8 @@ function EventDetailPage() {
         <span className="text-sm text-white">{event.name}</span>
       </div>
 
-      <div className="flex items-start justify-between mb-8">
+      <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">{event.name}</h1>
-        <span
-          className={`inline-flex px-2.5 py-1 text-xs rounded-full border ${STATUS_STYLES[event.status]}`}
-        >
-          {event.status}
-        </span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">

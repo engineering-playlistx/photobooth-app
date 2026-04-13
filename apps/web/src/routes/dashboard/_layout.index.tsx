@@ -107,12 +107,6 @@ export const Route = createFileRoute('/dashboard/_layout/')({
   component: EventListPage,
 })
 
-const STATUS_STYLES: Record<string, string> = {
-  active: 'bg-green-500/20 text-green-400 border-green-500/30',
-  draft: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
-  ended: 'bg-slate-700/40 text-slate-500 border-slate-700/40',
-}
-
 function EventListPage() {
   const { events, organizations } = Route.useLoaderData()
   const router = useRouter()
@@ -123,7 +117,6 @@ function EventListPage() {
   const [createError, setCreateError] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
   const [newOrgId, setNewOrgId] = useState('')
-  const [newStatus, setNewStatus] = useState<'draft' | 'active'>('draft')
 
   const filtered =
     orgFilter === 'all'
@@ -147,13 +140,12 @@ function EventListPage() {
         data: {
           name: newName.trim(),
           organizationId: newOrgId,
-          status: newStatus,
+          status: 'draft',
         },
       })
       setShowCreateForm(false)
       setNewName('')
       setNewOrgId('')
-      setNewStatus('draft')
       void router.invalidate()
     } catch (err) {
       setCreateError(
@@ -217,21 +209,6 @@ function EventListPage() {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm text-slate-400 mb-1">
-                Status
-              </label>
-              <select
-                value={newStatus}
-                onChange={(e) =>
-                  setNewStatus(e.target.value as 'draft' | 'active')
-                }
-                className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none"
-              >
-                <option value="draft">draft</option>
-                <option value="active">active</option>
-              </select>
-            </div>
             {createError && (
               <p className="text-sm text-red-400">{createError}</p>
             )}
@@ -285,9 +262,6 @@ function EventListPage() {
                   Organization
                 </th>
                 <th className="px-4 py-3 text-left text-slate-400 font-medium">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-slate-400 font-medium">
                   Created
                 </th>
                 <th className="px-4 py-3" />
@@ -305,13 +279,6 @@ function EventListPage() {
                   <td className="px-4 py-3">
                     <span className="inline-flex px-2 py-0.5 text-xs rounded-full border bg-blue-500/10 text-blue-300 border-blue-500/20">
                       {event.organizations?.name ?? '—'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex px-2 py-0.5 text-xs rounded-full border ${STATUS_STYLES[event.status] ?? STATUS_STYLES.draft}`}
-                    >
-                      {event.status}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-slate-400">
