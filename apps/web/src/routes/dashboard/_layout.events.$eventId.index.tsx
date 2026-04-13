@@ -73,10 +73,7 @@ function EventDetailPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <StatCard label="Total Guests" value={String(event.guestCount)} />
         <StatCard label="Event ID" value={event.id} mono />
-        <StatCard
-          label="Created"
-          value={new Date(event.created_at).toLocaleDateString()}
-        />
+        <StatCard label="Created" value={event.created_at.slice(0, 10)} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
