@@ -103,6 +103,25 @@ const updateEvent = createServerFn({ method: 'POST' }).handler(async (ctx) => {
   if (error) throw new Error(error.message)
 })
 
+const deleteEvent = createServerFn({ method: 'POST' }).handler(async (ctx) => {
+  const { id } = ctx.data as { id: string }
+  const admin = getSupabaseAdminClient()
+  // Delete dependent rows first — event_configs and sessions have FK constraints with no CASCADE
+  const { error: configError } = await admin
+    .from('event_configs')
+    .delete()
+    .eq('event_id', id)
+  if (configError) throw new Error(configError.message)
+  const { error: sessionsError } = await admin
+    .from('sessions')
+    .delete()
+    .eq('event_id', id)
+  if (sessionsError) throw new Error(sessionsError.message)
+  // users.event_id has no FK constraint — rows become orphaned (acceptable)
+  const { error } = await admin.from('events').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+})
+
 export const Route = createFileRoute('/dashboard/_layout/')({
   loader: async () => {
     const [events, organizations] = await Promise.all([
@@ -129,6 +148,29 @@ function EventListPage() {
   const [editName, setEditName] = useState('')
   const [editError, setEditError] = useState<string | null>(null)
   const [editSaving, setEditSaving] = useState(false)
+
+  const [confirmDeleteEvent, setConfirmDeleteEvent] = useState<Event | null>(
+    null,
+  )
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const handleDelete = async () => {
+    if (!confirmDeleteEvent) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await deleteEvent({ data: { id: confirmDeleteEvent.id } })
+      setConfirmDeleteEvent(null)
+      void router.invalidate()
+    } catch (err) {
+      setDeleteError(
+        err instanceof Error ? err.message : 'Failed to delete event.',
+      )
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const openRename = (event: Event) => {
     setEditingEvent(event)
@@ -318,6 +360,47 @@ function EventListPage() {
         </div>
       )}
 
+      {confirmDeleteEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 max-w-sm w-full mx-4">
+            <h2 className="text-lg font-semibold text-white mb-2">
+              Delete event?
+            </h2>
+            <p className="text-sm text-slate-400 mb-4">
+              Are you sure you want to delete{' '}
+              <span className="text-white font-medium">
+                {confirmDeleteEvent.name}
+              </span>
+              ? This cannot be undone.
+            </p>
+            {deleteError && (
+              <p className="text-sm text-red-400 mb-4">{deleteError}</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  void handleDelete()
+                }}
+                disabled={deleting}
+                className="px-4 py-2 text-sm bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+              <button
+                onClick={() => {
+                  setConfirmDeleteEvent(null)
+                  setDeleteError(null)
+                }}
+                disabled={deleting}
+                className="px-4 py-2 text-sm text-slate-300 hover:text-white border border-slate-600 hover:border-slate-500 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 mb-4">
         <label className="text-sm text-slate-400">Organization:</label>
         <select
@@ -377,6 +460,15 @@ function EventListPage() {
                         className="text-sm text-slate-400 hover:text-slate-300 transition-colors"
                       >
                         Rename
+                      </button>
+                      <button
+                        onClick={() => {
+                          setConfirmDeleteEvent(event)
+                          setDeleteError(null)
+                        }}
+                        className="text-sm text-red-400 hover:text-red-300 transition-colors"
+                      >
+                        Delete
                       </button>
                       <Link
                         to="/dashboard/events/$eventId"
