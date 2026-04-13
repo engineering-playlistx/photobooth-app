@@ -31,6 +31,7 @@ export const Route = createFileRoute('/api/ai-generate-status')({
           const url = new URL(request.url)
           const predictionId = url.searchParams.get('predictionId')
           const tempPath = url.searchParams.get('tempPath')
+          const providerParam = url.searchParams.get('provider')
 
           if (!predictionId) {
             return json(
@@ -41,7 +42,14 @@ export const Route = createFileRoute('/api/ai-generate-status')({
             )
           }
 
-          const aiService = new AIGenerationService()
+          // Use the provider that created the prediction so we query the right backend.
+          // Without this, the env-var default could mismatch (e.g. AI_PROVIDER=google
+          // trying to poll a Replicate prediction ID against the ai_jobs table).
+          const provider =
+            providerParam === 'replicate' || providerParam === 'google'
+              ? providerParam
+              : undefined
+          const aiService = new AIGenerationService(provider)
           const { status, output, generatedBase64 } =
             await aiService.getPredictionStatus(predictionId)
 

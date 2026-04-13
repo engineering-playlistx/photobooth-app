@@ -183,6 +183,7 @@ export function AiGenerationModule({
         const createData = (await createResponse.json()) as {
           predictionId?: string;
           tempPath?: string;
+          provider?: string; // which AI backend created this prediction
           generatedImageBase64?: string; // Google AI sync: result returned immediately
         };
         clearTimeout(timeoutId);
@@ -191,7 +192,7 @@ export function AiGenerationModule({
           throw new Error("Server response missing prediction data");
         }
 
-        const { predictionId, tempPath } = createData;
+        const { predictionId, tempPath, provider } = createData;
         console.log(`[AI Generate] Prediction created — id: ${predictionId}`);
         setStatusText("AI is generating your photo...");
         setProgress(25);
@@ -217,7 +218,7 @@ export function AiGenerationModule({
             setProgress(pollProgress);
 
             const statusResponse = await fetch(
-              `${apiBaseUrl}/api/ai-generate-status?predictionId=${predictionId}&tempPath=${encodeURIComponent(tempPath ?? "")}`,
+              `${apiBaseUrl}/api/ai-generate-status?predictionId=${predictionId}&tempPath=${encodeURIComponent(tempPath ?? "")}&provider=${encodeURIComponent(provider ?? "")}`,
               {
                 headers: {
                   Authorization: `Bearer ${apiClientKey}`,

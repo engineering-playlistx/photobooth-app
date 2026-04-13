@@ -270,7 +270,7 @@ export const Route = createFileRoute('/api/ai-generate')({
             `[ai-generate] Prediction created in ${elapsed}s — id: ${predictionId}, tempPath: ${tempPath}`,
           )
 
-          return json({ predictionId, tempPath })
+          return json({ predictionId, tempPath, provider: 'replicate' })
         } catch (error) {
           console.error({ message: 'AI generation error', error })
 
