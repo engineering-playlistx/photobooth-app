@@ -1,6 +1,7 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
+import { SUPABASE_BUCKET } from '../../utils/constants'
 
 type EventDetail = {
   id: string
@@ -8,27 +9,31 @@ type EventDetail = {
   status: string
   created_at: string
   guestCount: number
+  photoCount: number
 }
 
 const getEventDetail = createServerFn({ method: 'GET' }).handler(
   async (ctx) => {
     const { eventId } = ctx.data as { eventId: string }
     const admin = getSupabaseAdminClient()
-    const [{ data: event, error }, { count }] = await Promise.all([
-      admin
-        .from('events')
-        .select('id, name, status, created_at')
-        .eq('id', eventId)
-        .single(),
-      admin
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('event_id', eventId),
-    ])
+    const [{ data: event, error }, { count }, { data: photoFiles }] =
+      await Promise.all([
+        admin
+          .from('events')
+          .select('id, name, status, created_at')
+          .eq('id', eventId)
+          .single(),
+        admin
+          .from('users')
+          .select('*', { count: 'exact', head: true })
+          .eq('event_id', eventId),
+        admin.storage.from(SUPABASE_BUCKET).list(`events/${eventId}/photos`),
+      ])
     if (error) throw new Error(error.message)
     return {
-      ...(event as Omit<EventDetail, 'guestCount'>),
+      ...(event as Omit<EventDetail, 'guestCount' | 'photoCount'>),
       guestCount: count ?? 0,
+      photoCount: photoFiles?.length ?? 0,
     }
   },
 )
@@ -70,8 +75,13 @@ function EventDetailPage() {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <StatCard label="Total Guests" value={String(event.guestCount)} />
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
+        <StatCard label="Total Photos" value={String(event.photoCount)} />
+        <StatCard
+          label="Total Guests"
+          value={String(event.guestCount)}
+          hint="Only recorded when the flow includes a Form module"
+        />
         <StatCard label="Event ID" value={event.id} mono />
         <StatCard label="Created" value={event.created_at.slice(0, 10)} />
       </div>
@@ -161,10 +171,12 @@ function StatCard({
   label,
   value,
   mono,
+  hint,
 }: {
   label: string
   value: string
   mono?: boolean
+  hint?: string
 }) {
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
@@ -174,6 +186,7 @@ function StatCard({
       >
         {value}
       </p>
+      {hint && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
     </div>
   )
 }
