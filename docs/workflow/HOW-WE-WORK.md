@@ -74,26 +74,55 @@ pnpm wb test   # for apps/web changes
 Write tests for: conditional branching, data transformation, error handling.
 Skip tests for: deleted code, config wiring, UI-only rendering.
 
+Also required when a change introduces a **new execution path through existing logic** — e.g. a condition that was never previously reachable (like a flow with no Form module reaching the ResultModule save guard). A new path through old code is as likely to have bugs as new code.
+
 Use `vi.resetModules()` + dynamic `import()` for modules with env-var-driven constants.
 
 ### Layer 3 — Manual smoke test
-Follow the exact steps in the task's **Verification** section. Run them in order.
+
+**Step A — Task verification:** Follow the exact steps in the task's **Verification** section. Run them in order.
+
+**Step B — Regression paths:** Re-test every path listed in the task's **Regression paths** field. These are existing flows that touch the same files or data the task changed. If the task has no Regression paths field, stop and ask: what was working before this change that could now be broken?
+
+**Step C — Standing E2E smoke test:** Run this fixed sequence after every task that touches frontend, backend, or config logic. It covers the full guest journey end-to-end and catches the most common regression classes.
+
+```
+1. Dashboard: create a new event
+   → config page loads (no 500)
+   → flow builder loads with welcome/camera/result pre-populated (no 500)
+
+2. Flow builder: add ai-generation module → save
+   → no validation errors
+   → page reloads with saved state
+
+3. Kiosk: Ctrl+Shift+S → change event ID → Save & Reconnect
+   → startup loader re-runs
+   → new event config loads (not stale)
+
+4. Kiosk: run full guest flow — welcome → camera → ai-generation → result
+   → AI generation completes without 500
+   → result page: "Saving…" resolves to "✓ Saved" within 30s
+   → print button becomes enabled after save completes
+
+5. Kiosk: run same flow with a 2-theme event
+   → theme-selection screen appears normally (regression for TASK-1.1)
+```
+
+Skip Step C only for tasks that are strictly isolated to: SQL-only migrations, doc-only changes, or test-only changes.
 
 For backend tasks, also:
 - Confirm the endpoint responds correctly to a curl/Postman request
 - Confirm error cases return appropriate HTTP status codes
-
-For frontend tasks, also:
-- Confirm the full guest flow still works end-to-end
-- Confirm the admin `/data` route still works
 
 ---
 
 ## Definition of "Done"
 
 - [ ] Layer 1: ESLint — no new errors in changed files
-- [ ] Layer 2: Unit tests written (if business logic changed) and passing
-- [ ] Layer 3: Manual steps in the task's Verification section all pass
+- [ ] Layer 2: Unit tests written (if business logic changed or new execution path introduced) and passing
+- [ ] Layer 3A: Manual steps in the task's **Verification** section all pass
+- [ ] Layer 3B: Every path in the task's **Regression paths** field re-tested and passing
+- [ ] Layer 3C: Standing E2E smoke test passed (unless task is SQL/doc/test-only)
 - [ ] Task marked complete (~~strikethrough~~ + ✅) in the project's task decomposition
 
 ---
@@ -160,9 +189,36 @@ Claude presents the issue list with a clear recommendation. You say yes, no, or 
 **Step 5 — Fix and commit**
 Claude applies all approved fixes in one pass and commits the planning docs. After the commit, the decomposition is the single source of truth.
 
+### Task template
+
+Every task in `02-task-decomposition.md` must include these fields:
+
+```markdown
+### TASK-X.Y — <title>
+
+**Status:** Pending
+**Risk:** Low | Medium | High
+**Depends on:** <task IDs or "Nothing">
+**Files touched:** <list of files>
+
+**What:** <precise description of the change>
+
+**Regression paths:** <existing flows to re-test after this change>
+- <e.g. "Existing events → flow builder loads without 500">
+- <e.g. "Full guest flow: welcome → camera → ai-generation → result">
+- (write "None" only for SQL/doc/test-only changes)
+
+**Verification:** <step-by-step acceptance check for the new behavior>
+1. ...
+2. ...
+```
+
+The **Regression paths** field is mandatory for any task that touches existing code. It answers: *what was working before this change that could now be broken?* If you can't name any paths, the task scope is probably too narrow to have been worth doing or too broad to be safe.
+
 ### What good planning output looks like
 
 - Every task has a defined input (which prior tasks must be complete) and a defined output (what you can observe/check)
+- Every task that touches existing code has a populated **Regression paths** field
 - No mid-task ambiguities — Claude should never need to stop and ask a design question during execution
 - Tasks that touch external systems (Supabase, Electron build, GitHub Releases) name the manual steps required before the code step
 - Risk ratings are honest — a task marked Low risk should be safely executable without extra caution
@@ -189,8 +245,11 @@ If you realize a related task should also be done — finish and verify the curr
 **Making manual Supabase changes without telling Claude**
 If you ran a SQL migration manually, state it at the start of the next session. Claude cannot see Supabase schema unless it queries it.
 
+**Skipping regression paths**
+Do not skip Layer 3B because "I only changed X." The regressions caught in V6 (stale config on reconnect, stuck save on result page) came from changes that seemed isolated but touched shared state. Always re-test the regression paths named in the task.
+
 **Skipping verification**
-Do not move to the next task if the current one hasn't passed all three verification layers.
+Do not move to the next task if the current one hasn't passed all three verification layers (3A, 3B, and 3C).
 
 ---
 
