@@ -34,7 +34,7 @@ function base64ToBlob(base64: string, contentType = "", sliceSize = 512) {
 
 export function ResultModule({ config, outputs }: ModuleProps) {
   const { config: eventConfig, apiBaseUrl, apiClientKey } = useEventConfig();
-  const { reset } = usePipeline();
+  const { reset, setSuppressInactivity } = usePipeline();
   const bg = useModuleBackground("result");
   const { customization, emailEnabled, qrCodeEnabled, printEnabled } =
     config as ResultModuleConfig;
@@ -212,9 +212,18 @@ export function ResultModule({ config, outputs }: ModuleProps) {
     };
   }, []);
 
+  // Suppress inactivity timeout while auto-save is in progress so the kiosk
+  // doesn't reset the guest before the save completes.
+  useEffect(() => {
+    setSuppressInactivity(isSaving);
+    return () => setSuppressInactivity(false);
+  }, [isSaving, setSuppressInactivity]);
+
   // Auto-save photo result to local database and Supabase when page loads
   useEffect(() => {
-    if (hasSaved.current || !finalPhoto || !selectedTheme || !userInfo) {
+    if (hasSaved.current || !finalPhoto) {
+      // Nothing to save — release the saving lock so the print button is enabled.
+      setIsSaving(false);
       return;
     }
 
@@ -229,8 +238,8 @@ export function ResultModule({ config, outputs }: ModuleProps) {
 
         await savePhotoResult({
           photoPath,
-          selectedTheme: { theme: selectedTheme.id },
-          userInfo,
+          selectedTheme: { theme: selectedTheme?.id ?? "" },
+          userInfo: userInfo ?? { name: "", email: "", phone: "" },
           eventId,
         });
 
@@ -248,7 +257,7 @@ export function ResultModule({ config, outputs }: ModuleProps) {
 
         if (uploadError) {
           console.error("Supabase upload error:", uploadError);
-        } else if (isEmailEnabled) {
+        } else if (userInfo && isEmailEnabled) {
           const response = await fetch(`${apiBaseUrl}/api/photo`, {
             method: "POST",
             headers: {
