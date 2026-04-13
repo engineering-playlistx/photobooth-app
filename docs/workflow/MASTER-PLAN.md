@@ -70,7 +70,12 @@ Delivered by: [`scale-up-v4`](projects/scale-up-v4/)
 
 Delivered by: [`scale-up-v5`](projects/scale-up-v5/)
 
-### V6 — Multi-Tenant SaaS (Future)
+### 🔜 V6 — Multi-Event Seamlessness
+Fix event-creation regression (no `event_configs` row seeded), repair existing broken events, and auto-skip module steps with only one option (theme-selection with 1 theme). Foundation for smooth multi-event operations.
+
+Delivered by: [`scale-up-v6`](projects/scale-up-v6/)
+
+### V7 — Multi-Tenant SaaS (Future)
 Client account management, client dashboard login and self-serve access, automated reporting and email delivery, AI provider fallback chain, config version history, nested org routing.
 
 ---
@@ -84,6 +89,7 @@ Client account management, client dashboard login and self-serve access, automat
 | `scale-up-v3` | V3 | ✅ Done | [projects/scale-up-v3/](projects/scale-up-v3/) |
 | `scale-up-v4` | V4 | ✅ Done | [projects/scale-up-v4/](projects/scale-up-v4/) |
 | `scale-up-v5` | V5 | ✅ Done | [projects/scale-up-v5/](projects/scale-up-v5/) |
+| `scale-up-v6` | V6 | 🔜 Planning | [projects/scale-up-v6/](projects/scale-up-v6/) |
 | `[parked]-auto-update` | — | ⏸️ Parked | [projects/[parked]-auto-update/](projects/[parked]-auto-update/) |
 
 ---

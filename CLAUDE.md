@@ -21,6 +21,7 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 **V3 complete ✅ (2026-04-05).** Remote asset management + carryover fixes.
 **V4 complete ✅ (2026-04-10).** Platform polish + deep customization.
 **V5 complete ✅ (2026-04-13).** Multi-tenant foundation — organizations layer.
+**V6 in planning 🔜.** Multi-event seamlessness — event creation bug fix + per-module conditional behavior.
 
 ### Workflow Documents
 
@@ -33,18 +34,19 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 | `docs/workflow/projects/scale-up-v3/` | V3 remote asset management — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v4/` | V4 platform polish + deep customization — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v5/` | V5 multi-tenant foundation — COMPLETE ✅ |
+| `docs/workflow/projects/scale-up-v6/` | V6 multi-event seamlessness — 🔜 planning |
 | `docs/workflow/projects/[parked]-auto-update/` | Electron auto-update — ⏸️ PARKED (blocked on Windows code signing) |
 
-### V5 Project Docs (`docs/workflow/projects/scale-up-v5/`)
+### V6 Project Docs (`docs/workflow/projects/scale-up-v6/`)
 
 | File | Contents |
 |------|----------|
-| `00-creator-feedback.md` | Input for V5 planning |
-| `01-backlog.md` | Backlog items scoped into V5 |
-| `01-scope.md` | V5 scope statement, definition of done, architecture decisions |
-| `02-task-decomposition.md` | Atomic executable tasks — all phases ✅ |
+| `00-creator-feedback.md` | Input for V6 planning |
+| `01-backlog.md` | Backlog items scoped into V6 |
+| `01-scope.md` | V6 scope statement, definition of done, architecture decisions |
+| `02-task-decomposition.md` | Atomic executable tasks — phases 0–1 |
 
-**Current status:** V5 complete. Next: plan V6 (Multi-Tenant SaaS — client accounts, per-org auth, nested routing) or resume parked auto-update when code signing is ready.
+**Current status:** V6 planning complete. Ready to execute TASK-0.1 (seed event_configs on creation), TASK-0.2 (repair migration), then TASK-1.1 (auto-skip theme-selection).
 
 ---
 
