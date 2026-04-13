@@ -68,6 +68,27 @@ const updateOrganization = createServerFn({ method: 'POST' }).handler(
   },
 )
 
+const deleteOrganization = createServerFn({ method: 'POST' }).handler(
+  async (ctx) => {
+    const { id } = ctx.data as { id: string }
+    const admin = getSupabaseAdminClient()
+    // Guard: check event count first for a user-friendly error message.
+    // events.organization_id REFERENCES organizations(id) without CASCADE — Postgres
+    // would also reject the deletion, but this fires first with a clearer message.
+    const { count, error: countError } = await admin
+      .from('events')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', id)
+    if (countError) throw new Error(countError.message)
+    if (count && count > 0)
+      throw new Error(
+        `This organization has ${count} event(s). Remove all events before deleting the organization.`,
+      )
+    const { error } = await admin.from('organizations').delete().eq('id', id)
+    if (error) throw new Error(error.message)
+  },
+)
+
 export const Route = createFileRoute('/dashboard/_layout/organizations')({
   loader: async () => await getOrganizationsWithCounts(),
   component: OrganizationsPage,
@@ -92,6 +113,28 @@ function OrganizationsPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
+
+  const [confirmDeleteOrg, setConfirmDeleteOrg] =
+    useState<OrgWithEventCount | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const handleDelete = async () => {
+    if (!confirmDeleteOrg) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await deleteOrganization({ data: { id: confirmDeleteOrg.id } })
+      setConfirmDeleteOrg(null)
+      void router.invalidate()
+    } catch (err) {
+      setDeleteError(
+        err instanceof Error ? err.message : 'Failed to delete organization.',
+      )
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const openCreate = () => {
     setFormMode({ type: 'create' })
@@ -229,6 +272,47 @@ function OrganizationsPage() {
         </div>
       )}
 
+      {confirmDeleteOrg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 max-w-sm w-full mx-4">
+            <h2 className="text-lg font-semibold text-white mb-2">
+              Delete organization?
+            </h2>
+            <p className="text-sm text-slate-400 mb-4">
+              Are you sure you want to delete{' '}
+              <span className="text-white font-medium">
+                {confirmDeleteOrg.name}
+              </span>
+              ? This cannot be undone.
+            </p>
+            {deleteError && (
+              <p className="text-sm text-red-400 mb-4">{deleteError}</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  void handleDelete()
+                }}
+                disabled={deleting}
+                className="px-4 py-2 text-sm bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+              <button
+                onClick={() => {
+                  setConfirmDeleteOrg(null)
+                  setDeleteError(null)
+                }}
+                disabled={deleting}
+                className="px-4 py-2 text-sm text-slate-300 hover:text-white border border-slate-600 hover:border-slate-500 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {orgs.length === 0 ? (
         <p className="text-slate-400">No organizations yet.</p>
       ) : (
@@ -268,12 +352,23 @@ function OrganizationsPage() {
                     {org.createdAt.slice(0, 10)}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => openEdit(org)}
-                      className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        onClick={() => openEdit(org)}
+                        className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          setConfirmDeleteOrg(org)
+                          setDeleteError(null)
+                        }}
+                        className="text-sm text-red-400 hover:text-red-300 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
