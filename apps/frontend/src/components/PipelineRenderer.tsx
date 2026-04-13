@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useLayoutEffect } from "react";
 import { useEventConfig } from "../contexts/EventConfigContext";
 import { usePipeline } from "../contexts/PipelineContext";
 import { useInactivityTimeout } from "../hooks/useInactivityTimeout";
@@ -59,6 +59,20 @@ export function PipelineRenderer() {
     },
     [config, currentIndex, apiBaseUrl, apiClientKey, advance, setSessionId],
   );
+
+  // useLayoutEffect fires before paint — prevents theme-selection flash on single-theme events.
+  // [currentIndex] dep is intentional: must fire once per step, not on handleComplete ref changes.
+  useLayoutEffect(() => {
+    if (
+      currentModule?.moduleId === "theme-selection" &&
+      currentModule.themes.length === 1
+    ) {
+      const singleTheme = currentModule.themes[0];
+      handleComplete({
+        selectedTheme: { id: singleTheme.id, label: singleTheme.label },
+      });
+    }
+  }, [currentIndex]); // intentional: fires once per step, not on handleComplete ref changes
 
   if (sessionStarting) {
     return (
