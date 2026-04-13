@@ -21,7 +21,7 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 **V3 complete ✅ (2026-04-05).** Remote asset management + carryover fixes.
 **V4 complete ✅ (2026-04-10).** Platform polish + deep customization.
 **V5 complete ✅ (2026-04-13).** Multi-tenant foundation — organizations layer.
-**V6 in planning 🔜.** Multi-event seamlessness — event creation bug fix + per-module conditional behavior.
+**V6 complete ✅ (2026-04-13).** Multi-event seamlessness — event creation bug fix + per-module conditional behavior.
 
 ### Workflow Documents
 
@@ -34,7 +34,7 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 | `docs/workflow/projects/scale-up-v3/` | V3 remote asset management — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v4/` | V4 platform polish + deep customization — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v5/` | V5 multi-tenant foundation — COMPLETE ✅ |
-| `docs/workflow/projects/scale-up-v6/` | V6 multi-event seamlessness — 🔜 planning |
+| `docs/workflow/projects/scale-up-v6/` | V6 multi-event seamlessness — COMPLETE ✅ |
 | `docs/workflow/projects/[parked]-auto-update/` | Electron auto-update — ⏸️ PARKED (blocked on Windows code signing) |
 
 ### V6 Project Docs (`docs/workflow/projects/scale-up-v6/`)
@@ -44,9 +44,7 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 | `00-creator-feedback.md` | Input for V6 planning |
 | `01-backlog.md` | Backlog items scoped into V6 |
 | `01-scope.md` | V6 scope statement, definition of done, architecture decisions |
-| `02-task-decomposition.md` | Atomic executable tasks — phases 0–1 |
-
-**Current status:** V6 planning complete. Ready to execute TASK-0.1 (seed event_configs on creation), TASK-0.2 (repair migration), then TASK-1.1 (auto-skip theme-selection).
+| `02-task-decomposition.md` | Completed tasks (phases 0–1) + additional fixes logged |
 
 ---
 
@@ -57,6 +55,12 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 | ~~`DROP TABLE IF EXISTS photo_results` runs on every app start~~ | `sqlite.ts` | ✅ Fixed (TASK-0.1) |
 | ~~`Replicate` client initialized even when `AI_PROVIDER === 'google'`~~ | `ai-generation.service.ts` | ✅ Fixed (TASK-0.2) |
 | ~~No inactivity timeout on kiosk~~ | `useInactivityTimeout.ts` | ✅ Fixed (TASK-0.3) |
+| ~~New event flow builder empty / validation errors adding modules~~ | `_layout.index.tsx` | ✅ Fixed (V6 FIX-A) |
+| ~~`kiosk.config.json` first-save clobbers `apiBaseUrl`/`apiClientKey`~~ | `main.ts` | ✅ Fixed (V6 FIX-B) |
+| ~~Config refresh after event-ID change serves stale config~~ | `renderer.tsx` | ✅ Fixed (V6 FIX-C) |
+| ~~AI generation status 500 when `AI_PROVIDER` env var mismatches event config~~ | `api.ai-generate-status.ts` | ✅ Fixed (V6 FIX-D) |
+| ~~ResultModule stuck in "saving" when Form module absent~~ | `ResultModule.tsx` | ✅ Fixed (V6 FIX-E) |
+| ~~Inactivity timer resets guest mid-save on result page~~ | `ResultModule.tsx` | ✅ Fixed (V6 FIX-F) |
 
 ---
 

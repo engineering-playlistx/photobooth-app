@@ -1,6 +1,6 @@
 # scale-up-v6 — Task Decomposition
 
-**Status:** Draft 🔜
+**Status:** Complete ✅ (2026-04-13)
 
 ---
 
@@ -182,6 +182,76 @@ useLayoutEffect(() => {
 3. The theme-selection screen does not appear → the kiosk advances directly to the next module (camera)
 4. The theme is pre-selected in `moduleOutputs` (verifiable in the AI generation step, which uses the selected theme)
 5. In a separate test: modify the same event back to 2 themes → theme-selection screen appears normally (regression check)
+
+---
+
+## Additional Fixes — Surfaced During V6 Execution
+
+> These bugs were not in the original V6 scope but were discovered during end-to-end testing and fixed in the same session.
+
+### FIX-A — Flow builder empty on new events (mandatory modules missing)
+
+**Status:** ✅ Fixed
+**Files:** `apps/web/src/routes/dashboard/_layout.index.tsx`, `apps/web/supabase/migrations/20260413110000_repair_empty_module_flows.sql`
+
+`defaultConfig.moduleFlow` was `[]`. The flow builder requires welcome, camera, and result as mandatory singletons before any optional module can be added — `addModule` uses `findIndex` to locate anchor modules, returning -1 on an empty array, causing validation errors and wrong splice positions.
+
+Fix: `defaultConfig.moduleFlow` now seeds the three mandatory modules. A second repair migration (`20260413110000`) backfills existing events whose `moduleFlow` is still `[]`.
+
+---
+
+### FIX-B — `kiosk.config.json` first-save clobbered `apiBaseUrl`/`apiClientKey`
+
+**Status:** ✅ Fixed
+**Files:** `apps/frontend/src/main.ts`
+
+`save-kiosk-config` IPC handler initialised its blank-slate `existing` object as `{ eventId: "", apiBaseUrl: "", apiClientKey: "" }`. When `kiosk.config.json` didn't exist yet, a first save (e.g. changing the event ID) merged the new event ID onto those empty defaults and wrote the file — permanently overwriting the env-var values. All subsequent launches read the file (skipping the env-var fallback) and got `apiBaseUrl: ""`, causing the fetch to hit the Vite dev server and receive HTML instead of JSON.
+
+Fix: `save-kiosk-config` now seeds `existing` from env vars in dev mode (same logic as `get-kiosk-config`), so a first-time save never clobbers `apiBaseUrl`/`apiClientKey`.
+
+---
+
+### FIX-C — Config refresh after event-ID change served stale config (race condition)
+
+**Status:** ✅ Fixed
+**Files:** `apps/frontend/src/renderer.tsx`
+
+`key={startupKey}` was on `<StartupLoader>` but `<EventConfigProvider>` sat outside it and never remounted. On reconnect, `StartupLoader` remounted and called `refreshConfig()`, but the context still had `status="ready"` from the previous fetch — so `StartupLoader` immediately advanced to the preloading phase using the old config, before the new fetch completed.
+
+Fix: moved `key={startupKey}` to `<EventConfigProvider>` so the entire tree (config + pipeline + startup loader) remounts together, giving a clean `status="idle"` slate before the new fetch runs.
+
+---
+
+### FIX-D — AI generation status endpoint used wrong provider
+
+**Status:** ✅ Fixed
+**Files:** `apps/web/src/routes/api.ai-generate.ts`, `apps/web/src/routes/api.ai-generate-status.ts`, `apps/frontend/src/modules/AiGenerationModule.tsx`
+
+`new AIGenerationService()` in the status endpoint used the `AI_PROVIDER` env var, but the prediction was created using the provider resolved from the event config. If they differed (e.g. `AI_PROVIDER=google` while the event config specified `replicate`), the status poll queried `ai_jobs` for a Replicate prediction ID, found nothing, and returned `status: "failed"` on the first poll.
+
+Fix: `api.ai-generate` now returns `provider: 'replicate'` in the create response. `AiGenerationModule` forwards it as `&provider=` in every poll URL. `api.ai-generate-status` reads and validates the param, constructing `AIGenerationService(provider)` to ensure the status check always uses the same backend that created the prediction.
+
+---
+
+### FIX-E — ResultModule stuck in "saving" when Form module absent
+
+**Status:** ✅ Fixed
+**Files:** `apps/frontend/src/modules/ResultModule.tsx`
+
+The save `useEffect` guard bailed out on `!userInfo` (always `undefined` when no Form module is in the flow). `isSaving` initialised as `true` and `setIsSaving(false)` only ran in the save function's `finally` block — which was never reached. Print button stayed permanently disabled.
+
+Fix: guard is now `!finalPhoto` only. `selectedTheme` and `userInfo` are handled defensively inside the save function with nullish fallbacks. The email API call is gated on `userInfo &&` so it is skipped when the Form module is absent.
+
+---
+
+### FIX-F — Inactivity timer reset guest mid-save on result page
+
+**Status:** ✅ Fixed
+**Files:** `apps/frontend/src/modules/ResultModule.tsx`
+
+`ResultModule` never called `setSuppressInactivity`, so the inactivity timeout could fire while the Supabase upload was in progress and send the guest back to the home screen before save completed.
+
+Fix: a new `useEffect` watches `isSaving` and calls `setSuppressInactivity(isSaving)`. Suppression is active for the full duration of the save and is released (via cleanup) if the component unmounts mid-save.
 
 ---
 
