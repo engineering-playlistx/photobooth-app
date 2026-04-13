@@ -493,7 +493,16 @@ ipcMain.handle("get-kiosk-config", () => {
 ipcMain.handle("save-kiosk-config", (_event, updates: Partial<KioskConfig>) => {
   const fs = require("fs");
   const configPath = path.join(app.getPath("userData"), "kiosk.config.json");
-  let existing: KioskConfig = { eventId: "", apiBaseUrl: "", apiClientKey: "" };
+  // Seed defaults from env vars in dev so that a first-time save (no existing file)
+  // doesn't write empty apiBaseUrl/apiClientKey into kiosk.config.json.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const env = isDev ? ((import.meta as any).env ?? {}) : {};
+  let existing: KioskConfig = {
+    eventId: (env.VITE_EVENT_ID as string | undefined) ?? "",
+    apiBaseUrl:
+      (env.VITE_API_BASE_URL as string | undefined) ?? "http://localhost:3000",
+    apiClientKey: (env.VITE_API_CLIENT_KEY as string | undefined) ?? "",
+  };
   if (fs.existsSync(configPath)) {
     try {
       existing = JSON.parse(

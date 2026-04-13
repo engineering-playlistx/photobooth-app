@@ -17,7 +17,10 @@ import "./index.css";
 
 function AppShell() {
   const [showSettings, setShowSettings] = useState(false);
-  // Incrementing this key forces StartupLoader to remount and re-run startup
+  // Incrementing this key forces a full reset: EventConfigProvider + StartupLoader + PipelineProvider
+  // all remount together, giving a clean slate (status="idle", currentIndex=0, fresh fetch).
+  // Key must be on EventConfigProvider (not just StartupLoader) to avoid a race where
+  // StartupLoader remounts but context still has status="ready" from the previous fetch.
   const [startupKey, setStartupKey] = useState(0);
 
   useEffect(() => {
@@ -34,8 +37,8 @@ function AppShell() {
   }
 
   return (
-    <EventConfigProvider>
-      <StartupLoader key={startupKey}>
+    <EventConfigProvider key={startupKey}>
+      <StartupLoader>
         <PipelineProvider>
           <HashRouter>
             <NavigationListener />
