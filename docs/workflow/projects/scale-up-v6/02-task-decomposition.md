@@ -23,7 +23,7 @@ Facts confirmed by reading the codebase — not inferred from filenames or prior
 
 ## Phase 0 — Critical Bug Fixes
 
-### ~~TASK-0.1~~ — Seed default `event_configs` row on event creation
+### TASK-0.1 — Seed default `event_configs` row on event creation
 
 **Status:** Pending
 **Risk:** Low
@@ -75,7 +75,7 @@ If the config insert fails, the whole `createEvent` call throws — no orphaned 
 
 ---
 
-### ~~TASK-0.2~~ — Repair migration: seed default config for existing broken events
+### TASK-0.2 — Repair migration: seed default config for existing broken events
 
 **Status:** Pending
 **Risk:** Low
@@ -137,7 +137,7 @@ WHERE ec.event_id IS NULL;
 
 ## Phase 1 — Per-Module Conditional Behavior
 
-### ~~TASK-1.1~~ — Auto-skip theme-selection when exactly 1 theme is configured
+### TASK-1.1 — Auto-skip theme-selection when exactly 1 theme is configured
 
 **Status:** Pending
 **Risk:** Medium (touches core kiosk pipeline)
@@ -145,17 +145,25 @@ WHERE ec.event_id IS NULL;
 **Files touched:** `apps/frontend/src/components/PipelineRenderer.tsx`
 
 **What:**
-In `PipelineRenderer.tsx`, add a `useEffect` that fires whenever `currentIndex` changes. If the current module is `theme-selection` and `themes.length === 1`, immediately call `handleComplete` with the single theme pre-selected — skipping the UI.
+In `PipelineRenderer.tsx`, add a `useLayoutEffect` that fires whenever `currentIndex` changes. If the current module is `theme-selection` and `themes.length === 1`, immediately call `handleComplete` with the single theme pre-selected — skipping the UI.
+
+`useLayoutEffect` (not `useEffect`) is required here: `useEffect` fires after the browser paints, which would cause the theme-selection UI to flash for one frame before advancing. `useLayoutEffect` fires synchronously before paint, preventing any visible flash.
 
 The output shape must match what `ThemeSelectionModule.handleSelectTheme` produces: `{ selectedTheme: { id, label } }`.
+
+**Before writing:** Check whether `PipelineRenderer.tsx` already imports from `@photobooth/types`. If not, add the type import.
 
 Implementation:
 
 ```typescript
+import { useLayoutEffect } from 'react'
 import type { ThemeSelectionModuleConfig } from '@photobooth/types'
 
 // Inside PipelineRenderer, after the existing handleComplete useCallback:
-useEffect(() => {
+// useLayoutEffect fires before paint — prevents theme-selection flash on single-theme events.
+// [currentIndex] dep is intentional: must fire once per step, not on handleComplete ref changes.
+// eslint-disable-next-line react-hooks/exhaustive-deps
+useLayoutEffect(() => {
   if (
     currentModule?.moduleId === 'theme-selection' &&
     (currentModule as ThemeSelectionModuleConfig).themes.length === 1
@@ -163,10 +171,10 @@ useEffect(() => {
     const singleTheme = (currentModule as ThemeSelectionModuleConfig).themes[0]
     handleComplete({ selectedTheme: { id: singleTheme.id, label: singleTheme.label } })
   }
-}, [currentIndex]) // eslint-disable-line react-hooks/exhaustive-deps
+}, [currentIndex])
 ```
 
-**Why `react-hooks/exhaustive-deps` suppression is acceptable here:** The effect must fire exactly once per module step, not every time `handleComplete` or `currentModule` reference changes. Including them in the deps array would cause infinite re-execution. This is an intentional pattern (same as many "run once on mount" effects). Add a comment explaining this.
+**Why `react-hooks/exhaustive-deps` suppression is acceptable here:** The effect must fire exactly once per module step, not every time `handleComplete` or `currentModule` reference changes. Including them in the deps array would cause infinite re-execution since `handleComplete` is recreated whenever `currentIndex` changes (it's in its `useCallback` deps). This is an intentional one-per-step trigger. The suppression comment is placed above the hook, not inline, so it is clear and isolated.
 
 **Verification:**
 1. In Supabase SQL editor, modify an event's `config_json.moduleFlow` so the `theme-selection` module has exactly 1 theme in its `themes` array
@@ -181,12 +189,11 @@ useEffect(() => {
 
 > This section tracks issues identified during planning review (HOW-WE-WORK.md Step 3). Updated after creator decisions in Step 4.
 
-### Issue 1 — `useEffect` ESLint suppression in TASK-1.1
+### Issue 1 — ESLint suppression in TASK-1.1 (`react-hooks/exhaustive-deps`)
 
 **Type:** Risk
 **Task:** TASK-1.1
-**Issue:** Suppressing `react-hooks/exhaustive-deps` is a code smell that can mask real bugs. The reason it's needed here (prevent infinite re-execution) is valid, but it should be documented inline.
-**Recommendation:** Add a comment block explaining the suppression. Accept this as-is — the alternative (restructuring the effect) adds unnecessary complexity.
+**Resolution:** Using `useLayoutEffect` with `[currentIndex]` dep and `eslint-disable-next-line` above the hook. The reason for suppression (prevent infinite re-execution caused by `handleComplete` being in `useCallback`'s deps) is explained inline. `useLayoutEffect` was chosen over `useEffect` to prevent a one-frame flash of the theme-selection UI before advancing. Accepted — the suppression is intentional and documented.
 
 ### Issue 2 — Open question: other per-module conditional behaviors
 

@@ -9,6 +9,7 @@
 ## How to use this document
 
 Each entry has:
+
 - **ID** — reference for task decomposition
 - **Category** — Security / Data / UX / Perf / Code / Scale / Ops / Resilience
 - **Issue** — what the problem is
@@ -50,18 +51,21 @@ Each entry has:
 
 These items were deferred from V5. Subset relevant to V6 "multi-event seamlessness" goal listed here.
 
-| ID | Issue | V6 decision |
-|----|-------|-------------|
-| CARRY-02 | Config version history + rollback snapshots | ⏸️ Defer to V7 — low urgency, no client accounts yet |
-| GAP-03 | Operator-facing error dashboard | ⏸️ Defer to V7 |
-| CLIENT-01 | Client dashboard login + self-serve access | ⏸️ Defer to V7 |
-| REPORT-01 | Automated reporting + scheduled email delivery | ⏸️ Defer to V7 (depends on CLIENT-01) |
-| CARRY-01 | AI provider fallback chain | ⏸️ Defer to V7 |
-| CUSTOM-03 | Per-module layout template selection | ⏸️ Defer to V7 — complex UX |
-| CSS-01 | Visual CSS builder in dashboard | ⏸️ Defer to V7 |
-| GUEST-01 | Guest portal V2 | ⏸️ Defer to V7 |
-| FIELD-01 | Form field builder | ⏸️ Defer to V7 |
-| GAP-01 | Session crash recovery (SQLite mid-flow) | ⏸️ Defer — still low urgency |
-| GAP-05 | SQLite offline sync-back to Supabase | ⏸️ Defer — depends on GAP-01 |
-| QR-01 | QR kiosk pairing | ⏸️ Defer — PIN screen sufficient |
-| PERF-01 | `getSession()` JWT 1-hour revocation window | ⏸️ Defer — low risk until client accounts exist |
+
+| ID        | Issue                                          | V6 decision                                          |
+| --------- | ---------------------------------------------- | ---------------------------------------------------- |
+| CARRY-02  | Config version history + rollback snapshots    | ⏸️ Defer to V7 — low urgency, no client accounts yet |
+| GAP-03    | Operator-facing error dashboard                | ⏸️ Defer to V7                                       |
+| CLIENT-01 | Client dashboard login + self-serve access     | ⏸️ Defer to V7                                       |
+| REPORT-01 | Automated reporting + scheduled email delivery | ⏸️ Defer to V7 (depends on CLIENT-01)                |
+| CARRY-01  | AI provider fallback chain                     | ⏸️ Defer to V7                                       |
+| CUSTOM-03 | Per-module layout template selection           | ⏸️ Defer to V7 — complex UX                          |
+| CSS-01    | Visual CSS builder in dashboard                | ⏸️ Defer to V7                                       |
+| GUEST-01  | Guest portal V2                                | ⏸️ Defer to V7                                       |
+| FIELD-01  | Form field builder                             | ⏸️ Defer to V7                                       |
+| GAP-01    | Session crash recovery (SQLite mid-flow)       | ⏸️ Defer — still low urgency                         |
+| GAP-05    | SQLite offline sync-back to Supabase           | ⏸️ Defer — depends on GAP-01                         |
+| QR-01     | QR kiosk pairing                               | ⏸️ Defer — PIN screen sufficient                     |
+| PERF-01   | `getSession()` JWT 1-hour revocation window    | ⏸️ Defer — low risk until client accounts exist      |
+
+

@@ -64,7 +64,7 @@ An empty `moduleFlow` is intentional — the operator configures the flow via th
 
 There is no reason to ever show a theme selection screen with exactly one option. The behavior is unconditional.
 
-**Implementation:** In `PipelineRenderer.tsx`, add a `useEffect` that fires when `currentIndex` changes. If `currentModule.moduleId === 'theme-selection'` and `themes.length === 1`, immediately call `handleComplete({ selectedTheme: { id: themes[0].id, label: themes[0].label } })`.
+**Implementation:** In `PipelineRenderer.tsx`, add a `useLayoutEffect` that fires when `currentIndex` changes. If `currentModule.moduleId === 'theme-selection'` and `themes.length === 1`, immediately call `handleComplete({ selectedTheme: { id: themes[0].id, label: themes[0].label } })`. `useLayoutEffect` is used (not `useEffect`) to prevent a one-frame flash of the theme-selection UI before the skip executes.
 
 **Edge cases:**
 - `themes.length === 0`: already handled in `ThemeSelectionModule` (shows error UI) — not affected
