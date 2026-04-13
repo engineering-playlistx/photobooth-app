@@ -56,6 +56,43 @@ const createEvent = createServerFn({ method: 'POST' }).handler(async (ctx) => {
     )
     .single()
   if (error) throw new Error(error.message)
+
+  // TASK-0.1: Seed a default event_configs row so config/flow pages don't 500 on first load.
+  // Note: if this insert fails after the events insert succeeds, the event row is orphaned.
+  // The operator can recover via the TASK-0.2 repair migration. Accepted at risk tolerance 2/5.
+  const defaultConfig = {
+    eventId: id,
+    branding: {
+      logoUrl: null,
+      primaryColor: '#ffffff',
+      secondaryColor: '#000000',
+      fontFamily: null,
+      backgroundUrl: null,
+      portalHeading: null,
+      screenBackgrounds: null,
+    },
+    moduleFlow: [
+      { moduleId: 'welcome', position: 'fixed-first' },
+      {
+        moduleId: 'camera',
+        position: 'fixed-camera',
+        outputKey: 'originalPhoto',
+        maxRetakes: 2,
+      },
+      { moduleId: 'result', position: 'fixed-last' },
+    ],
+    formFields: { name: true, email: true, phone: true, consent: true },
+    techConfig: {
+      printerName: '',
+      inactivityTimeoutSeconds: 60,
+      guestPortalEnabled: false,
+    },
+  }
+  const { error: configError } = await admin
+    .from('event_configs')
+    .insert({ event_id: id, config_json: defaultConfig })
+  if (configError) throw new Error(configError.message)
+
   return data as Event
 })
 

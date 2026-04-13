@@ -23,9 +23,9 @@ Facts confirmed by reading the codebase — not inferred from filenames or prior
 
 ## Phase 0 — Critical Bug Fixes
 
-### TASK-0.1 — Seed default `event_configs` row on event creation
+### ~~TASK-0.1 — Seed default `event_configs` row on event creation~~ ✅
 
-**Status:** Pending
+**Status:** ~~Pending~~ Done
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/web/src/routes/dashboard/_layout.index.tsx`
@@ -75,9 +75,9 @@ If the config insert fails, the whole `createEvent` call throws — no orphaned 
 
 ---
 
-### TASK-0.2 — Repair migration: seed default config for existing broken events
+### ~~TASK-0.2 — Repair migration: seed default config for existing broken events~~ ✅
 
-**Status:** Pending
+**Status:** ~~Pending~~ Done (migration file committed — manual SQL editor run still required)
 **Risk:** Low
 **Depends on:** Nothing (independent of TASK-0.1)
 **Files touched:** `apps/web/supabase/migrations/20260413100000_repair_missing_event_configs.sql`
@@ -137,9 +137,9 @@ WHERE ec.event_id IS NULL;
 
 ## Phase 1 — Per-Module Conditional Behavior
 
-### TASK-1.1 — Auto-skip theme-selection when exactly 1 theme is configured
+### ~~TASK-1.1 — Auto-skip theme-selection when exactly 1 theme is configured~~ ✅
 
-**Status:** Pending
+**Status:** ~~Pending~~ Done
 **Risk:** Medium (touches core kiosk pipeline)
 **Depends on:** Nothing (frontend-only change)
 **Files touched:** `apps/frontend/src/components/PipelineRenderer.tsx`
