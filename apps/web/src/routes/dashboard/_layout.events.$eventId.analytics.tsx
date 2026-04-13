@@ -1,6 +1,7 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
+import { SUPABASE_BUCKET } from '../../utils/constants'
 
 type DailyTrendEntry = { date: string; visits: number }
 
@@ -25,9 +26,10 @@ const getEventAnalytics = createServerFn({ method: 'GET' }).handler(
   async (ctx) => {
     const { eventId } = ctx.data as { eventId: string }
     const admin = getSupabaseAdminClient()
-    const { data, error } = await admin.rpc('get_event_analytics', {
-      p_event_id: eventId,
-    })
+    const [{ data, error }, { data: photoFiles }] = await Promise.all([
+      admin.rpc('get_event_analytics', { p_event_id: eventId }),
+      admin.storage.from(SUPABASE_BUCKET).list(`events/${eventId}/photos`),
+    ])
     if (error) throw new Error(error.message)
 
     const raw = (data ?? {}) as Partial<EventAnalytics>
@@ -43,8 +45,9 @@ const getEventAnalytics = createServerFn({ method: 'GET' }).handler(
       total_visits: raw.total_visits ?? 0,
       unique_guests: raw.unique_guests ?? 0,
       returning_guests: raw.returning_guests ?? 0,
+      photo_count: photoFiles?.length ?? 0,
       daily_trend,
-    } satisfies EventAnalytics
+    }
   },
 )
 
@@ -78,7 +81,8 @@ function AnalyticsPage() {
 
       <h1 className="text-2xl font-bold text-white mb-6">Analytics</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
+        <StatCard label="Total Photos" value={String(analytics.photo_count)} />
         <StatCard label="Total Visits" value={String(analytics.total_visits)} />
         <StatCard
           label="Unique Guests"
