@@ -25,7 +25,9 @@ import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.se
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoSentryTestingRouteImport } from './routes/demo/sentry.testing'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
+import { Route as DashboardLayoutOrganizationsRouteImport } from './routes/dashboard/_layout.organizations'
 import { Route as ApiSessionStartRouteImport } from './routes/api.session.start'
+import { Route as ApiAssetsUploadRouteImport } from './routes/api.assets.upload'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
@@ -35,6 +37,8 @@ import { Route as DashboardLayoutEventsEventIdPhotosRouteImport } from './routes
 import { Route as DashboardLayoutEventsEventIdGuestsRouteImport } from './routes/dashboard/_layout.events.$eventId.guests'
 import { Route as DashboardLayoutEventsEventIdFlowRouteImport } from './routes/dashboard/_layout.events.$eventId.flow'
 import { Route as DashboardLayoutEventsEventIdConfigRouteImport } from './routes/dashboard/_layout.events.$eventId.config'
+import { Route as DashboardLayoutEventsEventIdAssetsRouteImport } from './routes/dashboard/_layout.events.$eventId.assets'
+import { Route as DashboardLayoutEventsEventIdAnalyticsRouteImport } from './routes/dashboard/_layout.events.$eventId.analytics'
 
 const DashboardRouteImport = createFileRoute('/dashboard')()
 
@@ -112,9 +116,20 @@ const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
   path: '/demo/api/names',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardLayoutOrganizationsRoute =
+  DashboardLayoutOrganizationsRouteImport.update({
+    id: '/organizations',
+    path: '/organizations',
+    getParentRoute: () => DashboardLayoutRoute,
+  } as any)
 const ApiSessionStartRoute = ApiSessionStartRouteImport.update({
   id: '/api/session/start',
   path: '/api/session/start',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAssetsUploadRoute = ApiAssetsUploadRouteImport.update({
+  id: '/api/assets/upload',
+  path: '/api/assets/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
@@ -167,6 +182,18 @@ const DashboardLayoutEventsEventIdConfigRoute =
     path: '/events/$eventId/config',
     getParentRoute: () => DashboardLayoutRoute,
   } as any)
+const DashboardLayoutEventsEventIdAssetsRoute =
+  DashboardLayoutEventsEventIdAssetsRouteImport.update({
+    id: '/events/$eventId/assets',
+    path: '/events/$eventId/assets',
+    getParentRoute: () => DashboardLayoutRoute,
+  } as any)
+const DashboardLayoutEventsEventIdAnalyticsRoute =
+  DashboardLayoutEventsEventIdAnalyticsRouteImport.update({
+    id: '/events/$eventId/analytics',
+    path: '/events/$eventId/analytics',
+    getParentRoute: () => DashboardLayoutRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -178,7 +205,9 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardLayoutRouteWithChildren
   '/dashboard/login': typeof DashboardLoginRoute
   '/result/$sessionId': typeof ResultSessionIdRoute
+  '/api/assets/upload': typeof ApiAssetsUploadRoute
   '/api/session/start': typeof ApiSessionStartRoute
+  '/dashboard/organizations': typeof DashboardLayoutOrganizationsRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -188,6 +217,8 @@ export interface FileRoutesByFullPath {
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
+  '/dashboard/events/$eventId/analytics': typeof DashboardLayoutEventsEventIdAnalyticsRoute
+  '/dashboard/events/$eventId/assets': typeof DashboardLayoutEventsEventIdAssetsRoute
   '/dashboard/events/$eventId/config': typeof DashboardLayoutEventsEventIdConfigRoute
   '/dashboard/events/$eventId/flow': typeof DashboardLayoutEventsEventIdFlowRoute
   '/dashboard/events/$eventId/guests': typeof DashboardLayoutEventsEventIdGuestsRoute
@@ -204,7 +235,9 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardLayoutIndexRoute
   '/dashboard/login': typeof DashboardLoginRoute
   '/result/$sessionId': typeof ResultSessionIdRoute
+  '/api/assets/upload': typeof ApiAssetsUploadRoute
   '/api/session/start': typeof ApiSessionStartRoute
+  '/dashboard/organizations': typeof DashboardLayoutOrganizationsRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -213,6 +246,8 @@ export interface FileRoutesByTo {
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
+  '/dashboard/events/$eventId/analytics': typeof DashboardLayoutEventsEventIdAnalyticsRoute
+  '/dashboard/events/$eventId/assets': typeof DashboardLayoutEventsEventIdAssetsRoute
   '/dashboard/events/$eventId/config': typeof DashboardLayoutEventsEventIdConfigRoute
   '/dashboard/events/$eventId/flow': typeof DashboardLayoutEventsEventIdFlowRoute
   '/dashboard/events/$eventId/guests': typeof DashboardLayoutEventsEventIdGuestsRoute
@@ -231,7 +266,9 @@ export interface FileRoutesById {
   '/dashboard/_layout': typeof DashboardLayoutRouteWithChildren
   '/dashboard/login': typeof DashboardLoginRoute
   '/result/$sessionId': typeof ResultSessionIdRoute
+  '/api/assets/upload': typeof ApiAssetsUploadRoute
   '/api/session/start': typeof ApiSessionStartRoute
+  '/dashboard/_layout/organizations': typeof DashboardLayoutOrganizationsRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -241,6 +278,8 @@ export interface FileRoutesById {
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
+  '/dashboard/_layout/events/$eventId/analytics': typeof DashboardLayoutEventsEventIdAnalyticsRoute
+  '/dashboard/_layout/events/$eventId/assets': typeof DashboardLayoutEventsEventIdAssetsRoute
   '/dashboard/_layout/events/$eventId/config': typeof DashboardLayoutEventsEventIdConfigRoute
   '/dashboard/_layout/events/$eventId/flow': typeof DashboardLayoutEventsEventIdFlowRoute
   '/dashboard/_layout/events/$eventId/guests': typeof DashboardLayoutEventsEventIdGuestsRoute
@@ -259,7 +298,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dashboard/login'
     | '/result/$sessionId'
+    | '/api/assets/upload'
     | '/api/session/start'
+    | '/dashboard/organizations'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -269,6 +310,8 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
     | '/demo/start/ssr'
+    | '/dashboard/events/$eventId/analytics'
+    | '/dashboard/events/$eventId/assets'
     | '/dashboard/events/$eventId/config'
     | '/dashboard/events/$eventId/flow'
     | '/dashboard/events/$eventId/guests'
@@ -285,7 +328,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dashboard/login'
     | '/result/$sessionId'
+    | '/api/assets/upload'
     | '/api/session/start'
+    | '/dashboard/organizations'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -294,6 +339,8 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
     | '/demo/start/ssr'
+    | '/dashboard/events/$eventId/analytics'
+    | '/dashboard/events/$eventId/assets'
     | '/dashboard/events/$eventId/config'
     | '/dashboard/events/$eventId/flow'
     | '/dashboard/events/$eventId/guests'
@@ -311,7 +358,9 @@ export interface FileRouteTypes {
     | '/dashboard/_layout'
     | '/dashboard/login'
     | '/result/$sessionId'
+    | '/api/assets/upload'
     | '/api/session/start'
+    | '/dashboard/_layout/organizations'
     | '/demo/api/names'
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
@@ -321,6 +370,8 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
     | '/demo/start/ssr/'
+    | '/dashboard/_layout/events/$eventId/analytics'
+    | '/dashboard/_layout/events/$eventId/assets'
     | '/dashboard/_layout/events/$eventId/config'
     | '/dashboard/_layout/events/$eventId/flow'
     | '/dashboard/_layout/events/$eventId/guests'
@@ -337,6 +388,7 @@ export interface RootRouteChildren {
   ApiTestGoogleAiRoute: typeof ApiTestGoogleAiRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   ResultSessionIdRoute: typeof ResultSessionIdRoute
+  ApiAssetsUploadRoute: typeof ApiAssetsUploadRoute
   ApiSessionStartRoute: typeof ApiSessionStartRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoSentryTestingRoute: typeof DemoSentryTestingRoute
@@ -455,11 +507,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoApiNamesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/_layout/organizations': {
+      id: '/dashboard/_layout/organizations'
+      path: '/organizations'
+      fullPath: '/dashboard/organizations'
+      preLoaderRoute: typeof DashboardLayoutOrganizationsRouteImport
+      parentRoute: typeof DashboardLayoutRoute
+    }
     '/api/session/start': {
       id: '/api/session/start'
       path: '/api/session/start'
       fullPath: '/api/session/start'
       preLoaderRoute: typeof ApiSessionStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/assets/upload': {
+      id: '/api/assets/upload'
+      path: '/api/assets/upload'
+      fullPath: '/api/assets/upload'
+      preLoaderRoute: typeof ApiAssetsUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/start/ssr/': {
@@ -525,11 +591,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLayoutEventsEventIdConfigRouteImport
       parentRoute: typeof DashboardLayoutRoute
     }
+    '/dashboard/_layout/events/$eventId/assets': {
+      id: '/dashboard/_layout/events/$eventId/assets'
+      path: '/events/$eventId/assets'
+      fullPath: '/dashboard/events/$eventId/assets'
+      preLoaderRoute: typeof DashboardLayoutEventsEventIdAssetsRouteImport
+      parentRoute: typeof DashboardLayoutRoute
+    }
+    '/dashboard/_layout/events/$eventId/analytics': {
+      id: '/dashboard/_layout/events/$eventId/analytics'
+      path: '/events/$eventId/analytics'
+      fullPath: '/dashboard/events/$eventId/analytics'
+      preLoaderRoute: typeof DashboardLayoutEventsEventIdAnalyticsRouteImport
+      parentRoute: typeof DashboardLayoutRoute
+    }
   }
 }
 
 interface DashboardLayoutRouteChildren {
+  DashboardLayoutOrganizationsRoute: typeof DashboardLayoutOrganizationsRoute
   DashboardLayoutIndexRoute: typeof DashboardLayoutIndexRoute
+  DashboardLayoutEventsEventIdAnalyticsRoute: typeof DashboardLayoutEventsEventIdAnalyticsRoute
+  DashboardLayoutEventsEventIdAssetsRoute: typeof DashboardLayoutEventsEventIdAssetsRoute
   DashboardLayoutEventsEventIdConfigRoute: typeof DashboardLayoutEventsEventIdConfigRoute
   DashboardLayoutEventsEventIdFlowRoute: typeof DashboardLayoutEventsEventIdFlowRoute
   DashboardLayoutEventsEventIdGuestsRoute: typeof DashboardLayoutEventsEventIdGuestsRoute
@@ -538,7 +621,12 @@ interface DashboardLayoutRouteChildren {
 }
 
 const DashboardLayoutRouteChildren: DashboardLayoutRouteChildren = {
+  DashboardLayoutOrganizationsRoute: DashboardLayoutOrganizationsRoute,
   DashboardLayoutIndexRoute: DashboardLayoutIndexRoute,
+  DashboardLayoutEventsEventIdAnalyticsRoute:
+    DashboardLayoutEventsEventIdAnalyticsRoute,
+  DashboardLayoutEventsEventIdAssetsRoute:
+    DashboardLayoutEventsEventIdAssetsRoute,
   DashboardLayoutEventsEventIdConfigRoute:
     DashboardLayoutEventsEventIdConfigRoute,
   DashboardLayoutEventsEventIdFlowRoute: DashboardLayoutEventsEventIdFlowRoute,
@@ -577,6 +665,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTestGoogleAiRoute: ApiTestGoogleAiRoute,
   DashboardRoute: DashboardRouteWithChildren,
   ResultSessionIdRoute: ResultSessionIdRoute,
+  ApiAssetsUploadRoute: ApiAssetsUploadRoute,
   ApiSessionStartRoute: ApiSessionStartRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoSentryTestingRoute: DemoSentryTestingRoute,

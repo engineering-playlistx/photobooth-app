@@ -1,4 +1,5 @@
 import {
+  Link,
   Outlet,
   createFileRoute,
   redirect,
@@ -41,7 +42,25 @@ function DashboardLayout() {
   return (
     <div className="min-h-screen bg-slate-900">
       <nav className="flex items-center justify-between px-6 py-4 border-b border-slate-700 bg-slate-800">
-        <span className="text-white font-semibold">Photobooth Dashboard</span>
+        <div className="flex items-center gap-6">
+          <span className="text-white font-semibold">Photobooth Dashboard</span>
+          <div className="flex items-center gap-4">
+            <Link
+              to="/dashboard"
+              className="text-sm text-slate-400 hover:text-white transition-colors"
+              activeProps={{ className: 'text-sm text-white font-medium' }}
+            >
+              Events
+            </Link>
+            <Link
+              to="/dashboard/organizations"
+              className="text-sm text-slate-400 hover:text-white transition-colors"
+              activeProps={{ className: 'text-sm text-white font-medium' }}
+            >
+              Organizations
+            </Link>
+          </div>
+        </div>
         <div className="flex items-center gap-4">
           <span className="text-slate-400 text-sm">{user.email}</span>
           <button
