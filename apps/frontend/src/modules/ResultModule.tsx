@@ -36,8 +36,13 @@ export function ResultModule({ config, outputs }: ModuleProps) {
   const { config: eventConfig, apiBaseUrl, apiClientKey } = useEventConfig();
   const { reset, setSuppressInactivity } = usePipeline();
   const bg = useModuleBackground("result");
-  const { customization, emailEnabled, qrCodeEnabled, printEnabled } =
-    config as ResultModuleConfig;
+  const {
+    customization,
+    emailEnabled,
+    qrCodeEnabled,
+    printEnabled,
+    retryEnabled,
+  } = config as ResultModuleConfig;
   const isEmailEnabled = emailEnabled ?? true;
   const isQrCodeEnabled = qrCodeEnabled ?? true;
   const isPrintEnabled = printEnabled ?? true;
@@ -361,14 +366,20 @@ export function ResultModule({ config, outputs }: ModuleProps) {
             )}
           </div>
 
-          <div className="text-center text-4xl grid grid-cols-2 gap-6 w-full">
-            <button
-              type="button"
-              className="pb-result-retryButton px-7 py-3 bg-white text-secondary rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
-              onClick={() => setShowLeaveConfirm(true)}
-            >
-              {retryButtonEl.copy}
-            </button>
+          <div
+            className={`text-center text-4xl gap-6 w-full ${retryEnabled ? "grid grid-cols-2" : "flex justify-center"}`}
+          >
+            {/* TODO V8: retry should jump back to the ai-generation step, not reset to home.
+                Requires pipeline step-back capability (not yet implemented). */}
+            {retryEnabled && (
+              <button
+                type="button"
+                className="pb-result-retryButton px-7 py-3 bg-white text-secondary rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+                onClick={() => setShowLeaveConfirm(true)}
+              >
+                {retryButtonEl.copy}
+              </button>
+            )}
             <button
               type="button"
               className="pb-result-backButton px-7 py-3 bg-white text-secondary rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"

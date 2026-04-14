@@ -79,6 +79,7 @@ export interface ResultModuleConfig extends BaseModuleConfig {
   emailEnabled?: boolean // undefined treated as true (backward compatible)
   qrCodeEnabled?: boolean // undefined treated as true
   printEnabled?: boolean // undefined treated as true
+  retryEnabled?: boolean // undefined treated as false (opt-in)
 }
 
 export interface MiniQuizModuleConfig extends BaseModuleConfig {
