@@ -389,6 +389,7 @@ function FlowBuilderPage() {
   const [saveStatus, setSaveStatus] = useState<
     'idle' | 'saving' | 'saved' | 'error'
   >('idle')
+  const [saveWarning, setSaveWarning] = useState<string | null>(null)
 
   const isDirty =
     JSON.stringify(flow) !== JSON.stringify(savedFlow) ||
@@ -598,8 +599,36 @@ function FlowBuilderPage() {
       setValidationErrors(errors)
       return
     }
+
+    // TASK-2.2 — Hard block: printer name required when printing is enabled
+    const resultModule = flow.find(
+      (m): m is ResultModuleConfig => m.moduleId === 'result',
+    )
+    const printEnabled = resultModule
+      ? (resultModule.printEnabled ?? true)
+      : false
+    if (printEnabled && !printerName.trim()) {
+      setValidationErrors({
+        printerName:
+          'Printer name is required when printing is enabled. Open the Result module settings to set a printer name.',
+      })
+      return
+    }
+
     if (!confirm('Save flow changes to Supabase?')) return
     setValidationErrors({})
+
+    // TASK-2.1 — Non-blocking warning: AI gen without Theme Selection
+    const hasAiGen = flow.some((m) => m.moduleId === 'ai-generation')
+    const hasThemeSelection = flow.some((m) => m.moduleId === 'theme-selection')
+    if (hasAiGen && !hasThemeSelection) {
+      setSaveWarning(
+        "Your flow has an AI Generation module but no Theme Selection module — guests won't be able to pick a theme.",
+      )
+    } else {
+      setSaveWarning(null)
+    }
+
     setSaveStatus('saving')
     try {
       await saveFlowConfig({
@@ -662,6 +691,19 @@ function FlowBuilderPage() {
           )}
         </div>
       </div>
+
+      {saveWarning && (
+        <div className="mb-4 p-3 border border-amber-500/30 bg-amber-500/10 rounded-lg flex items-start justify-between gap-2">
+          <p className="text-xs text-amber-300">{saveWarning}</p>
+          <button
+            onClick={() => setSaveWarning(null)}
+            className="text-amber-500 hover:text-amber-300 transition-colors text-sm leading-none shrink-0"
+            title="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {Object.keys(validationErrors).length > 0 && (
         <div className="mb-4 p-3 border border-red-500/30 bg-red-500/10 rounded-lg space-y-1">
@@ -963,6 +1005,7 @@ function ConfigPanel({
     return (
       <ResultPanel
         module={module}
+        flow={flow}
         onUpdate={onUpdate}
         bgSlot={bgSlot}
         printerName={extras.printerName}
@@ -1720,12 +1763,14 @@ function FormPanel({
 
 function ResultPanel({
   module,
+  flow,
   onUpdate,
   bgSlot,
   printerName,
   onPrinterNameChange,
 }: {
   module: ResultModuleConfig
+  flow: Array<ModuleConfig>
   onUpdate: (patch: Partial<ModuleConfig>) => void
   bgSlot: ReactNode
   printerName: string
@@ -1733,9 +1778,10 @@ function ResultPanel({
 }) {
   const toggleCls = 'flex items-center gap-2 cursor-pointer select-none'
   const checkboxCls = 'w-4 h-4 rounded accent-blue-500'
+  const hasAiGen = flow.some((m) => m.moduleId === 'ai-generation')
 
   const update = (
-    field: 'emailEnabled' | 'qrCodeEnabled' | 'printEnabled',
+    field: 'emailEnabled' | 'qrCodeEnabled' | 'printEnabled' | 'retryEnabled',
     value: boolean,
   ) => onUpdate({ [field]: value } as Partial<ModuleConfig>)
 
@@ -1786,6 +1832,25 @@ function ResultPanel({
               onChange={(e) => update('printEnabled', e.target.checked)}
             />
             <span className="text-sm text-slate-300">Enable printing</span>
+          </label>
+          <label
+            className={`${toggleCls} ${!hasAiGen ? 'opacity-40 cursor-not-allowed' : ''}`}
+            title={
+              !hasAiGen
+                ? 'Requires an AI Generation module in the flow'
+                : undefined
+            }
+          >
+            <input
+              type="checkbox"
+              className={checkboxCls}
+              checked={module.retryEnabled ?? false}
+              disabled={!hasAiGen}
+              onChange={(e) => update('retryEnabled', e.target.checked)}
+            />
+            <span className="text-sm text-slate-300">
+              Allow guest to retry AI generation
+            </span>
           </label>
         </div>
       </div>
