@@ -33,6 +33,7 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [isCameraLoading, setIsCameraLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
   const [retakeCount, setRetakeCount] = useState(0);
@@ -190,6 +191,7 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
   }, [isCameraActive, verticalOffset, capturedPhotos]);
 
   async function handleStartCamera(deviceId?: string) {
+    setIsCameraLoading(true);
     try {
       setError(null);
 
@@ -253,11 +255,13 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
         }
       }
 
+      setIsCameraLoading(false);
       setIsCameraActive(true);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to access camera";
       setError(errorMessage);
+      setIsCameraLoading(false);
       setIsCameraActive(false);
     }
   }
@@ -485,6 +489,11 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
       )}
 
       <div className="relative w-full h-full overflow-hidden">
+        {isCameraLoading && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
+            <div className="size-16 rounded-full border-4 border-white/20 border-t-white animate-spin" />
+          </div>
+        )}
         <canvas
           ref={canvasRef}
           width={canvasWidth}
