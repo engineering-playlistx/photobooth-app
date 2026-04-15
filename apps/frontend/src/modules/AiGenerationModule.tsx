@@ -184,7 +184,6 @@ export function AiGenerationModule({
           predictionId?: string;
           tempPath?: string;
           provider?: string; // which AI backend created this prediction
-          generatedImageBase64?: string; // Google AI sync: result returned immediately
         };
         clearTimeout(timeoutId);
         timeoutId = undefined;
@@ -197,62 +196,52 @@ export function AiGenerationModule({
         setStatusText("AI is generating your photo...");
         setProgress(25);
 
-        // Phase 2: Use result if already returned (Google AI sync), otherwise poll
+        // Phase 2: Poll for completion (both Replicate and Google AI use this path)
         let generatedImageBase64: string | null = null;
 
-        if (createData.generatedImageBase64) {
-          // Google AI synchronous mode — result is already in the create response
-          console.log(
-            `[AI Generate] Got result from create response (sync mode) — ${Math.round(createData.generatedImageBase64.length / 1024)}KB`,
-          );
-          generatedImageBase64 = createData.generatedImageBase64;
-          setProgress(85);
-        } else {
-          // Replicate (or future async provider) — poll for completion
-          const POLL_INTERVAL = 2500;
-          const MAX_ATTEMPTS = 60;
+        const POLL_INTERVAL = 2500;
+        const MAX_ATTEMPTS = 60;
 
-          for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-            await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
-            const pollProgress = 25 + Math.min(attempt * 2, 60);
-            setProgress(pollProgress);
+        for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+          await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
+          const pollProgress = 25 + Math.min(attempt * 2, 60);
+          setProgress(pollProgress);
 
-            const statusResponse = await fetch(
-              `${apiBaseUrl}/api/ai-generate-status?predictionId=${predictionId}&tempPath=${encodeURIComponent(tempPath ?? "")}&provider=${encodeURIComponent(provider ?? "")}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${apiClientKey}`,
-                },
+          const statusResponse = await fetch(
+            `${apiBaseUrl}/api/ai-generate-status?predictionId=${predictionId}&tempPath=${encodeURIComponent(tempPath ?? "")}&provider=${encodeURIComponent(provider ?? "")}`,
+            {
+              headers: {
+                Authorization: `Bearer ${apiClientKey}`,
               },
-            );
+            },
+          );
 
-            const statusData = (await statusResponse.json()) as {
-              status?: string;
-              generatedImageBase64?: string;
-              error?: string;
-            };
-            console.log(
-              `[AI Generate] Poll #${attempt + 1} — status: ${statusData.status}`,
-            );
+          const statusData = (await statusResponse.json()) as {
+            status?: string;
+            generatedImageBase64?: string;
+            error?: string;
+          };
+          console.log(
+            `[AI Generate] Poll #${attempt + 1} — status: ${statusData.status}`,
+          );
 
-            if (
-              statusData.status === "succeeded" &&
-              statusData.generatedImageBase64
-            ) {
-              generatedImageBase64 = statusData.generatedImageBase64;
-              break;
-            }
-
-            if (
-              statusData.status === "failed" ||
-              statusData.status === "canceled"
-            ) {
-              throw new Error(
-                statusData.error || `Generation ${statusData.status}`,
-              );
-            }
-            // "starting" or "processing" — continue polling
+          if (
+            statusData.status === "succeeded" &&
+            statusData.generatedImageBase64
+          ) {
+            generatedImageBase64 = statusData.generatedImageBase64;
+            break;
           }
+
+          if (
+            statusData.status === "failed" ||
+            statusData.status === "canceled"
+          ) {
+            throw new Error(
+              statusData.error || `Generation ${statusData.status}`,
+            );
+          }
+          // "starting" or "processing" — continue polling
         }
 
         if (!generatedImageBase64) {

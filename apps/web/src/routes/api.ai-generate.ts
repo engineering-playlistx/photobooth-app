@@ -146,62 +146,19 @@ export const Route = createFileRoute('/api/ai-generate')({
           let predictionId: string
 
           if (provider === 'google') {
-            // Google AI: run entirely synchronously inside the request handler.
-            // Background fire-and-forget tasks hang in Nitro/Vite and some production
-            // runtimes — awaiting inside the active request lifecycle is the reliable path.
+            // Google AI: create an async job (stored in ai_jobs), return immediately.
+            // The frontend polls /api/ai-generate-status until the job completes,
+            // giving a smooth progress bar instead of a blocking 30–60s request.
             console.log(
-              `[ai-generate] Using Google AI provider — synchronous mode`,
+              `[ai-generate] Using Google AI provider — async job mode`,
             )
-
-            console.log(`[ai-generate] Pre-fetching template: ${templateUrl}`)
-            let templateBase64: string
-            let templateMimeType: string
-            try {
-              const templateResponse = await fetch(templateUrl)
-              if (!templateResponse.ok) {
-                throw new Error(
-                  `${templateResponse.status} ${templateResponse.statusText}`,
-                )
-              }
-              const templateArrayBuffer = await templateResponse.arrayBuffer()
-              templateBase64 =
-                Buffer.from(templateArrayBuffer).toString('base64')
-              templateMimeType =
-                templateResponse.headers.get('content-type') || 'image/jpeg'
-              console.log(
-                `[ai-generate] Template pre-fetched — ${Math.round(templateArrayBuffer.byteLength / 1024)}KB, mimeType: ${templateMimeType}`,
-              )
-            } catch (fetchErr) {
-              console.error(
-                '[ai-generate] Template pre-fetch failed:',
-                fetchErr,
-              )
-              return json(
-                {
-                  error: `Failed to fetch template image: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`,
-                },
-                { status: 500 },
-              )
-            }
-
-            console.log(`[ai-generate] Calling Google AI synchronously...`)
-            const generatedImageBase64 = await aiService.generateGoogleAISync({
+            predictionId = await aiService.createPrediction({
               userPhotoUrl: '',
               userPhotoBase64,
-              templateBase64,
-              templateMimeType,
               theme,
               templateUrl,
               prompt,
             })
-
-            const elapsed = ((Date.now() - requestStart) / 1000).toFixed(1)
-            console.log(
-              `[ai-generate] Google AI done in ${elapsed}s — result size: ${Math.round(generatedImageBase64.length / 1024)}KB`,
-            )
-
-            // Return the result directly — no polling needed for Google AI
-            return json({ predictionId: 'google-sync', generatedImageBase64 })
           } else {
             // Replicate: upload to Supabase to get a public URL, then pass to model
             console.log(
@@ -270,7 +227,7 @@ export const Route = createFileRoute('/api/ai-generate')({
             `[ai-generate] Prediction created in ${elapsed}s — id: ${predictionId}, tempPath: ${tempPath}`,
           )
 
-          return json({ predictionId, tempPath, provider: 'replicate' })
+          return json({ predictionId, tempPath, provider })
         } catch (error) {
           console.error({ message: 'AI generation error', error })
 
