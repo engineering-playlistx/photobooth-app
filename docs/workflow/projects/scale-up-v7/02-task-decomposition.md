@@ -388,9 +388,9 @@ Back button was always wired to `back()` in PipelineContext. Pressing it unmount
 
 ## Phase 4 — Kiosk UX
 
-### TASK-4.1 — Align Google AI generation with Replicate polling pattern
+### ~~TASK-4.1 — Align Google AI generation with Replicate polling pattern~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Medium (touches AI generation pipeline)
 **Depends on:** Nothing
 **Files touched:** `apps/web/src/routes/api.ai-generate.ts`, `apps/web/src/usecases/ai-generation.usecase.ts` (or equivalent), `apps/frontend/src/modules/AiGenerationModule.tsx`
@@ -414,9 +414,9 @@ Currently, the Google AI path returns `generatedImageBase64` synchronously in th
 
 ---
 
-### TASK-4.2 — Inactivity warning modal (two-timer system)
+### ~~TASK-4.2 — Inactivity warning modal (two-timer system)~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Medium (touches inactivity flow)
 **Depends on:** Nothing
 **Files touched:** `apps/frontend/src/hooks/useInactivityTimeout.ts`, `packages/types/src/event-config.ts`, `apps/frontend/src/components/PipelineRenderer.tsx` (or wherever the hook is consumed), `apps/web/src/routes/dashboard/_layout.events.$eventId.config.tsx`
@@ -452,9 +452,9 @@ Add a number input for "Inactivity warning duration (seconds)" beside the existi
 
 ---
 
-### TASK-4.3 — Separate download and print into two buttons
+### ~~TASK-4.3 — Separate download and print into two buttons~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/frontend/src/modules/ResultModule.tsx`
@@ -477,9 +477,9 @@ Read the current `handlePrintAndDownload` implementation fully before splitting 
 
 ---
 
-### TASK-4.4 — Fix button freeze ("processing") after modal close
+### ~~TASK-4.4 — Fix button freeze ("processing") after modal close~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** TASK-4.3 (split buttons first, then investigate per-button state)
 **Files touched:** `apps/frontend/src/modules/ResultModule.tsx`
