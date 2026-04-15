@@ -146,19 +146,65 @@ export const Route = createFileRoute('/api/ai-generate')({
           let predictionId: string
 
           if (provider === 'google') {
-            // Google AI: create an async job (stored in ai_jobs), return immediately.
-            // The frontend polls /api/ai-generate-status until the job completes,
-            // giving a smooth progress bar instead of a blocking 30–60s request.
+            // Google AI: run synchronously inside the active request, then store
+            // the result in ai_jobs before returning.
+            //
+            // Background fire-and-forget (the async job path) does NOT work on
+            // Cloudflare Workers — the runtime kills un-awaited promises once the
+            // HTTP response is sent (requires ctx.waitUntil() to survive, which
+            // TanStack Start server handlers don't expose). Running sync here is
+            // the reliable path; the row is written as 'succeeded' before we
+            // return, so the first status poll resolves immediately.
             console.log(
-              `[ai-generate] Using Google AI provider — async job mode`,
+              `[ai-generate] Using Google AI provider — sync-then-store mode`,
             )
-            predictionId = await aiService.createPrediction({
+            const jobId = crypto.randomUUID()
+            const admin = getSupabaseAdminClient()
+            await admin
+              .from('ai_jobs')
+              .insert({ id: jobId, status: 'processing' })
+
+            console.log(`[ai-generate] Pre-fetching template: ${templateUrl}`)
+            const templateResponse = await fetch(templateUrl)
+            if (!templateResponse.ok) {
+              throw new Error(
+                `Failed to fetch template image: ${templateResponse.status} ${templateResponse.statusText}`,
+              )
+            }
+            const templateArrayBuffer = await templateResponse.arrayBuffer()
+            const templateBase64 =
+              Buffer.from(templateArrayBuffer).toString('base64')
+            const templateMimeType =
+              templateResponse.headers.get('content-type') || 'image/jpeg'
+            console.log(
+              `[ai-generate] Template pre-fetched — ${Math.round(templateArrayBuffer.byteLength / 1024)}KB`,
+            )
+
+            console.log(`[ai-generate] Calling Google AI synchronously...`)
+            const generatedImageBase64 = await aiService.generateGoogleAISync({
               userPhotoUrl: '',
               userPhotoBase64,
+              templateBase64,
+              templateMimeType,
               theme,
               templateUrl,
               prompt,
             })
+
+            await admin
+              .from('ai_jobs')
+              .update({
+                status: 'succeeded',
+                output: generatedImageBase64,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', jobId)
+
+            const elapsed = ((Date.now() - requestStart) / 1000).toFixed(1)
+            console.log(
+              `[ai-generate] Google AI done in ${elapsed}s — result stored in ai_jobs`,
+            )
+            predictionId = jobId
           } else {
             // Replicate: upload to Supabase to get a public URL, then pass to model
             console.log(
