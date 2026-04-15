@@ -98,3 +98,16 @@ body {
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
 }
+
+@keyframes flash {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-flash {
+  animation: flash 0.3s ease-out forwards;
+}

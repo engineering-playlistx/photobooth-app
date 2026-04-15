@@ -34,6 +34,8 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
   const animationFrameRef = useRef<number | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isCameraLoading, setIsCameraLoading] = useState(true);
+  const [isFlashing, setIsFlashing] = useState(false);
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
   const [retakeCount, setRetakeCount] = useState(0);
@@ -62,6 +64,45 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
     }
   }
 
+  function playTick() {
+    try {
+      const ctx = new AudioContext();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.1);
+    } catch {
+      // Audio not available — silently ignore
+    }
+  }
+
+  function playShutter() {
+    try {
+      const ctx = new AudioContext();
+      const bufferSize = Math.floor(ctx.sampleRate * 0.08);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+      }
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      const gainNode = ctx.createGain();
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      gainNode.gain.setValueAtTime(0.6, ctx.currentTime);
+      source.start();
+    } catch {
+      // Audio not available — silently ignore
+    }
+  }
+
   useEffect(() => {
     async function init() {
       await handleStartCamera();
@@ -79,6 +120,7 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
         });
         streamRef.current = null;
       }
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
     };
   }, []);
 
@@ -327,11 +369,17 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
     countdownRef.current = countdown;
 
     if (countdown === 0) {
+      playShutter();
+      setIsFlashing(true);
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = setTimeout(() => setIsFlashing(false), 300);
       capturePhoto();
       setCountdown(null);
       countdownRef.current = null;
       return;
     }
+
+    playTick();
 
     const timer = setTimeout(() => {
       setCountdown((prev) => (prev !== null ? prev - 1 : null));
@@ -386,6 +434,9 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
         backgroundImage: `url('${bg ?? getAssetPath("/images/bg_camera.png")}')`,
       }}
     >
+      {isFlashing && (
+        <div className="fixed inset-0 bg-white pointer-events-none z-50 animate-flash" />
+      )}
       {retakeButtonEl.styleTag}
       {captureButtonEl.styleTag}
       {nextButtonEl.styleTag}
