@@ -442,7 +442,8 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
       {nextButtonEl.styleTag}
       <button
         onClick={onBack}
-        className="absolute top-22 left-32 z-20 transition-all duration-200 active:scale-95 flex flex-row align-left items-center  gap-4 text-secondary text-2xl"
+        disabled={isCameraLoading || isCameraActive}
+        className="absolute top-22 left-32 z-20 transition-all duration-200 active:scale-95 flex flex-row align-left items-center  gap-4 text-secondary text-2xl disabled:invisible"
         aria-label="Back to home"
       >
         <div className="p-3 bg-secondary rounded-full shadow-lg transition-all duration-200 active:scale-95 flex flex-row">
