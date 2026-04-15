@@ -1,5 +1,21 @@
 import { useState, useCallback } from "react";
 
+const PRINT_TIMEOUT_MS = 15_000;
+
+const printWithTimeout = (
+  filePath: string,
+  printerName?: string,
+): Promise<PrintResult> =>
+  Promise.race([
+    window.electronAPI.print(filePath, printerName),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error("Print timed out after 15 seconds")),
+        PRINT_TIMEOUT_MS,
+      ),
+    ),
+  ]);
+
 export const usePrint = () => {
   const [isPrinting, setIsPrinting] = useState(false);
   const [lastResult, setLastResult] = useState<PrintResult | null>(null);
@@ -21,8 +37,8 @@ export const usePrint = () => {
           );
         }
 
-        // trigger print with file path
-        const result = await window.electronAPI.print(filePath, printerName);
+        // trigger print with file path; timeout prevents indefinite hang when no printer connected
+        const result = await printWithTimeout(filePath, printerName);
 
         // setting up last result state for data caching
         setLastResult(result);
