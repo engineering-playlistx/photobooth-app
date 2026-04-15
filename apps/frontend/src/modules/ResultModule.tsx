@@ -52,11 +52,17 @@ export function ResultModule({ config, outputs }: ModuleProps) {
     "header",
     "Ready to Race!",
   );
+  const downloadButtonEl = useElementCustomization(
+    customization,
+    "result",
+    "downloadButton",
+    "Download Photo",
+  );
   const printButtonEl = useElementCustomization(
     customization,
     "result",
     "printButton",
-    "Print & Download",
+    "Print Photo",
   );
   const retryButtonEl = useElementCustomization(
     customization,
@@ -89,7 +95,7 @@ export function ResultModule({ config, outputs }: ModuleProps) {
   const supabaseFolder = eventId ? `events/${eventId}/photos` : "public";
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(true);
   const [showSavingHint, setShowSavingHint] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -161,27 +167,21 @@ export function ResultModule({ config, outputs }: ModuleProps) {
     }
   };
 
-  const handlePrintAndDownload = async () => {
+  const handleDownload = async () => {
     if (!finalPhoto) {
       addToast("Photo is missing.", "error");
       return;
     }
-
-    setIsProcessing(true);
+    setIsDownloading(true);
     try {
-      if (isQrCodeEnabled) {
-        await uploadToSupabaseAndShowQR();
-      }
-      if (isPrintEnabled) {
-        await handlePrint();
-      }
+      await uploadToSupabaseAndShowQR();
     } finally {
-      setIsProcessing(false);
+      setIsDownloading(false);
     }
   };
 
   // printing feature
-  const { print } = usePrint();
+  const { print, isPrinting } = usePrint();
 
   const handlePrint = async () => {
     console.log(
@@ -325,6 +325,7 @@ export function ResultModule({ config, outputs }: ModuleProps) {
         }}
       />
       {headerEl.styleTag}
+      {downloadButtonEl.styleTag}
       {printButtonEl.styleTag}
       {retryButtonEl.styleTag}
       {backButtonEl.styleTag}
@@ -343,15 +344,32 @@ export function ResultModule({ config, outputs }: ModuleProps) {
             )}
           </div>
 
-          <button
-            type="button"
-            className="pb-result-printButton mt-12 mb-2 w-full text-5xl px-7 py-5 bg-tertiary text-white rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
-            onClick={() => void handlePrintAndDownload()}
-            onPointerDown={handleDisabledPrintTap}
-            disabled={isProcessing || isSaving}
+          <div
+            className={`mt-12 mb-2 w-full flex gap-4 ${isQrCodeEnabled && isPrintEnabled ? "" : "justify-center"}`}
           >
-            {isProcessing ? "Processing..." : printButtonEl.copy}
-          </button>
+            {isQrCodeEnabled && (
+              <button
+                type="button"
+                className="pb-result-downloadButton flex-1 text-5xl px-7 py-5 bg-tertiary text-white rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+                onClick={() => void handleDownload()}
+                onPointerDown={handleDisabledPrintTap}
+                disabled={isDownloading || isSaving}
+              >
+                {isDownloading ? "Processing..." : downloadButtonEl.copy}
+              </button>
+            )}
+            {isPrintEnabled && (
+              <button
+                type="button"
+                className="pb-result-printButton flex-1 text-5xl px-7 py-5 bg-tertiary text-white rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
+                onClick={() => void handlePrint()}
+                onPointerDown={handleDisabledPrintTap}
+                disabled={isPrinting || isSaving}
+              >
+                {isPrinting ? "Processing..." : printButtonEl.copy}
+              </button>
+            )}
+          </div>
           <div className="mb-4 h-8 flex items-center justify-center">
             {showSavingHint && (
               <p className="text-3xl text-white font-semibold">
