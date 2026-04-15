@@ -316,9 +316,9 @@ Currently both "Retry Result" (line 368) and "Back to Home" (line 374) call `set
 
 ## Phase 3 — Kiosk Feel
 
-### TASK-3.1 — Camera loading spinner
+### ~~TASK-3.1 — Camera loading spinner~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/frontend/src/modules/CameraModule.tsx`
@@ -333,24 +333,21 @@ Add a `isCameraLoading` state initialized to `true`. Set it to `false` after the
 2. A spinner is visible for the 1–3 seconds before the camera feed appears
 3. Spinner disappears when the live feed is showing
 
+**Notes:** Audio sounds implemented via Web Audio API (no external audio files). Back button also disabled (`disabled:invisible`) while `isCameraLoading || isCameraActive` — prevents guests from accidentally navigating away and resetting retake count. See hotfix below.
+
 ---
 
-### TASK-3.2 — Countdown sound
+### ~~TASK-3.2 — Countdown sound~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** Nothing
-**Files touched:** `apps/frontend/src/modules/CameraModule.tsx`, `apps/frontend/public/` (audio asset)
+**Files touched:** `apps/frontend/src/modules/CameraModule.tsx`
 
 **What:**
 The countdown ticks (3, 2, 1) exist as state already. Play a short tick sound on each countdown value change using the Web Audio API or a simple `<audio>` element with `.play()`.
 
-Add a short tick audio file (`.mp3` or `.wav`) to `apps/frontend/public/sounds/countdown-tick.mp3`. On each countdown decrement, call:
-```typescript
-new Audio('/sounds/countdown-tick.mp3').play()
-```
-
-A distinct "capture" sound (heavier click) plays at 0 / capture moment — use a separate `shutter.mp3` or handle in TASK-3.3.
+Implemented via `playTick()` — Web Audio API sine wave at 880 Hz, 100 ms, exponential fade. No external audio files needed.
 
 **Verification:**
 1. Navigate to camera step → tap the capture button
@@ -359,24 +356,33 @@ A distinct "capture" sound (heavier click) plays at 0 / capture moment — use a
 
 ---
 
-### TASK-3.3 — Flash overlay and shutter sound on capture
+### ~~TASK-3.3 — Flash overlay and shutter sound on capture~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** TASK-3.2 (adds the audio infrastructure)
-**Files touched:** `apps/frontend/src/modules/CameraModule.tsx`, `apps/frontend/public/sounds/`
+**Files touched:** `apps/frontend/src/modules/CameraModule.tsx`, `apps/frontend/src/index.css`
 
 **What:**
 At the moment the photo is captured (after countdown reaches 0):
 1. **Flash:** briefly render a white full-screen overlay (`position: fixed`, `inset: 0`, `bg-white`, `opacity-100`) that fades out over ~300ms using a CSS transition or Tailwind animation.
-2. **Shutter sound:** play `shutter.mp3` (a camera click sound) at capture moment.
+2. **Shutter sound:** play a camera click sound at capture moment.
 
-Implementation: add a `isFlashing` boolean state. Set `true` at capture, set `false` after 300ms via `setTimeout`. Render `{isFlashing && <div className="fixed inset-0 bg-white animate-flash pointer-events-none z-50" />}`. Define `animate-flash` in Tailwind config as a keyframe: `0% { opacity: 1 } 100% { opacity: 0 }` over 300ms.
+Implemented via `playShutter()` (Web Audio API noise burst) + `isFlashing` state + `animate-flash` keyframe in `index.css`. No external audio files.
 
 **Verification:**
 1. Navigate to camera → complete countdown
 2. A white flash briefly covers the screen at capture moment
 3. A shutter click sound plays simultaneously
+
+---
+
+### Hotfix — Camera back button disabled while stream active ✅
+
+**Status:** Complete (discovered during Phase 3 verification)
+**Files touched:** `apps/frontend/src/modules/CameraModule.tsx`
+
+Back button was always wired to `back()` in PipelineContext. Pressing it unmounts CameraModule and remounts it on re-entry, resetting all local state including `retakeCount`. Fixed by adding `disabled={isCameraLoading || isCameraActive}` + `disabled:invisible` — button is hidden during the entire active camera session, visible only in the error state so guests can exit.
 
 ---
 
