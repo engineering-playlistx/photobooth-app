@@ -1,4 +1,9 @@
-import React, { useState, useCallback, useLayoutEffect } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+} from "react";
 import { useEventConfig } from "../contexts/EventConfigContext";
 import { usePipeline } from "../contexts/PipelineContext";
 import { useInactivityTimeout } from "../hooks/useInactivityTimeout";
@@ -17,11 +22,26 @@ export function PipelineRenderer() {
   } = usePipeline();
   const [sessionStarting, setSessionStarting] = useState(false);
 
-  useInactivityTimeout({
+  const warningSeconds = config.techConfig.inactivityWarningSeconds ?? 15;
+  const { showWarning, resetAll } = useInactivityTimeout({
     onTimeout: reset,
     disabled: currentIndex === 0 || suppressInactivity,
     timeoutMs: config.techConfig.inactivityTimeoutSeconds * 1000,
+    warningMs: warningSeconds * 1000,
   });
+
+  const [warningCountdown, setWarningCountdown] = useState(0);
+  useEffect(() => {
+    if (!showWarning) {
+      setWarningCountdown(0);
+      return;
+    }
+    setWarningCountdown(warningSeconds);
+    const interval = setInterval(() => {
+      setWarningCountdown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showWarning, warningSeconds]);
 
   const currentModule = config.moduleFlow[currentIndex];
   const Component = currentModule
@@ -112,11 +132,33 @@ export function PipelineRenderer() {
   }
 
   return (
-    <Component
-      config={currentModule}
-      outputs={moduleOutputs}
-      onComplete={handleComplete}
-      onBack={back}
-    />
+    <>
+      <Component
+        config={currentModule}
+        outputs={moduleOutputs}
+        onComplete={handleComplete}
+        onBack={back}
+      />
+      {showWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-primary rounded-2xl p-16 mx-12 flex flex-col items-center gap-10 shadow-2xl">
+            <p className="text-5xl font-bold text-white text-center leading-tight">
+              Still there?
+            </p>
+            <p className="text-4xl text-white/70 text-center">
+              You&apos;ll be redirected to the home screen in {warningCountdown}{" "}
+              seconds.
+            </p>
+            <button
+              type="button"
+              className="px-8 py-6 bg-tertiary text-white text-4xl rounded-xl font-semibold cursor-pointer select-none"
+              onClick={resetAll}
+            >
+              I&apos;m still here
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

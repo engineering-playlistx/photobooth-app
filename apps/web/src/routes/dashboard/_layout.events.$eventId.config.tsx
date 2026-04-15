@@ -268,6 +268,17 @@ function ConfigEditorPage() {
               </p>
             )}
           </Field>
+          <Field label="Inactivity Warning Duration (seconds)">
+            <input
+              type="number"
+              min={5}
+              value={config.techConfig.inactivityWarningSeconds ?? 15}
+              onChange={(e) =>
+                updateTech('inactivityWarningSeconds', Number(e.target.value))
+              }
+              className={inputClass}
+            />
+          </Field>
           <div className="mb-3">
             <label className="flex items-center gap-2 cursor-pointer">
               <input

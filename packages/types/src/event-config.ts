@@ -43,5 +43,6 @@ export interface FormFieldsConfig {
 export interface TechConfig {
   printerName: string
   inactivityTimeoutSeconds: number
+  inactivityWarningSeconds?: number
   guestPortalEnabled: boolean
 }
