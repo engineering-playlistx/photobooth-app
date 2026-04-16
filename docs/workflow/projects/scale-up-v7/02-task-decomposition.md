@@ -609,29 +609,44 @@ If a `custom-font` style tag already exists (e.g. hot reload in dev), remove it 
 
 ## Phase 6 — Guest Portal Verification
 
-### TASK-6.1 — Verify guest portal end-to-end; document config location
+### ~~TASK-6.1 — Verify guest portal end-to-end; document config location~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low (investigation only — no code changes unless broken)
 **Depends on:** Nothing
-**Files touched:** TBD (based on findings)
+**Files touched:** None (investigation only)
 
 **What:**
-The `guestPortalEnabled` flag exists in `TechConfig` and the dashboard config page has a checkbox. However, **no rendering implementation was found in the kiosk frontend modules**. This task is an investigation:
+The `guestPortalEnabled` flag exists in `TechConfig` and the dashboard config page has a checkbox. However, **no rendering implementation was found in the kiosk frontend modules**. This task is an investigation.
 
-1. Search the full codebase for guest portal rendering (`guestPortal`, `guest-portal`, `portalHeading`, `guestPortalEnabled`) in both `apps/frontend` and `apps/web`
-2. Determine if a guest portal URL/page exists anywhere in the web app routes
-3. Test the end-to-end flow if an implementation is found
-4. Document findings: where the config lives, where it renders (if at all), and whether it's working
+**Findings:**
 
-**Expected outcomes:**
-- **If implemented and working:** Document the flow in this task's notes. Close task.
-- **If implemented but broken:** Add a fix task (TASK-6.2) with details.
-- **If not implemented at all:** The flag is dead. Note this clearly. Scope a proper guest portal implementation as a V8 backlog item — do not implement it in V7.
+**1. Guest portal web page — fully implemented** (`apps/web/src/routes/result.$sessionId.tsx`)
+- Accessible at `{apiBaseUrl}/result/{sessionId}`
+- Fetches session from Supabase → gets photo URL from Storage → loads branding from `event_configs`
+- Renders a branded page: logo, `portalHeading` + guest name, photo, "Download Photo" button
+- Injects custom fonts from `branding.fonts` using the same `@font-face` pattern as the kiosk
+- Shows "Photo not found" gracefully on invalid/expired session IDs
+
+**2. Kiosk QR code — implemented** (`apps/frontend/src/modules/ResultModule.tsx:294–295`)
+- After calling `/api/photo`, gets back `sessionId` → builds `qrUrl = ${apiBaseUrl}/result/${sessionId}`
+- Shows `QRCodeModal` when `isQrCodeEnabled` (from `ResultModuleConfig.qrCodeEnabled`) is `true` AND `qrUrl` is set
+
+**3. Caveat — QR only works with Form + email enabled**
+The guard at `ResultModule.tsx:265` is `if (userInfo && isEmailEnabled)` — the `/api/photo` call (which returns the `sessionId`) is skipped when the Form module is absent or email is disabled. No Form → no sessionId → no QR code. This is an acceptable limitation for V7.
+
+**4. `guestPortalEnabled` in `TechConfig` — dead flag**
+- Stored in `event_configs.config_json.techConfig.guestPortalEnabled`
+- Dashboard checkbox at `_layout.events.$eventId.config.tsx:446` writes to it
+- **Never read by the kiosk** — QR visibility is controlled by `ResultModuleConfig.qrCodeEnabled` instead
+- The flag is redundant / has no effect. Deferred to V8 to decide: wire it to the QR feature, or remove it.
+
+**Verdict: implemented and working.** No code changes needed in V7.
 
 **Verification:**
-- Findings documented in this task's notes below
-- Decision made: working / broken + fixed / not implemented (deferred)
+- Guest portal web page exists and is fully implemented ✅
+- QR code on kiosk points to it (gated by `qrCodeEnabled` + Form module present + email enabled) ✅
+- `guestPortalEnabled` flag is dead — documented, deferred to V8 ✅
 
 ---
 
@@ -667,9 +682,8 @@ The `guestPortalEnabled` flag exists in `TechConfig` and the dashboard config pa
 **Type:** Minor inaccuracy
 **Resolution:** The frontend is stuck at 10% (`setProgress(10)` line 148) while awaiting the blocking create response. Jumps to 25% only after the server responds. Task description corrected.
 
-### Issue 7 — TASK-6.1: Guest portal may be entirely unimplemented ⚠️ Open
+### Issue 7 — TASK-6.1: Guest portal is implemented and working ✅ Resolved
 
 **Type:** Scope risk
 **Task:** TASK-6.1
-**Issue:** No rendering code was found for the guest portal. The flag and dashboard config exist as stubs only.
-**Resolution needed:** Confirm in TASK-6.1. If unimplemented, document and defer to V8 — do not implement a full guest portal within V7 polish scope.
+**Resolution:** Guest portal web page (`apps/web/src/routes/result.$sessionId.tsx`) is fully implemented. Kiosk QR code points to it. The `guestPortalEnabled` flag in `TechConfig` is dead (QR is controlled by `ResultModuleConfig.qrCodeEnabled` instead). Dead flag deferred to V8.
