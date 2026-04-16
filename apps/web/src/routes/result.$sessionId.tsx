@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../utils/supabase-admin'
@@ -96,6 +96,28 @@ function GuestPortalPage() {
   }
 
   const { photoUrl, guestName, branding } = data
+
+  useEffect(() => {
+    const entries = branding.fonts.filter((f) => f.family && f.url)
+    if (entries.length === 0) return
+    const style = document.createElement('style')
+    style.id = 'custom-font'
+    style.textContent = entries
+      .map(
+        (f) => `@font-face {
+  font-family: '${f.family}';
+  src: url('${f.url}');
+  font-display: swap;
+}`,
+      )
+      .join('\n')
+    document.head.appendChild(style)
+    document.body.style.fontFamily = `'${entries[0].family}', sans-serif`
+    return () => {
+      style.remove()
+      document.body.style.fontFamily = ''
+    }
+  }, [branding.fonts])
 
   return (
     <div
