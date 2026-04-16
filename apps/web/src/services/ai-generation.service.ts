@@ -267,7 +267,7 @@ export class AIGenerationService {
         },
       ],
 
-      generationConfig: { responseModalities: ['IMAGE', 'TEXT'] } as any,
+      generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } as any,
     })
 
     console.log(`[AIService][${jobId}] Step 3 done — response received`)
