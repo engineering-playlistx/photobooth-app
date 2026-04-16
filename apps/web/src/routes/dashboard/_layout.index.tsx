@@ -67,6 +67,7 @@ const createEvent = createServerFn({ method: 'POST' }).handler(async (ctx) => {
       primaryColor: '#ffffff',
       secondaryColor: '#000000',
       fontFamily: null,
+      fontUrl: null,
       backgroundUrl: null,
       portalHeading: null,
       screenBackgrounds: null,

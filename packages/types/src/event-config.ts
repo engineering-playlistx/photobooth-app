@@ -13,6 +13,7 @@ export interface BrandingConfig {
   primaryColor: string
   secondaryColor: string
   fontFamily: string | null
+  fontUrl: string | null
   backgroundUrl: string | null
   portalHeading: string | null
   screenBackgrounds: Record<string, string | null> | null
