@@ -43,6 +43,28 @@ async function fetchConfig(
   return response.json() as Promise<EventConfig>;
 }
 
+function injectCustomFont(
+  fontFamily: string | null | undefined,
+  fontUrl: string | null | undefined,
+) {
+  const existing = document.getElementById("custom-font");
+  if (existing) existing.remove();
+  if (!fontFamily || !fontUrl) return;
+  const style = document.createElement("style");
+  style.id = "custom-font";
+  style.textContent = `
+    @font-face {
+      font-family: '${fontFamily}';
+      src: url('${fontUrl}');
+      font-display: swap;
+    }
+    :root {
+      --font-custom: '${fontFamily}', sans-serif;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 export function EventConfigProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<EventConfig | null>(null);
   const [apiBaseUrl, setApiBaseUrl] = useState("");
@@ -72,6 +94,7 @@ export function EventConfigProvider({ children }: { children: ReactNode }) {
       setApiBaseUrl(normalizedBaseUrl);
       setApiClientKey(clientKey);
       setStatus("ready");
+      injectCustomFont(data.branding.fontFamily, data.branding.fontUrl);
     } catch (err) {
       console.error("[EventConfig] fetch failed:", err);
       const httpStatus = (err as { status?: number }).status;
