@@ -76,7 +76,19 @@ type FontUploadState = { uploading: boolean; error: string | null }
 function ConfigEditorPage() {
   const initial = Route.useLoaderData()
   const { eventId } = Route.useParams()
-  const [config, setConfig] = useState<EventConfig>(initial)
+  // Normalize fonts: old event configs stored before multi-font migration have no
+  // `fonts` key — coerce undefined → [] at the boundary so the rest of the component
+  // can safely assume fonts is always an array.
+  const normalizedInitial: EventConfig = {
+    ...initial,
+    // Cast through unknown: the type says FontEntry[] but old stored JSON may
+    // not have the key at all — runtime value is undefined for pre-migration events.
+    branding: {
+      ...initial.branding,
+      fonts: (initial.branding.fonts as Array<FontEntry> | undefined) ?? [],
+    },
+  }
+  const [config, setConfig] = useState<EventConfig>(normalizedInitial)
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -89,7 +101,7 @@ function ConfigEditorPage() {
   >({})
   const fontInputRefs = useRef<Record<number, HTMLInputElement | null>>({})
 
-  const isDirty = JSON.stringify(config) !== JSON.stringify(initial)
+  const isDirty = JSON.stringify(config) !== JSON.stringify(normalizedInitial)
 
   const fonts: Array<FontEntry> = config.branding.fonts
 
@@ -165,7 +177,7 @@ function ConfigEditorPage() {
   }
 
   const handleDiscard = () => {
-    setConfig(initial)
+    setConfig(normalizedInitial)
     setValidationErrors({})
     setStatus('idle')
   }
