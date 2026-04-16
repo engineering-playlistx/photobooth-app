@@ -650,6 +650,122 @@ The guard at `ResultModule.tsx:265` is `if (userInfo && isEmailEnabled)` — the
 
 ---
 
+### TASK-6.2 — Fix sessions table schema drift (add `status` + `module_outputs` columns)
+
+**Status:** Pending
+**Risk:** Low
+**Depends on:** Nothing
+**Files touched:**
+- `apps/web/supabase/migrations/<timestamp>_add_status_module_outputs_to_sessions.sql` (new)
+- `apps/web/src/repositories/session.repository.ts` (verify writes are correct after migration)
+
+**What:**
+The `sessions` table migration (`20260401000000_create_sessions.sql`) is missing two columns that `session.repository.ts` already tries to write:
+- `status TEXT NOT NULL DEFAULT 'in_progress'` — written by `startSession()` and `completeSession()`
+- `module_outputs JSONB` — written by `completeSession()`
+
+These columns don't exist in the DB, so every `completeSession()` call silently fails to persist them. Create a new migration to add both columns.
+
+Migration content:
+```sql
+ALTER TABLE sessions
+  ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'in_progress',
+  ADD COLUMN IF NOT EXISTS module_outputs JSONB;
+```
+
+After adding the migration, read `session.repository.ts` fully and verify the column names in `startSession()` and `completeSession()` match exactly.
+
+**Verification:**
+1. Run the migration in Supabase SQL editor (or confirm it applies cleanly)
+2. Complete a full photobooth session → inspect the `sessions` row in Supabase → `status` = `'completed'`, `module_outputs` populated
+
+---
+
+### TASK-6.3 — Add `PATCH /api/session/photo` endpoint
+
+**Status:** Pending
+**Risk:** Low
+**Depends on:** TASK-6.2
+**Files touched:**
+- `apps/web/src/routes/api.session.photo.ts` (new)
+- `apps/web/src/repositories/session.repository.ts` (add `updatePhotoPath` method)
+
+**What:**
+Add a minimal authenticated endpoint that writes `photo_path` onto an existing session row. This is the only write needed to make the guest portal accessible without a Form module.
+
+**Repository method** (`session.repository.ts`):
+```typescript
+async updatePhotoPath(sessionId: string, photoPath: string): Promise<void> {
+  const { error } = await this.client
+    .from('sessions')
+    .update({ photo_path: photoPath })
+    .eq('id', sessionId)
+  if (error) throw new Error(error.message)
+}
+```
+
+**Route** (`apps/web/src/routes/api.session.photo.ts`):
+```typescript
+// PATCH /api/session/photo
+// Body: { sessionId: string, photoPath: string }
+// Auth: Bearer API_CLIENT_KEY (same as /api/photo)
+```
+
+Reuse the existing auth pattern from `api.photo.ts` — check `Authorization: Bearer <API_CLIENT_KEY>` header. Return `{ ok: true }` on success.
+
+**Verification:**
+1. POST a valid `sessionId` + `photoPath` → `sessions` row updated
+2. Missing/invalid bearer token → 401
+3. Unknown `sessionId` → no error (UPDATE with no matching rows is not an error in Postgres — acceptable)
+
+---
+
+### TASK-6.4 — Decouple QR code from Form + email in ResultModule
+
+**Status:** Pending
+**Risk:** Medium (touches core result save flow)
+**Depends on:** TASK-6.3
+**Files touched:** `apps/frontend/src/modules/ResultModule.tsx`
+
+**What:**
+Currently `qrUrl` is only set if `userInfo && isEmailEnabled` (line 265), because it was piggybacking on the `/api/photo` response. After TASK-6.3, we have a dedicated endpoint for setting `photo_path`, so the QR URL can always be built.
+
+**Key insight:** `sessionId` is already in `outputs["sessionId"]` from the start of the pipeline (set by PipelineRenderer after the Welcome module). It doesn't need to come from a server response.
+
+**Changes to `ResultModule.tsx`:**
+
+1. After the Supabase Storage upload succeeds, always call `PATCH /api/session/photo`:
+```typescript
+// Always update photo_path on session (enables guest portal regardless of Form/email)
+await fetch(`${apiBaseUrl}/api/session/photo`, {
+  method: 'PATCH',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${apiClientKey}`,
+  },
+  body: JSON.stringify({ sessionId, photoPath: supabasePath }),
+})
+// Build qrUrl immediately — sessionId was known from pipeline start
+if (sessionId) {
+  setQrUrl(`${apiBaseUrl}/result/${sessionId}`)
+}
+```
+
+2. Remove `setQrUrl(...)` from inside the `/api/photo` response handler (line 295) — `qrUrl` is now set unconditionally after the storage upload.
+
+3. The `/api/photo` call remains unchanged for Form + email flows — it still handles `user_info`, `module_outputs`, `status: 'completed'`, and email sending. It just no longer controls `qrUrl`.
+
+**Guard:** Only call `PATCH /api/session/photo` if `sessionId` is truthy (it always should be for a properly configured flow with a Welcome module, but guard defensively).
+
+**Verification:**
+1. Flow **with** Form module + email enabled → QR code appears ✅, email sent ✅
+2. Flow **without** Form module → QR code still appears ✅, no email ✅
+3. Flow with Form module but `emailEnabled: false` → QR code still appears ✅
+4. `qrCodeEnabled: false` in Result module config → QR modal not shown (existing gate unchanged) ✅
+5. Guest scans QR → guest portal loads with correct photo ✅
+
+---
+
 ## Design Review — Issues Identified and Resolved
 
 ### Issue 1 — TASK-0.1/0.2: No `photo_results` table in Supabase ✅ Resolved
