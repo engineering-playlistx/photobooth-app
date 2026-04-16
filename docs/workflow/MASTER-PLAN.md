@@ -70,13 +70,22 @@ Delivered by: [`scale-up-v4`](projects/scale-up-v4/)
 
 Delivered by: [`scale-up-v5`](projects/scale-up-v5/)
 
-### 🔜 V6 — Multi-Event Seamlessness
+### ✅ V6 — Multi-Event Seamlessness
+**Done:** 2026-04-13
+
 Fix event-creation regression (no `event_configs` row seeded), repair existing broken events, and auto-skip module steps with only one option (theme-selection with 1 theme). Foundation for smooth multi-event operations.
 
 Delivered by: [`scale-up-v6`](projects/scale-up-v6/)
 
-### V7 — Multi-Tenant SaaS (Future)
-Client account management, client dashboard login and self-serve access, automated reporting and email delivery, AI provider fallback chain, config version history, nested org routing.
+### ✅ V7 — Platform Polish
+**Done:** 2026-04-17
+
+Polish pass across the full platform: dashboard CRUD completeness (event rename/delete, org delete), photo + guest stat cards, analytics photo count, event status removed from UI. Flow builder validation (AI gen without theme selection warning, printer name required, `retryEnabled` flag). Kiosk feel (camera spinner, countdown ticks, shutter flash + sound). Kiosk UX (inactivity warning modal, separate download/print buttons, print timeout fix, Google AI aligned with Replicate polling). Font customization via Supabase Storage (upload, kiosk injection, guest portal injection). Guest portal reliability (QR code decoupled from Form/email, sessions schema drift fixed, dedicated `PATCH /api/session/photo` endpoint).
+
+Delivered by: [`scale-up-v7`](projects/scale-up-v7/)
+
+### V8 — Multi-Tenant SaaS (Future)
+Client account management, client dashboard login and self-serve access, automated reporting and email delivery, AI provider fallback chain, config version history, nested org routing. Also: wire or remove `guestPortalEnabled` flag (currently dead), true retry-AI-gen step-back in pipeline.
 
 ---
 
@@ -89,7 +98,8 @@ Client account management, client dashboard login and self-serve access, automat
 | `scale-up-v3` | V3 | ✅ Done | [projects/scale-up-v3/](projects/scale-up-v3/) |
 | `scale-up-v4` | V4 | ✅ Done | [projects/scale-up-v4/](projects/scale-up-v4/) |
 | `scale-up-v5` | V5 | ✅ Done | [projects/scale-up-v5/](projects/scale-up-v5/) |
-| `scale-up-v6` | V6 | 🔜 Planning | [projects/scale-up-v6/](projects/scale-up-v6/) |
+| `scale-up-v6` | V6 | ✅ Done | [projects/scale-up-v6/](projects/scale-up-v6/) |
+| `scale-up-v7` | V7 | ✅ Done | [projects/scale-up-v7/](projects/scale-up-v7/) |
 | `[parked]-auto-update` | — | ⏸️ Parked | [projects/[parked]-auto-update/](projects/[parked]-auto-update/) |
 
 ---

@@ -22,6 +22,7 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 **V4 complete ✅ (2026-04-10).** Platform polish + deep customization.
 **V5 complete ✅ (2026-04-13).** Multi-tenant foundation — organizations layer.
 **V6 complete ✅ (2026-04-13).** Multi-event seamlessness — event creation bug fix + per-module conditional behavior.
+**V7 complete ✅ (2026-04-17).** Platform polish — dashboard CRUD, kiosk feel/UX, font customization, guest portal reliability.
 
 ### Workflow Documents
 
@@ -35,16 +36,16 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 | `docs/workflow/projects/scale-up-v4/` | V4 platform polish + deep customization — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v5/` | V5 multi-tenant foundation — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v6/` | V6 multi-event seamlessness — COMPLETE ✅ |
+| `docs/workflow/projects/scale-up-v7/` | V7 platform polish — COMPLETE ✅ |
 | `docs/workflow/projects/[parked]-auto-update/` | Electron auto-update — ⏸️ PARKED (blocked on Windows code signing) |
 
-### V6 Project Docs (`docs/workflow/projects/scale-up-v6/`)
+### V7 Project Docs (`docs/workflow/projects/scale-up-v7/`)
 
 | File | Contents |
 |------|----------|
-| `00-creator-feedback.md` | Input for V6 planning |
-| `01-backlog.md` | Backlog items scoped into V6 |
-| `01-scope.md` | V6 scope statement, definition of done, architecture decisions |
-| `02-task-decomposition.md` | Completed tasks (phases 0–1) + additional fixes logged |
+| `00-creator-feedback.md` | Input for V7 planning |
+| `01-scope.md` | V7 scope statement, definition of done, architecture decisions |
+| `02-task-decomposition.md` | Completed tasks (phases 0–6) |
 
 ---
 
