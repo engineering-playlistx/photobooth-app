@@ -49,7 +49,11 @@ function injectCustomFonts(
   const existing = document.getElementById("custom-font");
   if (existing) existing.remove();
   const entries = (fonts ?? []).filter((f) => f.family && f.url);
-  if (entries.length === 0) return;
+  if (entries.length === 0) {
+    // Clear any previously applied body font
+    document.body.style.fontFamily = "";
+    return;
+  }
   const style = document.createElement("style");
   style.id = "custom-font";
   style.textContent = entries
@@ -62,6 +66,8 @@ function injectCustomFonts(
     )
     .join("\n");
   document.head.appendChild(style);
+  // Apply first font as the global body font
+  document.body.style.fontFamily = `'${entries[0].family}', sans-serif`;
 }
 
 export function EventConfigProvider({ children }: { children: ReactNode }) {

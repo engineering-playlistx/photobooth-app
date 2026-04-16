@@ -333,6 +333,11 @@ function ConfigEditorPage() {
             />
           </Field>
           <Field label="Fonts">
+            <p className="text-xs text-slate-400 mb-1">
+              The <span className="text-white font-medium">first font</span> in
+              the list is used as the main body font across all kiosk screens.
+              Additional fonts are registered and available for use.
+            </p>
             <div className="flex flex-col gap-3">
               {fonts.length === 0 && (
                 <p className="text-xs text-slate-500">No fonts added.</p>
