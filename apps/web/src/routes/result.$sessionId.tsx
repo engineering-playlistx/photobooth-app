@@ -40,9 +40,10 @@ const getSessionData = createServerFn({ method: 'GET' }).handler(
       logoUrl: null,
       primaryColor: '#ffc600',
       secondaryColor: '#dd1d21',
-      fontFamily: null,
+      fonts: [],
       backgroundUrl: null,
       portalHeading: null,
+      screenBackgrounds: null,
       ...(eventConfig?.config_json?.branding ?? {}),
     }
 

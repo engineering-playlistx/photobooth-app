@@ -8,12 +8,16 @@ export interface EventConfig {
   techConfig: TechConfig
 }
 
+export interface FontEntry {
+  family: string
+  url: string
+}
+
 export interface BrandingConfig {
   logoUrl: string | null
   primaryColor: string
   secondaryColor: string
-  fontFamily: string | null
-  fontUrl: string | null
+  fonts: FontEntry[]
   backgroundUrl: string | null
   portalHeading: string | null
   screenBackgrounds: Record<string, string | null> | null
