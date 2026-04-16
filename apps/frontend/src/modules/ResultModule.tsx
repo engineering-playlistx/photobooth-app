@@ -266,7 +266,7 @@ export function ResultModule({ config, outputs }: ModuleProps) {
           // Always record photo_path on the session so the guest portal is
           // accessible regardless of whether a Form module or email is in the flow.
           if (sessionId) {
-            await fetch(`${apiBaseUrl}/api/session/photo`, {
+            const patchRes = await fetch(`${apiBaseUrl}/api/session/photo`, {
               method: "PATCH",
               headers: {
                 "Content-Type": "application/json",
@@ -274,7 +274,14 @@ export function ResultModule({ config, outputs }: ModuleProps) {
               },
               body: JSON.stringify({ sessionId, photoPath: supabasePath }),
             });
-            setQrUrl(`${apiBaseUrl}/result/${sessionId}`);
+            if (patchRes.ok) {
+              setQrUrl(`${apiBaseUrl}/result/${sessionId}`);
+            } else {
+              console.error(
+                "[ResultModule] PATCH /api/session/photo failed:",
+                patchRes.status,
+              );
+            }
           }
 
           // Form + email flow: save user record and send email.
