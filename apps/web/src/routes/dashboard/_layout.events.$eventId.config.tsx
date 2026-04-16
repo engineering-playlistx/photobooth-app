@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getSupabaseAdminClient } from '../../utils/supabase-admin'
@@ -9,6 +9,8 @@ import {
 } from '../../components/AssetSlot'
 import type { ReactNode } from 'react'
 import type { EventConfig } from '@photobooth/types'
+
+const ALLOWED_FONT_EXTENSIONS = ['.woff2', '.woff', '.ttf', '.otf']
 
 const getEventConfig = createServerFn({ method: 'GET' }).handler(
   async (ctx) => {
@@ -78,6 +80,11 @@ function ConfigEditorPage() {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({})
+  const [fontUploading, setFontUploading] = useState(false)
+  const [fontError, setFontError] = useState<string | null>(null)
+  const [fontSaved, setFontSaved] = useState(false)
+  const fontSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const fontInputRef = useRef<HTMLInputElement>(null)
 
   const isDirty = JSON.stringify(config) !== JSON.stringify(initial)
 
@@ -121,6 +128,62 @@ function ConfigEditorPage() {
       ...c,
       techConfig: { ...c.techConfig, [field]: value },
     }))
+
+  const showFontSaved = () => {
+    setFontSaved(true)
+    if (fontSavedTimerRef.current) clearTimeout(fontSavedTimerRef.current)
+    fontSavedTimerRef.current = setTimeout(() => setFontSaved(false), 2000)
+  }
+
+  const handleFontFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const ext = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`
+    if (!ALLOWED_FONT_EXTENSIONS.includes(ext)) {
+      setFontError('Font must be .woff2, .woff, .ttf, or .otf')
+      if (fontInputRef.current) fontInputRef.current.value = ''
+      return
+    }
+    setFontUploading(true)
+    setFontError(null)
+    setFontSaved(false)
+    try {
+      const fileBase64 = await readFileAsBase64(file)
+      const { publicUrl } = await uploadAssetFn({
+        data: {
+          eventId,
+          assetType: 'fonts',
+          filename: file.name,
+          fileBase64,
+          mimeType: file.type || 'font/woff2',
+        },
+      })
+      const updated = {
+        ...config,
+        branding: { ...config.branding, fontUrl: publicUrl },
+      }
+      setConfig(updated)
+      await saveEventConfig({ data: { eventId, config: updated } })
+      showFontSaved()
+    } catch (err) {
+      setFontError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setFontUploading(false)
+      if (fontInputRef.current) fontInputRef.current.value = ''
+    }
+  }
+
+  const handleFontRemove = async () => {
+    const updated = {
+      ...config,
+      branding: { ...config.branding, fontUrl: null },
+    }
+    setConfig(updated)
+    await saveEventConfig({ data: { eventId, config: updated } })
+    showFontSaved()
+  }
 
   const handleLogoUpload = async (file: File) => {
     const fileBase64 = await readFileAsBase64(file)
@@ -247,6 +310,53 @@ function ConfigEditorPage() {
               className={inputClass}
               placeholder="Inter"
             />
+          </Field>
+          <Field label="Font File">
+            <div className="flex flex-col gap-2 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+              {config.branding.fontUrl ? (
+                <p className="text-xs text-slate-400 truncate">
+                  {config.branding.fontUrl.split('/').pop()}
+                </p>
+              ) : (
+                <p className="text-xs text-slate-500">No font file uploaded</p>
+              )}
+              {fontError && <p className="text-xs text-red-400">{fontError}</p>}
+              {fontSaved && !fontError && (
+                <p className="text-xs text-green-400">Saved</p>
+              )}
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fontInputRef}
+                  type="file"
+                  accept=".woff2,.woff,.ttf,.otf"
+                  className="hidden"
+                  onChange={(e) => {
+                    void handleFontFileChange(e)
+                  }}
+                />
+                <button
+                  disabled={fontUploading}
+                  onClick={() => fontInputRef.current?.click()}
+                  className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded transition-colors"
+                >
+                  {fontUploading ? 'Uploading…' : 'Upload font'}
+                </button>
+                {config.branding.fontUrl && (
+                  <button
+                    disabled={fontUploading}
+                    onClick={() => {
+                      void handleFontRemove()
+                    }}
+                    className="px-3 py-1.5 text-xs bg-transparent hover:bg-red-900/40 disabled:opacity-40 disabled:cursor-not-allowed text-red-400 hover:text-red-300 rounded transition-colors border border-red-800/50"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-slate-600">
+                Accepted: .woff2, .woff, .ttf, .otf
+              </p>
+            </div>
           </Field>
         </Section>
 

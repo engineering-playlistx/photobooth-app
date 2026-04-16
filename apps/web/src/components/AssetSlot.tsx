@@ -11,7 +11,7 @@ export const uploadAssetFn = createServerFn({ method: 'POST' }).handler(
   async (ctx) => {
     const { eventId, assetType, filename, fileBase64, mimeType } = ctx.data as {
       eventId: string
-      assetType: 'frames' | 'templates' | 'backgrounds' | 'logos'
+      assetType: 'frames' | 'templates' | 'backgrounds' | 'logos' | 'fonts'
       filename: string
       fileBase64: string
       mimeType: string
