@@ -1,6 +1,6 @@
 # scale-up-v7 — Task Decomposition
 
-**Status:** In Progress 🔄
+**Status:** Complete ✅
 
 ---
 
@@ -42,9 +42,9 @@ Facts confirmed by reading the codebase — not inferred from filenames or prior
 
 ## Phase 0 — Dashboard Data Display
 
-### TASK-0.1 — Add total photos count to dashboard event detail page
+### ~~TASK-0.1 — Add total photos count to dashboard event detail page~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/web/src/routes/dashboard/_layout.events.$eventId.index.tsx`
@@ -81,9 +81,9 @@ Import `SUPABASE_BUCKET` from `../../utils/constants` if not already imported.
 
 ---
 
-### TASK-0.2 — Add photo count to analytics page
+### ~~TASK-0.2 — Add photo count to analytics page~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/web/src/routes/dashboard/_layout.events.$eventId.analytics.tsx`
@@ -99,9 +99,9 @@ The photo count does not require an RPC change — add a `admin.storage.from(SUP
 
 ---
 
-### TASK-0.3 — Remove event status display from frontend
+### ~~TASK-0.3 — Remove event status display from frontend~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/web/src/routes/dashboard/_layout.events.$eventId.index.tsx`
@@ -125,9 +125,9 @@ Search for any other `event.status` or `STATUS_STYLES` usages across dashboard r
 
 ## Phase 1 — Event + Organization CRUD
 
-### TASK-1.1 — Event rename
+### ~~TASK-1.1 — Event rename~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/web/src/routes/dashboard/_layout.index.tsx` or `apps/web/src/routes/dashboard/_layout.events.$eventId.index.tsx`
@@ -153,9 +153,9 @@ UI: inline edit on the event card (click pencil icon → text input → save/can
 
 ---
 
-### TASK-1.2 — Event delete
+### ~~TASK-1.2 — Event delete~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Medium (destructive — irreversible)
 **Depends on:** Nothing
 **Files touched:** `apps/web/src/routes/dashboard/_layout.index.tsx`
@@ -192,9 +192,9 @@ UI: delete button on the event card → confirmation dialog ("Are you sure you w
 
 ---
 
-### TASK-1.3 — Organization delete (blocked if has events)
+### ~~TASK-1.3 — Organization delete (blocked if has events)~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Medium
 **Depends on:** Nothing
 **Files touched:** `apps/web/src/routes/dashboard/_layout.organizations.tsx`
@@ -235,9 +235,9 @@ UI: add a delete button to each org row (alongside the existing edit button). Sh
 
 ## Phase 2 — Flow Builder Hardening
 
-### TASK-2.1 — Flow validation: warn when AI gen module has no Theme Selection
+### ~~TASK-2.1 — Flow validation: warn when AI gen module has no Theme Selection~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/web/src/routes/dashboard/_layout.events.$eventId.flow.tsx`
@@ -257,9 +257,9 @@ In the `saveFlowConfig` handler (lines 38–66), before saving, check the `modul
 
 ---
 
-### TASK-2.2 — Flow validation: printer name required when print enabled
+### ~~TASK-2.2 — Flow validation: printer name required when print enabled~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/web/src/routes/dashboard/_layout.events.$eventId.flow.tsx`
@@ -274,9 +274,9 @@ In `saveFlowConfig`, check: if the Result module config has `printEnabled === tr
 
 ---
 
-### TASK-2.3 — Add `retryEnabled` to ResultModuleConfig and flow builder UI
+### ~~TASK-2.3 — Add `retryEnabled` to ResultModuleConfig and flow builder UI~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `packages/types/src/module-config.ts`, `apps/web/src/routes/dashboard/_layout.events.$eventId.flow.tsx`, `apps/frontend/src/modules/ResultModule.tsx`
