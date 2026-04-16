@@ -515,9 +515,9 @@ After splitting buttons in TASK-4.3, this freeze will only affect the print butt
 
 ## Phase 5 — Font Customization
 
-### TASK-5.1 — Add `fontUrl` to `BrandingConfig` type + default config
+### ~~TASK-5.1 — Add `fontUrl` to `BrandingConfig` type + default config~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `packages/types/src/event-config.ts`, `apps/web/src/routes/dashboard/_layout.index.tsx` (default config seed)
@@ -535,9 +535,9 @@ No migration needed — existing `config_json` JSONB rows will just not have the
 
 ---
 
-### TASK-5.2 — Dashboard: font file upload to Supabase Storage
+### ~~TASK-5.2 — Dashboard: font file upload to Supabase Storage~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** TASK-5.1
 **Files touched:** `apps/web/src/routes/dashboard/_layout.events.$eventId.config.tsx`
@@ -569,9 +569,9 @@ if (!ext || !ALLOWED_FONT_EXTENSIONS.includes(`.${ext}`)) {
 
 ---
 
-### TASK-5.3 — Kiosk: inject custom font once at app startup
+### ~~TASK-5.3 — Kiosk: inject custom font once at app startup~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** TASK-5.1
 **Files touched:** `apps/frontend/src/contexts/EventConfigContext.tsx` (or the root app component)
