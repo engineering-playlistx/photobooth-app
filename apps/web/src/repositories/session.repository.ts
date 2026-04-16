@@ -67,6 +67,19 @@ export class SessionRepository {
     return { sessionId: id }
   }
 
+  async updatePhotoPath(sessionId: string, photoPath: string): Promise<void> {
+    const supabase = getSupabaseAdminClient()
+
+    const { error } = await supabase
+      .from('sessions')
+      .update({ photo_path: photoPath })
+      .eq('id', sessionId)
+
+    if (error) {
+      throw new Error(`Failed to update session photo path: ${error.message}`)
+    }
+  }
+
   async getSession(id: string): Promise<{
     id: string
     event_id: string

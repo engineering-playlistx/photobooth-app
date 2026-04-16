@@ -262,37 +262,50 @@ export function ResultModule({ config, outputs }: ModuleProps) {
 
         if (uploadError) {
           console.error("Supabase upload error:", uploadError);
-        } else if (userInfo && isEmailEnabled) {
-          const response = await fetch(`${apiBaseUrl}/api/photo`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${apiClientKey}`,
-            },
-            body: JSON.stringify({
-              photoPath: supabasePath,
-              name: userInfo.name,
-              email: userInfo.email,
-              phone: userInfo.phone,
-              selectedTheme: selectedTheme.id,
-              eventId,
-              sessionId,
-              moduleOutputs: Object.fromEntries(
-                Object.entries(outputs).filter(
-                  ([key]) => key !== "finalPhoto" && key !== "originalPhoto",
-                ),
-              ),
-            }),
-          });
+        } else {
+          // Always record photo_path on the session so the guest portal is
+          // accessible regardless of whether a Form module or email is in the flow.
+          if (sessionId) {
+            await fetch(`${apiBaseUrl}/api/session/photo`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${apiClientKey}`,
+              },
+              body: JSON.stringify({ sessionId, photoPath: supabasePath }),
+            });
+            setQrUrl(`${apiBaseUrl}/result/${sessionId}`);
+          }
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Failed to save user to Supabase:", errorData);
-          } else {
-            const responseData = await response.json();
-            console.log("User record saved to Supabase successfully");
-            if (responseData.sessionId) {
-              setQrUrl(`${apiBaseUrl}/result/${responseData.sessionId}`);
+          // Form + email flow: save user record and send email.
+          if (userInfo && isEmailEnabled) {
+            const response = await fetch(`${apiBaseUrl}/api/photo`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${apiClientKey}`,
+              },
+              body: JSON.stringify({
+                photoPath: supabasePath,
+                name: userInfo.name,
+                email: userInfo.email,
+                phone: userInfo.phone,
+                selectedTheme: selectedTheme.id,
+                eventId,
+                sessionId,
+                moduleOutputs: Object.fromEntries(
+                  Object.entries(outputs).filter(
+                    ([key]) => key !== "finalPhoto" && key !== "originalPhoto",
+                  ),
+                ),
+              }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              console.error("Failed to save user to Supabase:", errorData);
+            } else {
+              console.log("User record saved to Supabase successfully");
             }
           }
         }
