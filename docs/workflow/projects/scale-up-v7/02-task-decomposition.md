@@ -650,9 +650,9 @@ The guard at `ResultModule.tsx:265` is `if (userInfo && isEmailEnabled)` — the
 
 ---
 
-### TASK-6.2 — Fix sessions table schema drift (add `status` + `module_outputs` columns)
+### ~~TASK-6.2 — Fix sessions table schema drift (add `status` + `module_outputs` columns)~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:**
@@ -681,9 +681,9 @@ After adding the migration, read `session.repository.ts` fully and verify the co
 
 ---
 
-### TASK-6.3 — Add `PATCH /api/session/photo` endpoint
+### ~~TASK-6.3 — Add `PATCH /api/session/photo` endpoint~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Low
 **Depends on:** TASK-6.2
 **Files touched:**
@@ -720,9 +720,9 @@ Reuse the existing auth pattern from `api.photo.ts` — check `Authorization: Be
 
 ---
 
-### TASK-6.4 — Decouple QR code from Form + email in ResultModule
+### ~~TASK-6.4 — Decouple QR code from Form + email in ResultModule~~ ✅
 
-**Status:** Pending
+**Status:** Complete
 **Risk:** Medium (touches core result save flow)
 **Depends on:** TASK-6.3
 **Files touched:** `apps/frontend/src/modules/ResultModule.tsx`
