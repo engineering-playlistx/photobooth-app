@@ -27,6 +27,7 @@ import { Route as DemoSentryTestingRouteImport } from './routes/demo/sentry.test
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
 import { Route as DashboardLayoutOrganizationsRouteImport } from './routes/dashboard/_layout.organizations'
 import { Route as ApiSessionStartRouteImport } from './routes/api.session.start'
+import { Route as ApiSessionPhotoRouteImport } from './routes/api.session.photo'
 import { Route as ApiAssetsUploadRouteImport } from './routes/api.assets.upload'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
@@ -127,6 +128,11 @@ const ApiSessionStartRoute = ApiSessionStartRouteImport.update({
   path: '/api/session/start',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSessionPhotoRoute = ApiSessionPhotoRouteImport.update({
+  id: '/api/session/photo',
+  path: '/api/session/photo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAssetsUploadRoute = ApiAssetsUploadRouteImport.update({
   id: '/api/assets/upload',
   path: '/api/assets/upload',
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/login': typeof DashboardLoginRoute
   '/result/$sessionId': typeof ResultSessionIdRoute
   '/api/assets/upload': typeof ApiAssetsUploadRoute
+  '/api/session/photo': typeof ApiSessionPhotoRoute
   '/api/session/start': typeof ApiSessionStartRoute
   '/dashboard/organizations': typeof DashboardLayoutOrganizationsRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -236,6 +243,7 @@ export interface FileRoutesByTo {
   '/dashboard/login': typeof DashboardLoginRoute
   '/result/$sessionId': typeof ResultSessionIdRoute
   '/api/assets/upload': typeof ApiAssetsUploadRoute
+  '/api/session/photo': typeof ApiSessionPhotoRoute
   '/api/session/start': typeof ApiSessionStartRoute
   '/dashboard/organizations': typeof DashboardLayoutOrganizationsRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -267,6 +275,7 @@ export interface FileRoutesById {
   '/dashboard/login': typeof DashboardLoginRoute
   '/result/$sessionId': typeof ResultSessionIdRoute
   '/api/assets/upload': typeof ApiAssetsUploadRoute
+  '/api/session/photo': typeof ApiSessionPhotoRoute
   '/api/session/start': typeof ApiSessionStartRoute
   '/dashboard/_layout/organizations': typeof DashboardLayoutOrganizationsRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -299,6 +308,7 @@ export interface FileRouteTypes {
     | '/dashboard/login'
     | '/result/$sessionId'
     | '/api/assets/upload'
+    | '/api/session/photo'
     | '/api/session/start'
     | '/dashboard/organizations'
     | '/demo/api/names'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/dashboard/login'
     | '/result/$sessionId'
     | '/api/assets/upload'
+    | '/api/session/photo'
     | '/api/session/start'
     | '/dashboard/organizations'
     | '/demo/api/names'
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/dashboard/login'
     | '/result/$sessionId'
     | '/api/assets/upload'
+    | '/api/session/photo'
     | '/api/session/start'
     | '/dashboard/_layout/organizations'
     | '/demo/api/names'
@@ -389,6 +401,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   ResultSessionIdRoute: typeof ResultSessionIdRoute
   ApiAssetsUploadRoute: typeof ApiAssetsUploadRoute
+  ApiSessionPhotoRoute: typeof ApiSessionPhotoRoute
   ApiSessionStartRoute: typeof ApiSessionStartRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoSentryTestingRoute: typeof DemoSentryTestingRoute
@@ -519,6 +532,13 @@ declare module '@tanstack/react-router' {
       path: '/api/session/start'
       fullPath: '/api/session/start'
       preLoaderRoute: typeof ApiSessionStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/session/photo': {
+      id: '/api/session/photo'
+      path: '/api/session/photo'
+      fullPath: '/api/session/photo'
+      preLoaderRoute: typeof ApiSessionPhotoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/assets/upload': {
@@ -666,6 +686,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   ResultSessionIdRoute: ResultSessionIdRoute,
   ApiAssetsUploadRoute: ApiAssetsUploadRoute,
+  ApiSessionPhotoRoute: ApiSessionPhotoRoute,
   ApiSessionStartRoute: ApiSessionStartRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoSentryTestingRoute: DemoSentryTestingRoute,
