@@ -1,7 +1,7 @@
 # scale-up-v8 — Project Scope
 
 **Milestone:** V8 — AI Pipeline Hygiene
-**Status:** Planning 🔜
+**Status:** Complete ✅ (2026-04-18)
 **Depends on:** `scale-up-v7` complete ✅
 
 ---
@@ -15,6 +15,7 @@ One sentence: **This project decouples the AI generation module from the rest of
 ## Definition of Done
 
 ### Kiosk App
+
 - The photobooth flow works end-to-end with the `ai-generation` module removed — `ResultModule` displays, saves, and prints the raw camera photo without error
 - "Try Again" in the AI generation loading screen actually restarts the generation request (new network call made)
 - "Back to Home" in the AI generation error state navigates to the welcome screen (not one step back)
@@ -24,12 +25,15 @@ One sentence: **This project decouples the AI generation module from the rest of
 - A `TypeError` on `selectedTheme.id` (ResultModule line 300) is fixed — optional chaining used
 
 ### PipelineContext
+
 - A `jumpToIndex(index)` function exists that sets `currentIndex` to the given index and clears `finalPhoto` from `moduleOutputs`
 
 ### Dashboard (Flow Builder)
+
 - Attempting to add a second `ai-generation` module to a flow shows a banner error and is blocked
 
 ### AI Provider Fallback (Backend + Config)
+
 - `AiGenerationModuleConfig` has a `providerFallback?: 'replicate' | 'google'` field
 - The flow builder AI gen module config panel has a "Fallback Provider" dropdown
 - If the primary provider CREATE request fails, the backend automatically retries with the fallback provider before returning an error to the frontend
@@ -99,13 +103,15 @@ One sentence: **This project decouples the AI generation module from the rest of
 
 ## Phase Plan
 
-| Phase | Focus | Key Items |
-|-------|-------|-----------|
-| V8-Phase 0 | Small bug fixes | selectedTheme?.id fix, "Back to Home" reset fix |
-| V8-Phase 1 | AI gen decoupling | ResultModule photo fallback |
-| V8-Phase 2 | Fix broken retry in loading | retryCount trigger in AiGenerationModule |
+
+| Phase      | Focus                         | Key Items                                                                                 |
+| ---------- | ----------------------------- | ----------------------------------------------------------------------------------------- |
+| V8-Phase 0 | Small bug fixes               | selectedTheme?.id fix, "Back to Home" reset fix                                           |
+| V8-Phase 1 | AI gen decoupling             | ResultModule photo fallback                                                               |
+| V8-Phase 2 | Fix broken retry in loading   | retryCount trigger in AiGenerationModule                                                  |
 | V8-Phase 3 | True retry from result screen | jumpToIndex in PipelineContext, retry modal in ResultModule, flow builder duplicate guard |
-| V8-Phase 4 | AI provider fallback | Type change, dashboard dropdown, backend fallback logic |
+| V8-Phase 4 | AI provider fallback          | Type change, dashboard dropdown, backend fallback logic                                   |
+
 
 ---
 
@@ -117,3 +123,4 @@ One sentence: **This project decouples the AI generation module from the rest of
 - Mid-generation polling fallback (ARCH-05 — fallback at CREATE step only)
 - QR / `guestPortalEnabled` dead flag resolution (BACKLOG-P2)
 - Any other BACKLOG items not listed in this scope
+

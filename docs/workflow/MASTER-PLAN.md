@@ -84,8 +84,15 @@ Polish pass across the full platform: dashboard CRUD completeness (event rename/
 
 Delivered by: [`scale-up-v7`](projects/scale-up-v7/)
 
-### V8 — Multi-Tenant SaaS (Future)
-Client account management, client dashboard login and self-serve access, automated reporting and email delivery, AI provider fallback chain, config version history, nested org routing. Also: wire or remove `guestPortalEnabled` flag (currently dead), true retry-AI-gen step-back in pipeline.
+### ✅ V8 — AI Pipeline Hygiene
+**Done:** 2026-04-18
+
+AI generation module decoupled from the rest of the pipeline — `ResultModule` works without `ai-generation` in the flow. Broken retry behaviors fixed throughout (loading screen retry actually re-fires generation; result screen retry jumps back to AI gen with photo and theme preserved, dedicated confirmation modal). `jumpToIndex` added to `PipelineContext`. AI provider fallback chain: per-event `providerFallback` field, dashboard dropdown, backend tries primary then fallback on failure. Flow builder hard-blocks duplicate `ai-generation` modules.
+
+Delivered by: [`scale-up-v8`](projects/scale-up-v8/)
+
+### V9 — Multi-Tenant SaaS (Future)
+Client account management, client dashboard login and self-serve access, automated reporting and email delivery, config version history, nested org routing. Also: wire or remove `guestPortalEnabled` flag (currently dead).
 
 ---
 
@@ -100,7 +107,7 @@ Client account management, client dashboard login and self-serve access, automat
 | `scale-up-v5` | V5 | ✅ Done | [projects/scale-up-v5/](projects/scale-up-v5/) |
 | `scale-up-v6` | V6 | ✅ Done | [projects/scale-up-v6/](projects/scale-up-v6/) |
 | `scale-up-v7` | V7 | ✅ Done | [projects/scale-up-v7/](projects/scale-up-v7/) |
-| `scale-up-v8` | V8 | 🔜 Pre-planning | [projects/scale-up-v8/](projects/scale-up-v8/) |
+| `scale-up-v8` | V8 | ✅ Done | [projects/scale-up-v8/](projects/scale-up-v8/) |
 | `[parked]-auto-update` | — | ⏸️ Parked | [projects/[parked]-auto-update/](projects/[parked]-auto-update/) |
 
 ---

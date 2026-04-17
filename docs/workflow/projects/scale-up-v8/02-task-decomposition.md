@@ -1,6 +1,6 @@
 # scale-up-v8 — Task Decomposition
 
-**Status:** Ready for implementation 🔜
+**Status:** Complete ✅ (2026-04-18)
 
 ---
 
@@ -30,9 +30,9 @@ Facts confirmed by reading the codebase — not inferred from filenames or prior
 
 ## Phase 0 — Small Bug Fixes
 
-### TASK-0.1 — Fix `selectedTheme.id` TypeError in ResultModule
+### ~~TASK-0.1 — Fix `selectedTheme.id` TypeError in ResultModule~~ ✅
 
-**Status:** Ready
+**Status:** ✅ Done
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/frontend/src/modules/ResultModule.tsx`
@@ -57,9 +57,9 @@ This matches the existing pattern already used at line 246 (`selectedTheme?.id ?
 
 ---
 
-### TASK-0.2 — Fix "Back to Home" button in AiGenerationModule error state
+### ~~TASK-0.2 — Fix "Back to Home" button in AiGenerationModule error state~~ ✅
 
-**Status:** Ready
+**Status:** ✅ Done
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/frontend/src/modules/AiGenerationModule.tsx`
@@ -91,9 +91,9 @@ onClick={reset}
 
 ## Phase 1 — AI Gen Decoupling
 
-### TASK-1.1 — ResultModule: fall back to originalPhoto when finalPhoto is absent
+### ~~TASK-1.1 — ResultModule: fall back to originalPhoto when finalPhoto is absent~~ ✅
 
-**Status:** Ready
+**Status:** ✅ Done
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/frontend/src/modules/ResultModule.tsx`
@@ -126,9 +126,9 @@ No other changes needed — all downstream uses of `finalPhoto` in this file rem
 
 ## Phase 2 — Fix Broken Retry in AiGenerationModule
 
-### TASK-2.1 — Wire `retryCount` state to trigger re-generation on retry
+### ~~TASK-2.1 — Wire `retryCount` state to trigger re-generation on retry~~ ✅
 
-**Status:** Ready
+**Status:** ✅ Done
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/frontend/src/modules/AiGenerationModule.tsx`
@@ -174,9 +174,9 @@ const handleRetry = () => {
 
 ## Phase 3 — True Retry from Result Screen
 
-### TASK-3.1 — Add `jumpToIndex` to PipelineContext
+### ~~TASK-3.1 — Add `jumpToIndex` to PipelineContext~~ ✅
 
-**Status:** Ready
+**Status:** ✅ Done
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `apps/frontend/src/contexts/PipelineContext.tsx`
@@ -224,9 +224,9 @@ const jumpToIndex = useCallback((index: number) => {
 
 ---
 
-### TASK-3.2 — Wire retry button in ResultModule to `jumpToIndex`
+### ~~TASK-3.2 — Wire retry button in ResultModule to `jumpToIndex`~~ ✅
 
-**Status:** Ready
+**Status:** ✅ Done
 **Risk:** Medium (touches the result save flow and modal state)
 **Depends on:** TASK-3.1
 **Files touched:** `apps/frontend/src/modules/ResultModule.tsx`
@@ -329,9 +329,9 @@ const { reset, setSuppressInactivity, jumpToIndex } = usePipeline();
 
 ---
 
-### TASK-3.3 — Dashboard: hard-block adding a second ai-generation module
+### ~~TASK-3.3 — Dashboard: hard-block adding a second ai-generation module~~ ✅
 
-**Status:** Ready
+**Status:** ✅ Done
 **Risk:** Low
 **Depends on:** Nothing (independent dashboard change)
 **Files touched:** `apps/web/src/routes/dashboard/_layout.events.$eventId.flow.tsx`
@@ -354,9 +354,9 @@ Read the flow builder code fully before touching it to understand how modules ar
 
 ## Phase 4 — AI Provider Fallback Chain
 
-### TASK-4.1 — Add `providerFallback` to `AiGenerationModuleConfig` type
+### ~~TASK-4.1 — Add `providerFallback` to `AiGenerationModuleConfig` type~~ ✅
 
-**Status:** Ready
+**Status:** ✅ Done
 **Risk:** Low
 **Depends on:** Nothing
 **Files touched:** `packages/types/src/module-config.ts`
@@ -386,9 +386,9 @@ export interface AiGenerationModuleConfig extends BaseModuleConfig {
 
 ---
 
-### TASK-4.2 — Dashboard: add fallback provider dropdown in AI gen module config
+### ~~TASK-4.2 — Dashboard: add fallback provider dropdown in AI gen module config~~ ✅
 
-**Status:** Ready
+**Status:** ✅ Done
 **Risk:** Low
 **Depends on:** TASK-4.1
 **Files touched:** `apps/web/src/routes/dashboard/_layout.events.$eventId.flow.tsx`
@@ -413,9 +413,9 @@ Persist the value into the module config object the same way `provider` is persi
 
 ---
 
-### TASK-4.3 — Backend: fallback at CREATE step in `api.ai-generate.ts`
+### ~~TASK-4.3 — Backend: fallback at CREATE step in `api.ai-generate.ts`~~ ✅
 
-**Status:** Ready
+**Status:** ✅ Done
 **Risk:** Medium (touches core AI generation path)
 **Depends on:** TASK-4.1
 **Files touched:** `apps/web/src/routes/api.ai-generate.ts`

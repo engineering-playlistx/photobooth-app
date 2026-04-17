@@ -23,6 +23,7 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 **V5 complete ✅ (2026-04-13).** Multi-tenant foundation — organizations layer.
 **V6 complete ✅ (2026-04-13).** Multi-event seamlessness — event creation bug fix + per-module conditional behavior.
 **V7 complete ✅ (2026-04-17).** Platform polish — dashboard CRUD, kiosk feel/UX, font customization, guest portal reliability.
+**V8 complete ✅ (2026-04-18).** AI pipeline hygiene — AI gen decoupling, retry fixes (loading + result screen), `jumpToIndex` in PipelineContext, AI provider fallback chain, duplicate AI gen module guard.
 
 ### Workflow Documents
 
@@ -37,7 +38,7 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 | `docs/workflow/projects/scale-up-v5/` | V5 multi-tenant foundation — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v6/` | V6 multi-event seamlessness — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v7/` | V7 platform polish — COMPLETE ✅ |
-| `docs/workflow/projects/scale-up-v8/` | V8 — planning 🔜 |
+| `docs/workflow/projects/scale-up-v8/` | V8 — AI pipeline hygiene — COMPLETE ✅ |
 | `docs/workflow/projects/[parked]-auto-update/` | Electron auto-update — ⏸️ PARKED (blocked on Windows code signing) |
 
 ### V8 Project Docs (`docs/workflow/projects/scale-up-v8/`)
@@ -71,6 +72,9 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 | ~~AI generation status 500 when `AI_PROVIDER` env var mismatches event config~~ | `api.ai-generate-status.ts` | ✅ Fixed (V6 FIX-D) |
 | ~~ResultModule stuck in "saving" when Form module absent~~ | `ResultModule.tsx` | ✅ Fixed (V6 FIX-E) |
 | ~~Inactivity timer resets guest mid-save on result page~~ | `ResultModule.tsx` | ✅ Fixed (V6 FIX-F) |
+| ~~Result image not shown when no `theme-selection` module in flow~~ | `ResultModule.tsx` | ✅ Fixed (V8 verification) |
+| ~~Result image blank on camera-only flow (no ai-generation)~~ | `ResultModule.tsx` | ✅ Fixed (V8 verification) |
+| ~~`Cmd+H` (navigate home) does nothing from `/data` admin view~~ | `NavigationListener.tsx` | ✅ Fixed (V8 verification) |
 
 ---
 
