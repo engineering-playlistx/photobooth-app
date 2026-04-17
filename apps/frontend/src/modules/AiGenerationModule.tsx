@@ -104,6 +104,7 @@ export function AiGenerationModule({
   const processedRef = useRef(false);
   const controllerRef = useRef<AbortController | null>(null);
   const [showCancelButton, setShowCancelButton] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const originalPhoto = outputs["originalPhoto"] as string | undefined;
@@ -288,13 +289,14 @@ export function AiGenerationModule({
     }
 
     void generateAIPhoto();
-  }, [originalPhoto, selectedTheme]);
+  }, [originalPhoto, selectedTheme, retryCount]);
 
   const handleRetry = () => {
     setError(null);
     setProgress(0);
     setShowCancelButton(false);
     processedRef.current = false;
+    setRetryCount((c) => c + 1);
   };
 
   const handleCancel = () => {
