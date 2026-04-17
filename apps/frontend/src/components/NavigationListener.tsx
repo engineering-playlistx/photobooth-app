@@ -13,6 +13,7 @@ export function NavigationListener() {
 
     const cleanupNavHome = window.electronAPI.onNavigateToHome(() => {
       pipeline.reset();
+      void navigate("/");
     });
 
     const cleanupNavData = window.electronAPI.onNavigateToData(() => {

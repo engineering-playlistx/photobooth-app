@@ -111,6 +111,11 @@ export function AiGenerationModule({
   const selectedTheme = outputs["selectedTheme"] as
     | { id: string; label: string }
     | undefined;
+  const moduleConfig = config as AiGenerationModuleConfig;
+  // If no theme-selection module in the flow, auto-use the single configured theme
+  const effectiveThemeId: string | undefined =
+    selectedTheme?.id ??
+    (moduleConfig.themes.length === 1 ? moduleConfig.themes[0].id : undefined);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -120,7 +125,7 @@ export function AiGenerationModule({
   }, [activeSlideshowCount]);
 
   useEffect(() => {
-    if (processedRef.current || !originalPhoto || !selectedTheme) {
+    if (processedRef.current || !originalPhoto || !effectiveThemeId) {
       return;
     }
 
@@ -131,8 +136,7 @@ export function AiGenerationModule({
       const cancelTimerId = setTimeout(() => setShowCancelButton(true), 30_000);
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
       try {
-        const themeId = selectedTheme!.id;
-        const moduleConfig = config as AiGenerationModuleConfig;
+        const themeId = effectiveThemeId!;
         const themeConfig = moduleConfig.themes.find((t) => t.id === themeId);
         if (!themeConfig) {
           throw new Error(`Theme '${themeId}' not found in module config`);
@@ -289,7 +293,7 @@ export function AiGenerationModule({
     }
 
     void generateAIPhoto();
-  }, [originalPhoto, selectedTheme, retryCount]);
+  }, [originalPhoto, effectiveThemeId, retryCount]);
 
   const handleRetry = () => {
     setError(null);

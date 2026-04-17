@@ -361,7 +361,7 @@ export function ResultModule({ config, outputs }: ModuleProps) {
             {headerEl.copy}
           </h1>
           <div className="w-175">
-            {!!finalPhoto && !!selectedTheme && (
+            {!!finalPhoto && (
               <img
                 src={finalPhoto}
                 alt="Final photo"
