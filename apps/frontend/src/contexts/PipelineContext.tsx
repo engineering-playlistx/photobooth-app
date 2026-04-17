@@ -9,6 +9,7 @@ interface PipelineContextType {
   advance: (output?: Record<string, unknown>) => void;
   back: () => void;
   reset: () => void;
+  jumpToIndex: (index: number) => void;
   setSessionId: (id: string) => void;
   setSuppressInactivity: (suppress: boolean) => void;
 }
@@ -43,6 +44,15 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
     setSuppressInactivity(false);
   }, []);
 
+  const jumpToIndex = useCallback((index: number) => {
+    setModuleOutputs((prev) => {
+      const next = { ...prev };
+      delete next["finalPhoto"];
+      return next;
+    });
+    setCurrentIndex(index);
+  }, []);
+
   return (
     <PipelineContext.Provider
       value={{
@@ -53,6 +63,7 @@ export function PipelineProvider({ children }: { children: ReactNode }) {
         advance,
         back,
         reset,
+        jumpToIndex,
         setSessionId,
         setSuppressInactivity,
       }}

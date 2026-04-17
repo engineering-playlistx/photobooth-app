@@ -34,7 +34,7 @@ function base64ToBlob(base64: string, contentType = "", sliceSize = 512) {
 
 export function ResultModule({ config, outputs }: ModuleProps) {
   const { config: eventConfig, apiBaseUrl, apiClientKey } = useEventConfig();
-  const { reset, setSuppressInactivity } = usePipeline();
+  const { reset, setSuppressInactivity, jumpToIndex } = usePipeline();
   const bg = useModuleBackground("result");
   const {
     customization,
@@ -101,6 +101,10 @@ export function ResultModule({ config, outputs }: ModuleProps) {
   const [isSaving, setIsSaving] = useState(true);
   const [showSavingHint, setShowSavingHint] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showRetryConfirm, setShowRetryConfirm] = useState(false);
+  const aiGenIndex = eventConfig.moduleFlow.findIndex(
+    (m) => m.moduleId === "ai-generation",
+  );
   const savingHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
@@ -409,13 +413,11 @@ export function ResultModule({ config, outputs }: ModuleProps) {
           <div
             className={`text-center text-4xl gap-6 w-full ${retryEnabled ? "grid grid-cols-2" : "flex justify-center"}`}
           >
-            {/* TODO V8: retry should jump back to the ai-generation step, not reset to home.
-                Requires pipeline step-back capability (not yet implemented). */}
-            {retryEnabled && (
+            {retryEnabled && aiGenIndex >= 0 && (
               <button
                 type="button"
                 className="pb-result-retryButton px-7 py-3 bg-white text-secondary rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none"
-                onClick={() => setShowLeaveConfirm(true)}
+                onClick={() => setShowRetryConfirm(true)}
               >
                 {retryButtonEl.copy}
               </button>
@@ -438,6 +440,35 @@ export function ResultModule({ config, outputs }: ModuleProps) {
           )}
         </div>
       </div>
+
+      {showRetryConfirm && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-primary rounded-2xl p-16 mx-12 flex flex-col items-center gap-10 shadow-2xl">
+            <p className="text-5xl font-bold text-white text-center leading-tight">
+              Regenerate your photo?
+            </p>
+            <p className="text-4xl text-white/70 text-center">
+              Your current result will be replaced.
+            </p>
+            <div className="grid grid-cols-2 gap-8 w-full mt-4">
+              <button
+                type="button"
+                className="px-8 py-6 bg-white text-secondary text-4xl rounded-xl font-semibold cursor-pointer select-none"
+                onClick={() => setShowRetryConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="px-8 py-6 bg-tertiary text-white text-4xl rounded-xl font-semibold cursor-pointer select-none"
+                onClick={() => jumpToIndex(aiGenIndex)}
+              >
+                Regenerate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showLeaveConfirm && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">

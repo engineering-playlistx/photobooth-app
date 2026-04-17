@@ -539,6 +539,13 @@ function FlowBuilderPage() {
     type: 'theme-selection' | 'ai-generation' | 'form' | 'mini-quiz',
   ) => {
     setShowPicker(false)
+    if (type === 'ai-generation' && hasModule('ai-generation')) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        addModuleGuard: 'Only one AI Generation module is allowed per flow.',
+      }))
+      return
+    }
     setFlow((f) => {
       const next = [...f]
       if (type === 'theme-selection') {
