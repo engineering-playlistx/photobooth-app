@@ -15,6 +15,7 @@ type ResolvedThemeConfig =
   | {
       ok: true
       provider: 'replicate' | 'google'
+      providerFallback?: 'replicate' | 'google'
       templateUrl: string
       prompt: string
     }
@@ -66,6 +67,7 @@ async function resolveThemeConfig(
     return {
       ok: true,
       provider: aiModule.provider,
+      providerFallback: aiModule.providerFallback,
       templateUrl: themeConfig.templateImageUrl,
       prompt: themeConfig.prompt,
     }
@@ -94,6 +96,130 @@ function validateApiKey(request: Request): boolean {
   }
 
   return true
+}
+
+interface GenerationParams {
+  userPhotoBase64: string
+  theme: string
+  templateUrl: string
+  prompt: string
+  requestStart: number
+}
+
+interface GenerationResult {
+  predictionId: string
+  tempPath: string
+  provider: 'replicate' | 'google'
+}
+
+async function runGeneration(
+  provider: 'replicate' | 'google',
+  params: GenerationParams,
+): Promise<GenerationResult> {
+  const { userPhotoBase64, theme, templateUrl, prompt, requestStart } = params
+  const aiService = new AIGenerationService(provider)
+
+  if (provider === 'google') {
+    console.log(`[ai-generate] Using Google AI provider — sync-then-store mode`)
+    const jobId = crypto.randomUUID()
+    const admin = getSupabaseAdminClient()
+    await admin.from('ai_jobs').insert({ id: jobId, status: 'processing' })
+
+    console.log(`[ai-generate] Pre-fetching template: ${templateUrl}`)
+    const templateResponse = await fetch(templateUrl)
+    if (!templateResponse.ok) {
+      throw new Error(
+        `Failed to fetch template image: ${templateResponse.status} ${templateResponse.statusText}`,
+      )
+    }
+    const templateArrayBuffer = await templateResponse.arrayBuffer()
+    const templateBase64 = Buffer.from(templateArrayBuffer).toString('base64')
+    const templateMimeType =
+      templateResponse.headers.get('content-type') || 'image/jpeg'
+    console.log(
+      `[ai-generate] Template pre-fetched — ${Math.round(templateArrayBuffer.byteLength / 1024)}KB`,
+    )
+
+    console.log(`[ai-generate] Calling Google AI synchronously...`)
+    const generatedImageBase64 = await aiService.generateGoogleAISync({
+      userPhotoUrl: '',
+      userPhotoBase64,
+      templateBase64,
+      templateMimeType,
+      theme,
+      templateUrl,
+      prompt,
+    })
+
+    await admin
+      .from('ai_jobs')
+      .update({
+        status: 'succeeded',
+        output: generatedImageBase64,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', jobId)
+
+    const elapsed = ((Date.now() - requestStart) / 1000).toFixed(1)
+    console.log(
+      `[ai-generate] Google AI done in ${elapsed}s — result stored in ai_jobs`,
+    )
+    return { predictionId: jobId, tempPath: '', provider }
+  } else {
+    // Replicate: upload to Supabase to get a public URL, then pass to model
+    console.log(`[ai-generate] Uploading photo to Supabase temp storage`)
+    const supabase = getSupabaseAdminClient()
+    const photoId = crypto.randomUUID()
+    const tempPath = `temp/${photoId}.png`
+
+    const base64Match = userPhotoBase64.match(
+      /^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/,
+    )
+
+    let photoBuffer: Uint8Array
+    let contentType: string
+
+    if (base64Match) {
+      contentType = base64Match[1]
+      const raw = atob(base64Match[2])
+      photoBuffer = new Uint8Array(raw.length)
+      for (let i = 0; i < raw.length; i++) {
+        photoBuffer[i] = raw.charCodeAt(i)
+      }
+    } else {
+      contentType = 'image/png'
+      const raw = atob(userPhotoBase64)
+      photoBuffer = new Uint8Array(raw.length)
+      for (let i = 0; i < raw.length; i++) {
+        photoBuffer[i] = raw.charCodeAt(i)
+      }
+    }
+
+    const { error: uploadError } = await supabase.storage
+      .from(SUPABASE_BUCKET)
+      .upload(tempPath, photoBuffer, { contentType, upsert: true })
+
+    if (uploadError) {
+      console.error('Failed to upload temp photo:', uploadError)
+      throw new Error('Failed to upload photo for processing')
+    }
+
+    const {
+      data: { publicUrl: userPhotoUrl },
+    } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(tempPath)
+
+    console.log(`[ai-generate] Temp photo URL: ${userPhotoUrl}`)
+    console.log(`[ai-generate] Creating async prediction...`)
+
+    const predictionId = await aiService.createPrediction({
+      userPhotoUrl,
+      theme,
+      templateUrl,
+      prompt,
+    })
+
+    return { predictionId, tempPath, provider }
+  }
 }
 
 export const Route = createFileRoute('/api/ai-generate')({
@@ -136,144 +262,48 @@ export const Route = createFileRoute('/api/ai-generate')({
               { status: themeConfig.status },
             )
           }
-          const { provider, templateUrl, prompt } = themeConfig
+          const { provider, providerFallback, templateUrl, prompt } =
+            themeConfig
 
           console.log(
             `[ai-generate] Using event config — eventId: ${body.eventId}, provider: ${provider}`,
           )
 
-          const aiService = new AIGenerationService(provider)
-          let predictionId: string
-
-          if (provider === 'google') {
-            // Google AI: run synchronously inside the active request, then store
-            // the result in ai_jobs before returning.
-            //
-            // Background fire-and-forget (the async job path) does NOT work on
-            // Cloudflare Workers — the runtime kills un-awaited promises once the
-            // HTTP response is sent (requires ctx.waitUntil() to survive, which
-            // TanStack Start server handlers don't expose). Running sync here is
-            // the reliable path; the row is written as 'succeeded' before we
-            // return, so the first status poll resolves immediately.
-            console.log(
-              `[ai-generate] Using Google AI provider — sync-then-store mode`,
-            )
-            const jobId = crypto.randomUUID()
-            const admin = getSupabaseAdminClient()
-            await admin
-              .from('ai_jobs')
-              .insert({ id: jobId, status: 'processing' })
-
-            console.log(`[ai-generate] Pre-fetching template: ${templateUrl}`)
-            const templateResponse = await fetch(templateUrl)
-            if (!templateResponse.ok) {
-              throw new Error(
-                `Failed to fetch template image: ${templateResponse.status} ${templateResponse.statusText}`,
-              )
-            }
-            const templateArrayBuffer = await templateResponse.arrayBuffer()
-            const templateBase64 =
-              Buffer.from(templateArrayBuffer).toString('base64')
-            const templateMimeType =
-              templateResponse.headers.get('content-type') || 'image/jpeg'
-            console.log(
-              `[ai-generate] Template pre-fetched — ${Math.round(templateArrayBuffer.byteLength / 1024)}KB`,
-            )
-
-            console.log(`[ai-generate] Calling Google AI synchronously...`)
-            const generatedImageBase64 = await aiService.generateGoogleAISync({
-              userPhotoUrl: '',
-              userPhotoBase64,
-              templateBase64,
-              templateMimeType,
-              theme,
-              templateUrl,
-              prompt,
-            })
-
-            await admin
-              .from('ai_jobs')
-              .update({
-                status: 'succeeded',
-                output: generatedImageBase64,
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', jobId)
-
-            const elapsed = ((Date.now() - requestStart) / 1000).toFixed(1)
-            console.log(
-              `[ai-generate] Google AI done in ${elapsed}s — result stored in ai_jobs`,
-            )
-            predictionId = jobId
-          } else {
-            // Replicate: upload to Supabase to get a public URL, then pass to model
-            console.log(
-              `[ai-generate] Uploading photo to Supabase temp storage`,
-            )
-            const supabase = getSupabaseAdminClient()
-            const photoId = crypto.randomUUID()
-            tempPath = `temp/${photoId}.png`
-
-            const base64Match = userPhotoBase64.match(
-              /^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/,
-            )
-
-            let photoBuffer: Uint8Array
-            let contentType: string
-
-            if (base64Match) {
-              contentType = base64Match[1]
-              const raw = atob(base64Match[2])
-              photoBuffer = new Uint8Array(raw.length)
-              for (let i = 0; i < raw.length; i++) {
-                photoBuffer[i] = raw.charCodeAt(i)
-              }
-            } else {
-              // Assume raw base64 without data URI prefix
-              contentType = 'image/png'
-              const raw = atob(userPhotoBase64)
-              photoBuffer = new Uint8Array(raw.length)
-              for (let i = 0; i < raw.length; i++) {
-                photoBuffer[i] = raw.charCodeAt(i)
-              }
-            }
-
-            const { error: uploadError } = await supabase.storage
-              .from(SUPABASE_BUCKET)
-              .upload(tempPath, photoBuffer, {
-                contentType,
-                upsert: true,
-              })
-
-            if (uploadError) {
-              console.error('Failed to upload temp photo:', uploadError)
-              return json(
-                { error: 'Failed to upload photo for processing' },
-                { status: 500 },
-              )
-            }
-
-            const {
-              data: { publicUrl: userPhotoUrl },
-            } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(tempPath)
-
-            console.log(`[ai-generate] Temp photo URL: ${userPhotoUrl}`)
-            console.log(`[ai-generate] Creating async prediction...`)
-
-            predictionId = await aiService.createPrediction({
-              userPhotoUrl,
-              theme,
-              templateUrl,
-              prompt,
-            })
+          const genParams: GenerationParams = {
+            userPhotoBase64,
+            theme,
+            templateUrl,
+            prompt,
+            requestStart,
           }
+
+          let result: GenerationResult
+          try {
+            result = await runGeneration(provider, genParams)
+          } catch (primaryErr) {
+            if (providerFallback) {
+              console.warn(
+                `[ai-generate] Primary provider '${provider}' failed — retrying with fallback '${providerFallback}':`,
+                primaryErr instanceof Error ? primaryErr.message : primaryErr,
+              )
+              result = await runGeneration(providerFallback, genParams)
+              console.log(
+                `[ai-generate] Fallback provider '${providerFallback}' succeeded`,
+              )
+            } else {
+              throw primaryErr
+            }
+          }
+
+          const { predictionId, provider: winningProvider } = result
+          tempPath = result.tempPath
 
           const elapsed = ((Date.now() - requestStart) / 1000).toFixed(1)
           console.log(
             `[ai-generate] Prediction created in ${elapsed}s — id: ${predictionId}, tempPath: ${tempPath}`,
           )
 
-          return json({ predictionId, tempPath, provider })
+          return json({ predictionId, tempPath, provider: winningProvider })
         } catch (error) {
           console.error({ message: 'AI generation error', error })
 

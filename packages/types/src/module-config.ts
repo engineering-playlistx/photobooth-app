@@ -60,6 +60,7 @@ export interface AiGenerationModuleConfig extends BaseModuleConfig {
   position: 'post-photo'
   outputKey: 'finalPhoto'
   provider: 'replicate' | 'google'
+  providerFallback?: 'replicate' | 'google'
   themes: Array<AiThemeConfig> // moved here from top-level aiConfig
   slideshowItems?: {
     imageUrl?: string

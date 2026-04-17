@@ -1326,6 +1326,26 @@ function AiGenerationPanel({
         </select>
       </div>
 
+      {/* Fallback Provider */}
+      <div className="flex items-center gap-2">
+        <label className={labelCls}>Fallback Provider</label>
+        <select
+          value={module.providerFallback ?? ''}
+          onChange={(e) => {
+            const val = e.target.value
+            onUpdate({
+              providerFallback:
+                val === '' ? undefined : (val as 'replicate' | 'google'),
+            } as Partial<ModuleConfig>)
+          }}
+          className="px-2 py-1 text-xs bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:border-blue-500"
+        >
+          <option value="">None</option>
+          <option value="replicate">replicate</option>
+          <option value="google">google</option>
+        </select>
+      </div>
+
       {/* Themes */}
       <div className="space-y-2">
         <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">
