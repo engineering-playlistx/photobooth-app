@@ -100,6 +100,7 @@ Client account management, client dashboard login and self-serve access, automat
 | `scale-up-v5` | V5 | ✅ Done | [projects/scale-up-v5/](projects/scale-up-v5/) |
 | `scale-up-v6` | V6 | ✅ Done | [projects/scale-up-v6/](projects/scale-up-v6/) |
 | `scale-up-v7` | V7 | ✅ Done | [projects/scale-up-v7/](projects/scale-up-v7/) |
+| `scale-up-v8` | V8 | 🔜 Pre-planning | [projects/scale-up-v8/](projects/scale-up-v8/) |
 | `[parked]-auto-update` | — | ⏸️ Parked | [projects/[parked]-auto-update/](projects/[parked]-auto-update/) |
 
 ---
