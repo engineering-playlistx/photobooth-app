@@ -160,7 +160,7 @@ export function FormModule({ config, onComplete, onBack }: ModuleProps) {
     <div
       className="h-svh aspect-9/16 mx-auto bg-cover bg-center bg-no-repeat flex items-start justify-center p-4 bg-primary text-secondary"
       style={{
-        backgroundImage: `url('${bg ?? getAssetPath("/images/bg_form.png")}')`,
+        backgroundImage: `url('${bg ?? getAssetPath("/images/bg_form_default.png")}')`,
       }}
     >
       <button

@@ -336,12 +336,12 @@ export function ResultModule({ config, outputs }: ModuleProps) {
   ]);
 
   return (
-    <div className="h-svh aspect-9/16 mx-auto relative flex items-center justify-center bg-primary text-secondary">
+    <div className="h-svh aspect-9/16 mx-auto relative flex items-center justify-center bg-white text-secondary">
       <ToastContainer toasts={toasts} onRemove={removeToast} />
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('${bg ?? getAssetPath("/images/bg_result.png")}')`,
+          backgroundImage: `url('${bg ?? getAssetPath("/images/bg_result_default.png")}')`,
         }}
       />
       {headerEl.styleTag}

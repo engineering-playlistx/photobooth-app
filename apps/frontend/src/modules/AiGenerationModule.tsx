@@ -69,12 +69,12 @@ async function applyRacingFrame(
 }
 
 const SLIDESHOW_IMAGES = [
-  "/images/bg_loading_1.png",
-  "/images/bg_loading_11.png",
-  "/images/bg_loading_12.png",
-  "/images/bg_loading_13.png",
-  "/images/bg_loading_14.png",
-  "/images/bg_loading_15.png",
+  "/images/bg_loading_default.png",
+  // "/images/bg_loading_11.png",
+  // "/images/bg_loading_12.png",
+  // "/images/bg_loading_13.png",
+  // "/images/bg_loading_14.png",
+  // "/images/bg_loading_15.png",
 ];
 
 const SLIDESHOW_INTERVAL_MS = 4500;
@@ -305,7 +305,7 @@ export function AiGenerationModule({
 
   return (
     <div
-      className="relative h-svh aspect-9/16 mx-auto flex items-start justify-center p-4 bg-primary text-secondary overflow-hidden"
+      className="relative h-svh aspect-9/16 mx-auto flex items-start justify-center p-4 bg-white text-secondary overflow-hidden"
       style={
         bg
           ? {

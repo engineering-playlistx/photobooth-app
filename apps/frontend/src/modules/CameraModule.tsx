@@ -431,7 +431,7 @@ export function CameraModule({ config, onComplete, onBack }: ModuleProps) {
     <div
       className="h-svh aspect-9/16 mx-auto bg-cover bg-center bg-no-repeat text-secondary relative overflow-hidden"
       style={{
-        backgroundImage: `url('${bg ?? getAssetPath("/images/bg_camera.png")}')`,
+        backgroundImage: `url('${bg ?? getAssetPath("/images/bg_camera_default.png")}')`,
       }}
     >
       {isFlashing && (

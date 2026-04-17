@@ -20,12 +20,12 @@ export function WelcomeModule({ config, onComplete }: ModuleProps) {
   }
 
   return (
-    <div className="h-svh aspect-9/16 mx-auto relative flex items-center justify-center p-4 bg-black overflow-hidden">
+    <div className="h-svh aspect-9/16 mx-auto relative flex items-center justify-center p-4 bg-black overflow-hidden bg-white">
       {ctaButton.styleTag}
       <div
         className="absolute inset-0 w-full h-full px-26 pb-20 pt-76"
         style={{
-          background: `url('${bg ?? getAssetPath("/images/bg_index.png")}')`,
+          background: `url('${bg ?? getAssetPath("/images/bg_index_default.png")}')`,
           backgroundSize: "cover",
         }}
       />

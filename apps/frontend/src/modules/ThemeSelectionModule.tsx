@@ -53,7 +53,7 @@ export function ThemeSelectionModule({
       <div
         className="absolute inset-0 w-full h-full"
         style={{
-          background: `url('${bg ?? getAssetPath("/images/bg_select.png")}')`,
+          background: `url('${bg ?? getAssetPath("/images/bg_select_default.png")}')`,
           backgroundSize: "cover",
         }}
       />
