@@ -37,14 +37,16 @@ The app is **offline-first**: all photos are saved locally via SQLite and the fi
 | `docs/workflow/projects/scale-up-v5/` | V5 multi-tenant foundation — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v6/` | V6 multi-event seamlessness — COMPLETE ✅ |
 | `docs/workflow/projects/scale-up-v7/` | V7 platform polish — COMPLETE ✅ |
-| `docs/workflow/projects/scale-up-v8/` | V8 — pre-planning 🔜 |
+| `docs/workflow/projects/scale-up-v8/` | V8 — planning 🔜 |
 | `docs/workflow/projects/[parked]-auto-update/` | Electron auto-update — ⏸️ PARKED (blocked on Windows code signing) |
 
 ### V8 Project Docs (`docs/workflow/projects/scale-up-v8/`)
 
 | File | Contents |
 |------|----------|
-| `00-backlog-collection.md` | All deferred items collected from V4–V7 — pre-planning input |
+| `00-backlog-collection.md` | All deferred items collected from V4–V7, updated with V8 planning notes |
+| `01-scope.md` | V8 scope statement, definition of done, architecture decisions |
+| `02-task-decomposition.md` | Task breakdown (phases 0–4) |
 
 ### V7 Project Docs (`docs/workflow/projects/scale-up-v7/`)
 

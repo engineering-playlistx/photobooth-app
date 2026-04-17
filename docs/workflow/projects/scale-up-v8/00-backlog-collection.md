@@ -12,6 +12,24 @@
 **Origin:** V7 TASK-2.3 (scoped down), code TODO at `apps/frontend/src/modules/ResultModule.tsx:410`
 **What:** The "Retry Result" button currently calls `reset()` — it sends the guest back to home, not back to the AI generation step. True retry requires the pipeline to support stepping back to a specific module (e.g. re-run AI gen with the same photo and theme). `PipelineContext` currently has no step-back capability — `reset()` is the only exit.
 **Deferred because:** Too large for V7 scope; needs pipeline architecture change.
+**→ Addressed in V8** (TASK-3.1, TASK-3.2 — `jumpToIndex` added to PipelineContext; retry modal in ResultModule).
+
+---
+
+### BACKLOG-P6 — Duplicate module instances (non-AI-gen modules) have undefined pipeline behavior
+**Origin:** V8 planning
+**What:** The flow builder hard-blocks adding a second `ai-generation` module (V8 TASK-3.3), but all other module types can appear multiple times in a flow with no guard or warning. If an operator adds two `form` modules or two `camera` modules, the pipeline will run them both in sequence — outputs from the first will be overwritten by the second (same `outputKey`). No validation exists. Actual UX impact depends on which module is duplicated; some combinations may work, others may produce surprising results.
+**Decision needed:** Should the flow builder show a warning (non-blocking) or hard-block for other module types known to conflict? Or is "you can add any module multiple times" a valid intentional feature?
+**Not in V8 because:** Only AI gen had a concrete known-broken case (ambiguous `jumpToIndex` target). Generalizing to other modules requires per-module analysis.
+
+---
+
+### BACKLOG-P7 — Form re-entry when retrying after a form-after-AI-gen flow
+**Origin:** V8 planning (ARCH-07 accepted behavior note)
+**What:** If an operator configures a flow as `... → ai-generation → form → result`, a guest who retries from the result screen jumps back to AI gen. After generation succeeds, `advance()` takes the guest to the form step — they must re-enter their name, email, and phone. This is surprising and slightly hostile UX.
+**Root cause:** `jumpToIndex` sets `currentIndex` to the AI gen index. The pipeline advances from there in sequence, so form comes next. `userInfo` in `moduleOutputs` is still populated from the first pass (not cleared), but the form module renders fresh and asks the guest to fill it in again.
+**Not in V8 because:** The standard Shell flow is `form → ai-generation → result` (form before AI gen), so this doesn't arise in practice. Fixing it would require `jumpToIndex` to also skip past already-completed modules, which needs a more sophisticated "resume from" mechanism.
+**Prerequisite for fixing:** A concept of "completed" vs "pending" per module step in the pipeline — likely tied to BACKLOG-P3 (session crash recovery).
 
 ---
 
@@ -72,6 +90,15 @@
 **Origin:** V4/V5/V6/V7 scopes (CARRY-01)
 **What:** If the primary AI provider (Replicate or Google) fails or times out, automatically retry with a secondary provider. Currently a failure shows an error with no fallback.
 **Deferred because:** Requires rearchitecting the AI generation service to support a provider chain with retry logic.
+**→ Partially addressed in V8** (TASK-4.1–4.3 — fallback at CREATE step only; mid-generation polling fallback remains open as BACKLOG-F4).
+
+---
+
+### BACKLOG-F4 — Mid-generation polling fallback (beyond CREATE step)
+**Origin:** V8 planning (ARCH-05 scope decision)
+**What:** V8 AI provider fallback covers only CREATE-step failures — if the primary provider accepts the prediction but then fails during polling (e.g. Replicate returns `status: "failed"` after the job is created), there is no automatic fallback. The guest sees an error and must manually retry. A complete fallback would detect a mid-generation failure and internally create a new prediction with the secondary provider, transparently resuming the polling loop.
+**Complexity:** High. Requires the backend to track in-flight provider state across polling requests. The polling endpoint (`/api/ai-generate-status`) would need to know which fallback provider to create a new prediction on and hand back a new `predictionId` mid-flight, or the frontend polling loop would need to be redesigned.
+**Not in V8 because:** Mid-generation failures are less common than CREATE failures (provider overload/down). The manual retry path (TASK-2.1) handles these acceptably for now.
 
 ---
 
@@ -147,6 +174,15 @@
 
 ## 7. Code Tech Debt
 
+### BACKLOG-T3 — Orphaned Supabase photo file when guest retries AI generation
+**Origin:** V8 planning (noted in TASK-3.2 design notes)
+**What:** When a guest retries AI generation from the result screen, `ResultModule` remounts as a new component instance. `photoUuid` is a `useMemo(() => crypto.randomUUID(), [])` — it regenerates on remount, producing a new filename. The retry therefore uploads a second photo file to Supabase Storage under a different name. The original file from the first generation attempt is never deleted. Over time, retried sessions leave orphaned files in `events/{eventId}/photos/`.
+**Impact:** Storage bloat. No functional impact on the current session or the guest portal. The session's `photo_path` on the `sessions` row is updated to the latest file (via `PATCH /api/session/photo`), so the guest portal always shows the correct photo.
+**Fix options:** (a) Derive `photoUuid` from `sessionId` (stable across remounts, always the same per session), which would cause the upsert to overwrite the old file rather than create a new one. (b) Explicit cleanup: delete the previous file from Supabase before uploading the new one. Option (a) is simpler and has no side effects.
+**Not in V8 because:** Discovered during task decomposition; low impact for the current scale. Worth fixing before retry becomes a high-frequency feature.
+
+---
+
 ### BACKLOG-T1 — `renderer.tsx` TypeScript suppression
 **Origin:** `apps/frontend/src/renderer.tsx:14`
 **What:** `@ts-expect-error` suppresses a TypeScript error on the CSS import (`import "./index.css"`). The comment says "TODO: Fix ts error". Should be resolved properly (correct tsconfig `moduleResolution` or a `.d.ts` declaration for CSS files) rather than suppressed.
@@ -165,17 +201,20 @@
 
 | ID | Area | Item | Priority Signal |
 |----|------|------|----------------|
-| BACKLOG-P1 | Pipeline | True retry-AI-gen (step-back) | Mentioned by creator, TODO in code |
+| BACKLOG-P1 | Pipeline | True retry-AI-gen (step-back) | ✅ Addressed in V8 |
 | BACKLOG-P2 | Pipeline | Wire or remove `guestPortalEnabled` | Dead code, decision needed |
 | BACKLOG-P3 | Pipeline | Session crash recovery | Recurring deferral (4+ versions) |
 | BACKLOG-P4 | Kiosk | QR kiosk pairing | UX improvement, not a blocker |
 | BACKLOG-P5 | Data | SQLite offline sync-back | Recurring deferral |
+| BACKLOG-P6 | Pipeline | Duplicate module instances — undefined behavior | Design decision needed |
+| BACKLOG-P7 | Pipeline | Form re-entry on retry (form-after-AI-gen flow) | Accepted behavior, prereq: P3 |
 | BACKLOG-M1 | Multi-tenant | Client account + dashboard login | Named in MASTER-PLAN V8 |
 | BACKLOG-M2 | Multi-tenant | Per-org API key isolation | Security, named in V5 |
 | BACKLOG-M3 | Multi-tenant | Nested org routing | Structural, low urgency |
-| BACKLOG-F1 | Platform | AI provider fallback chain | Recurring (CARRY-01) |
+| BACKLOG-F1 | Platform | AI provider fallback chain | ✅ Partially addressed in V8 (CREATE step only) |
 | BACKLOG-F2 | Platform | Config version history | Recurring (CARRY-02) |
 | BACKLOG-F3 | Platform | Automated reporting | Recurring (REPORT-01) |
+| BACKLOG-F4 | Platform | Mid-generation polling fallback | V8 out-of-scope (complex) |
 | BACKLOG-D1 | Dashboard | Operator error dashboard | Recurring (GAP-03) |
 | BACKLOG-D2 | Dashboard | Event status enforcement | Deliberate deferral (ARCH-01) |
 | BACKLOG-G1 | Guest UX | Guest portal V2 | Nice-to-have |
@@ -185,3 +224,4 @@
 | BACKLOG-AU | Infra | Electron auto-update | Parked — external blocker |
 | BACKLOG-T1 | Tech debt | `renderer.tsx` TS suppression | Low |
 | BACKLOG-T2 | Tech debt | `supabase.ts` ESLint suppression | Low |
+| BACKLOG-T3 | Tech debt | Orphaned Supabase photo on AI gen retry | Low — storage bloat, fix before retry scales |
