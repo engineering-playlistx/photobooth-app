@@ -297,7 +297,7 @@ export function ResultModule({ config, outputs }: ModuleProps) {
                 name: userInfo.name,
                 email: userInfo.email,
                 phone: userInfo.phone,
-                selectedTheme: selectedTheme.id,
+                selectedTheme: selectedTheme?.id ?? "",
                 eventId,
                 sessionId,
                 moduleOutputs: Object.fromEntries(

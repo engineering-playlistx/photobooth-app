@@ -83,7 +83,6 @@ export function AiGenerationModule({
   config,
   outputs,
   onComplete,
-  onBack,
 }: ModuleProps) {
   const { apiBaseUrl, apiClientKey, config: eventConfig } = useEventConfig();
   const { setSuppressInactivity, reset } = usePipeline();
@@ -364,7 +363,7 @@ export function AiGenerationModule({
             </button>
             <button
               type="button"
-              onClick={onBack}
+              onClick={reset}
               className="px-10 py-5 bg-transparent hover:bg-white/20 text-white border border-white rounded-lg font-medium text-3xl transition-all duration-200 cursor-pointer font-sans"
             >
               Back to Home
