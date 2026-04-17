@@ -82,7 +82,9 @@ export function ResultModule({ config, outputs }: ModuleProps) {
   // prevents issues if the component ever re-renders.
   const hasSaved = useRef(false);
 
-  const finalPhoto = outputs["finalPhoto"] as string | undefined;
+  const finalPhoto = (outputs["finalPhoto"] ?? outputs["originalPhoto"]) as
+    | string
+    | undefined;
   const selectedTheme = outputs["selectedTheme"] as
     | { id: string; label: string }
     | undefined;
