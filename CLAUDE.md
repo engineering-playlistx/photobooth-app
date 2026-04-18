@@ -6,7 +6,7 @@ This file gives Claude Code the context needed to work effectively in this repo.
 
 ## Project Overview
 
-**Shell Photobooth** is a managed, AI-powered photobooth platform sold as a service to brands and marketing agencies. Current deployment: Shell racing events (Pit Crew / MotoGP / F1 face-swap). Actively scaling into multi-client SaaS.
+**Photobooth App** is a managed, AI-powered photobooth platform sold as a service to brands and marketing agencies. Actively scaling into multi-client SaaS.
 
 **Offline-first:** photos saved locally via SQLite + filesystem. Cloud delivery via Supabase Storage layered on top. **Supabase is source of truth** — SQLite is offline backup only.
 
