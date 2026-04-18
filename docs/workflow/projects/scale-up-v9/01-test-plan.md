@@ -3,7 +3,7 @@
 **Theme:** Hygiene sprint — scalability, reliability, architecture quality, and readability.
 **Goal:** Full test coverage across all system surfaces to catch bugs, undefined behavior, and edge cases before V9 implementation work begins.
 **Created:** 2026-04-19
-**Status:** Phase 0 complete — Phase 1 in progress
+**Status:** Phase 0 complete ✅ — Phase 1 complete ✅ — Phase 2 complete ✅
 
 ---
 
@@ -499,7 +499,7 @@ This is the canonical list. Test IDs here map to test descriptions in Phases 1�
 |-------|--------|-------------|-------------|
 | Phase 0 — Audit | ✅ Done | 0 | 34 |
 | Phase 1 — Unit: Business Logic | ✅ Done | +62 | 96 |
-| Phase 2 — API Route Tests | 🔜 Next | — | — |
+| Phase 2 — API Route Tests | ✅ Done | +68 | 164 |
 | Phase 3 — Component Tests | ⏳ Pending | — | — |
 | Phase 4 — E2E | ⏳ Pending | — | — |
 | Phase 5 — Fix Pass | ⏳ Pending | — | — |

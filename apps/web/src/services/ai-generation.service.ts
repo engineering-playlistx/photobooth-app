@@ -139,14 +139,21 @@ export class AIGenerationService {
       })
       .catch(async (err) => {
         console.error(`[AIService] Google AI job ${jobId} failed:`, err)
-        await admin
-          .from('ai_jobs')
-          .update({
-            status: 'failed',
-            error: err instanceof Error ? err.message : String(err),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', jobId)
+        try {
+          await admin
+            .from('ai_jobs')
+            .update({
+              status: 'failed',
+              error: err instanceof Error ? err.message : String(err),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', jobId)
+        } catch (updateErr) {
+          console.error(
+            `[AIService] Failed to mark ai_job ${jobId} as failed:`,
+            updateErr,
+          )
+        }
       })
 
     return jobId
